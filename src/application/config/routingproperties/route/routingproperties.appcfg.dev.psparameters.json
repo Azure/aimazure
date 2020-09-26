@@ -1,0 +1,11 @@
+{
+    "configKey": "Aim.FtpPassthru.Aim.FtpPassthru.Sendport",
+    "configValueFileName": "Aim.FtpPassthru.Aim.FtpPassthru.Sendport.routingproperties.json",
+    "configLabel": "RoutingProperties",
+    "configStoreName": "appcfg-aimrstore-dev-xxxxx",
+    "configType": "application/json",
+    "configTags": [
+        "Application=Aim-FtpPassthru",
+        "Env=dev"
+    ]
+}

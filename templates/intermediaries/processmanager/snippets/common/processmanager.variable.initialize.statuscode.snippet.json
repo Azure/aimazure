@@ -1,0 +1,17 @@
+{
+    "workflowDefinitionVariable": {
+        "Initialize_StatusCode_variable": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "StatusCode",
+                        "type": "integer",
+                        "value": 500
+                    }
+                ]
+            }
+        }
+    }
+}

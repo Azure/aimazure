@@ -1,0 +1,21 @@
+{
+    "subscriptionId": "{{ resource_template.parameters.azure_subscription_id }}",
+    "name": "{{ resource_template.resource_name }}",
+    "resourceGroupName": "{{ resource_template.parameters.azure_resource_group_name }}",
+    "location": "{{ resource_template.parameters.azure_primary_region }}",
+    "appConfigName": "{{ resource_template.parameters.app_config_name }}",
+    "keyVaultName": "{{ resource_template.parameters.key_vault_name }}",
+    "publisherName": "{{ resource_template.parameters.publisher_name }}",
+    "publisherEmail": "{{ resource_template.parameters.publisher_email }}",
+    "sku": "{{ resource_template.parameters.azure_sku }}",
+    "skuCapacity": {{ resource_template.parameters.azure_sku_capacity }},
+    "tags": [
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+        "{{ tag.key }}={{ tag.value }}",
+    {%- else %}
+        "{{ tag.key }}={{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+    ]
+}

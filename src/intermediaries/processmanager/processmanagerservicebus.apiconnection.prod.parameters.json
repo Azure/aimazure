@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "apic-aimsbconnector-processmanager-prod-xxxxx"
+        },
+        "apiConnectionLocation": {
+            "value": "UK South"
+        },
+        "serviceBusResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-prod-uksouth-xxxxx"
+        },
+        "serviceBusNamespaceName": {
+            "value": "sb-aimmsgbox-prod-uksouth-xxxxx"
+        },
+        "serviceBusPolicyName": {
+            "value": "RootManageSharedAccessKey"
+        },
+        "tags": {
+            "value": {
+                "Env" : "prod"
+            }
+        }
+    }
+}

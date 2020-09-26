@@ -1,0 +1,10 @@
+{
+    "name": "kv-aimrstore-dev",
+    "resourceGroupName": "rg-aimmsgbus-dev-uksouth",
+    "location": "UK South",
+    "sku": "Standard",
+    "tags": [
+        "ApplicationName=AIM-MessageBus",
+        "Env=dev"
+    ]
+}

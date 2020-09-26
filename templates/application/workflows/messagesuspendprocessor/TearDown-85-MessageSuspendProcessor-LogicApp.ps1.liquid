@@ -1,0 +1,12 @@
+<#
+.SYNOPSIS
+Invokes the teardown of the Logic App.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+.\TearDown-85-MessageSuspendProcessor-LogicApp.ps1
+#>
+
+& $PSScriptRoot\Remove-MessageSuspendProcessor-LogicApp.ps1 -resourceGroup "{{ resource_template.parameters.azure_resource_group_name }}" -workflowName "{{ resource_template.resource_name }}"

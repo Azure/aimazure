@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schema.management.azure.com/messagebus-nack.json",
+    "type": "object",
+    "default": {},
+    "required": [
+        "code",
+        "message",
+        "fault"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "code": {
+            "$id": "#/properties/code",
+            "type": "integer"
+        },
+        "message": {
+            "$id": "#/properties/message",
+            "type": "string"
+        },
+        "fault": {
+            "$id": "#/properties/fault",
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "faultActor": {
+                    "$id": "#/properties/fault/properties/faultActor",
+                    "type": "string"
+                },
+                "faultCode": {
+                    "$id": "#/properties/fault/properties/faultCode",
+                    "type": "string"
+                },
+                "faultCategory": {
+                    "$id": "#/properties/fault/properties/faultCategory",
+                    "type": "string"
+                },
+                "faultMessage": {
+                    "$id": "#/properties/fault/properties/faultMessage",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

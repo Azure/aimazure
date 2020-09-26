@@ -1,0 +1,7 @@
+{
+  "ftpReceiveAdapter": {
+    "btsReceivePortName": "Aim.FtpPassthru.ReceivePort"
+  },
+  "contentPromoter": {},
+  "topicPublisher": {}
+}

@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimxmlenvelopewrapper-dev-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-dev-uksouth-xxxxx"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "logic-aimroutingsliprouter-dev-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "apimSubscriptionKey": {
+            "value": ""
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "AIM-System",
+                "Env": "dev"
+            }
+        }
+    }
+}

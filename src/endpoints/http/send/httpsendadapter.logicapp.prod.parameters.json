@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimhttpsadapter-httpsendport-prod-xxxxx"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "logic-aimroutingsliprouter-prod-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "apimSubscriptionKey": {
+            "value": ""
+        },
+        "scenarioStep": {
+            "value": "httpSendAdapter"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-XmlMapping",
+                "Env": "prod"
+            }
+        }
+    }
+}

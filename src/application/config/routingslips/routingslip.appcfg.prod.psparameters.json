@@ -1,0 +1,11 @@
+{
+    "configKey": "Aim.FtpPassthru.Aim.FtpPassthru.Sendport",
+    "configValueFileName": "Aim.FtpPassthru.Aim.FtpPassthru.Sendport.RoutingSlip.json",
+    "configLabel" : "RoutingSlip",
+    "configStoreName": "appcfg-aimrstore-dev-xxxxx",
+    "configType": "application/json",
+    "configTags": [
+        "Application=Aim-FtpPassthru",
+        "Env=prod"
+    ]
+}

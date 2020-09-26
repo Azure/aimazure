@@ -1,0 +1,13 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+<#
+.SYNOPSIS
+Invokes the deployment of a Logic App.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+.\Deploy-85-XmlMessageValidator-LogicApp.ps1
+#>
+
+& $PSScriptRoot\New-XmlMessageValidator-LogicApp.ps1 -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -templateFile "$PSScriptRoot\xmlmessagevalidator.logicapp.json" -templateParameterFile "$PSScriptRoot\xmlmessagevalidator.logicapp.{{ model.migration_target.deployment_environment | downcase }}.parameters.json" -keyVaultName "{{ resource_template.parameters.key_vault_name}}" -keyVaultApimSubscriptionSecretName "{{ resource_template.parameters.key_vault_apim_subscription_secret_name}}" -deploymentName "xmlmessagevalidator.logicapp.{{ formatted_azure_primary_region }}.{{ model.migration_target.unique_deployment_id | downcase }}"

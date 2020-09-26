@@ -1,0 +1,26 @@
+{
+    "armParameter": {
+        "suspendQueueTopicName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}"
+        }
+    },
+    "armTemplateParameter": {
+        "suspendQueueTopicName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Service Bus topic for the Suspend Queue."
+            }
+        }
+    },
+    "workflowParameter": {
+        "suspendQueueTopicName": {
+            "value": "[parameters('suspendQueueTopicName')]"
+        }
+    },
+    "workflowDefinitionParameter": {
+        "suspendQueueTopicName": {
+            "type": "String",
+            "description": "The name of the Service Bus topic for the Suspend Queue."
+        }
+    }
+}

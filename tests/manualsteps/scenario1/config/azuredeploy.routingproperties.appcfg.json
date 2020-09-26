@@ -1,0 +1,9 @@
+{
+    "routingProperties": [
+        {
+            "propertyName": "btsReceivePortName",
+            "propertyType": "property",
+            "propertyValue": "receivePortName"
+        }
+    ]
+}

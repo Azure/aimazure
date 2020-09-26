@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://BizTalk_Server_Project1.TestSchema" xmlns:b="http://schemas.microsoft.com/BizTalk/2003" targetNamespace="http://BizTalk_Server_Project1.TestSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="RootTest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ChildTest">
+          <xs:complexType />
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="TestAttribute" type="xs:string" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

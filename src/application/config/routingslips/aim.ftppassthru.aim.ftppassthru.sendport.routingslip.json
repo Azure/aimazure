@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "name": "contentPromoter",
+      "routingSteps": {
+        "channelType": "microsoft.channels.trigger.azure-apim"
+      },
+      "routingParameters": {
+        "messageReceiverType": "microsoft.workflows.azurelogicapp",
+        "parameters": {
+          "resourceId": "/rg-aimapp-systemapplication-dev-uksouth-xxxxx/logic-aimcontentpromoter-dev-xxxxx"
+        }
+      }
+    },
+    {
+      "name": "topicPublisher",
+      "routingSteps": {
+        "channelType": "microsoft.channels.trigger.azure-apim"
+      },
+      "routingParameters": {
+        "messageReceiverType": "microsoft.workflows.azurelogicapp",
+        "parameters": {
+          "resourceId": "/rg-aimapp-systemapplication-dev-uksouth-xxxxx/logic-aimtopicpublisher-dev-xxxxx"
+        }
+      }
+    }
+  ]
+}

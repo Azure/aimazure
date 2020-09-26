@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "messageBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "{{ resource_template.parameters.routing_slip_router_name }}"
+        },
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "fileSystemSendApiConnectionName": {
+            "value": "{{ resource_template.parameters.api_connector_name }}"
+        },
+        "scenarioStep": {
+            "value": "{{ resource_template.parameters.scenario_step_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

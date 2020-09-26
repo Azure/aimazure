@@ -1,0 +1,16 @@
+{
+    "workflowDefinitionVariable": {
+        "Initialize_FaultMessage_variable": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "FaultMessage",
+                        "type": "object"
+                    }
+                ]
+            }
+        }
+    }
+}

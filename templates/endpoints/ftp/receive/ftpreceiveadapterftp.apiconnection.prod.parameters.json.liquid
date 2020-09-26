@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "apiConnectorLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "serverAddress": {
+            "value": "{{ resource_template.parameters.azure_ftp_server_address }}"
+        },
+        "serverPort": {
+            "value": {{ resource_template.parameters.azure_ftp_server_port }}
+        },
+        "userName": {
+            "value": "{{ resource_template.parameters.azure_ftp_user_name }}"
+        },
+        "password": {
+            "value": "{{ resource_template.parameters.azure_ftp_password }}"
+        },
+        "isBinaryTransport": {
+            "value": {{ resource_template.parameters.azure_ftp_is_binary_transport }}
+        },
+        "isSSL": {
+            "value": {{ resource_template.parameters.azure_ftp_is_ssl }}
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "name": "appi-aimmsgbusops-prod",
+    "resourceGroupName": "rg-aimmsgbus-prod-uksouth",
+    "location": "UK South",
+    "tags": [
+        "ApplicationName=AIM-MessageBus",
+        "Env=prod"
+    ]
+}

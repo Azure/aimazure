@@ -1,0 +1,19 @@
+{
+  "routingProperties": [
+    {
+      "propertyName": "Microsoft.AzureMigration.BizTalk.TestApps.Schemas.TestStringProperty1",
+      "propertyType": "xpath",
+      "propertyValue": "/*[local-name()='SimplePerson' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']/*[local-name()='FirstName' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']"
+    },
+    {
+      "propertyName": "Microsoft.AzureMigration.BizTalk.TestApps.Schemas.TestIntegerProperty1",
+      "propertyType": "xpath",
+      "propertyValue": "/*[local-name()='SimplePerson' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']/*[local-name()='Age' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']"
+    },
+    {
+      "propertyName": "Microsoft.AzureMigration.BizTalk.TestApps.Schemas.TestBoolProperty1",
+      "propertyType": "xpath",
+      "propertyValue": "/*[local-name()='SimplePerson' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']/*[local-name()='IsAlive' and namespace-uri()='http://Microsoft.AzureMigration.BizTalk.TestApps.Schemas.Schema1WithPromotedFields']"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimmessageresponsehandler-dev-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "serviceBusTopicSubscribeApiConnectionName": {
+            "value": "apic-aimmessageresponsehandler-dev-xxxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "AIM-System",
+                "Env": "dev"
+            }
+        }
+    }
+}

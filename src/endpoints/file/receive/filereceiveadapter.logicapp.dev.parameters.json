@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimfileradapter-rcvfile-file-dev-xxxxx"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-dev-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-dev-uksouth-xxxxx"
+        },
+        "messageConstructorLogicAppName": {
+            "value": "logic-aimmessageconstructor-dev-xxxxx"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "logic-aimmessagesuspendprocessor-dev-xxxxx"
+        },
+        "suspendQueueTopicName": {
+            "value": "suspendqueue"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "fileSystemReceiveApiConnectionName": {
+            "value": "apic-topicpublisherconnector-filereceiveadapter-dev-xxxxx"
+        },
+        "fileReceiveFolder": {
+            "value": ""
+        },
+        "fileMaxFileCount": {
+            "value": 10
+        },
+        "fileRecurrenceFrequency": {
+            "value": "Second"
+        },
+        "fileRecurrenceInterval": {
+            "value": 30
+        },
+        "serviceBusTopicPublishApiConnectionName": {
+            "value": "apic-topicpublisherconnection-filereceiveadapater-dev-xxxxx"
+        },
+        "scenario": {
+            "value": ""
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-File",
+                "Env": "dev"
+            }
+        }
+    }
+}

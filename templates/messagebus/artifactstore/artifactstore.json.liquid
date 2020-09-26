@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "intAccName": {
+            "type": "string"
+        },
+        "intAccLocation": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('intAccName')]",
+            "location": "[parameters('intAccLocation')]",
+            "type": "Microsoft.Logic/IntegrationAccounts",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "properties": {
+            }
+        }
+    ]
+}

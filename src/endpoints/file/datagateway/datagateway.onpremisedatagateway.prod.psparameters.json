@@ -1,0 +1,5 @@
+{
+    "resourceGroupName": "rg-aimapp-systemapplication-prod-uksouth-xxxxx",
+    "connectionGatewayInstallationLocation": "uksouth",
+    "connectionGatewayInstallationDisplayName": "gtw-msgbus-prod-uksouth-xxxxx"
+}

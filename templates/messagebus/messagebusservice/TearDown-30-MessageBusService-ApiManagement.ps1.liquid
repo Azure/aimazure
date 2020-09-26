@@ -1,0 +1,12 @@
+<#
+.SYNOPSIS
+Invokes the teardown of the API Management resource.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+./TearDown-30-MessageBusService-ApiManagement.ps1
+#>
+
+& $PSScriptRoot\Remove-MessageBusService-ApiManagement.ps1 -resourceGroup "{{ resource_template.parameters.azure_resource_group_name }}" -resourceName "{{ resource_template.resource_name }}"

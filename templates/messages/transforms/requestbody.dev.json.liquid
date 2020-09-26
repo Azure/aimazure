@@ -1,0 +1,24 @@
+{%- assign source_schema_message_types = resource_template.parameters.azure_source_schema_message_types | split "|" -%}
+{%- assign target_schema_message_types = resource_template.parameters.azure_target_schema_message_types | split "|" -%}
+{
+    "properties": {
+        "mapType": "Xslt",
+        "metadata": {
+          "sourceSchemas": [
+            {% for message_type in source_schema_message_types -%} 
+              "{{ message_type }}"
+              {%- if forloop.last == false -%},{%- endif %}
+            {%- endfor %}
+          ],
+          "targetSchemas": [
+            {% for message_type in target_schema_message_types -%} 
+              "{{ message_type }}"
+              {%- if forloop.last == false -%},{%- endif %}
+            {%- endfor %}
+          ]
+        },
+        "content": "",
+        "contentType": "application/xml"
+    },
+  "location": "{{ resource_template.parameters.azure_primary_region }}"
+}

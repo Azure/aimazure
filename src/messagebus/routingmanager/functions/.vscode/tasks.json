@@ -1,0 +1,103 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "clean",
+			"command": "dotnet",
+			"args": [
+				"clean",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"dependsOn": "clean",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "clean release",
+			"command": "dotnet",
+			"args": [
+				"clean",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager",
+				"--configuration",
+				"Release",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build release",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager",
+				"--configuration",
+				"Release",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"dependsOn": "clean release",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "publish",
+			"command": "dotnet",
+			"args": [
+				"publish",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager",
+				"--configuration",
+				"Release",
+				"/property:GenerateFullPaths=true",
+				"/consoleloggerparameters:NoSummary"
+			],
+			"type": "process",
+			"dependsOn": "clean release",
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "restore",
+			"command": "dotnet",
+			"args": [
+				"restore",
+				"${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager"
+			],
+			"type": "process",
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "run function",
+			"type": "func",
+			"dependsOn": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager/bin/Debug/netcoreapp3.1"
+			},
+			"command": "host start --port 7071",
+			"isBackground": true,
+			"problemMatcher": "$func-watch"
+		}
+	]
+}

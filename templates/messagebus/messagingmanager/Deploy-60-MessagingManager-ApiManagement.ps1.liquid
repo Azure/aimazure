@@ -1,0 +1,13 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+<#
+.SYNOPSIS
+Invokes the deployment of an API in API Management for the messaging manager.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+./Deploy-60-MessagingManager-ApiManagement.ps1
+#>
+
+& $PSScriptRoot\New-MessagingManager-ApiManagement.ps1 -subscriptionId "{{ resource_template.parameters.azure_subscription_id }}" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -apimServiceName "{{ resource_template.resource_name }}" -apiName "{{ resource_template.parameters.api_name }}" -templateFile "$PSScriptRoot\messagingmanager.apim.json" -templateParameterFile "$PSScriptRoot\messagingmanager.apim.{{ model.migration_target.deployment_environment | downcase }}.parameters.json" -deploymentName "messagingmanager.apim.{{ formatted_azure_primary_region }}.{{ model.migration_target.unique_deployment_id | downcase }}"

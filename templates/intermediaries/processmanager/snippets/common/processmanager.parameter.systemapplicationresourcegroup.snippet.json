@@ -1,0 +1,15 @@
+{
+    "armParameter": {
+        "systemApplicationResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_system_application_resource_group_name }}"
+        }
+    },
+    "armTemplateParameter": {
+        "systemApplicationResourceGroupName": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of the resource group that common system artifacts are deployed to."
+            }
+        }
+    }
+}

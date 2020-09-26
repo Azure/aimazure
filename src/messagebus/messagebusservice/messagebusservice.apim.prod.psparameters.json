@@ -1,0 +1,16 @@
+{
+    "subscriptionId": "",
+    "name": "apim-aimmsgbussvc-prod",
+    "resourceGroupName": "rg-aimmsgbus-prod-uksouth",
+    "location": "UK South",
+    "appConfigName": "appcfg-aimrstore-prod",
+    "keyVaultName": "kv-aimrstore-prod",
+    "publisherName": "Microsoft",
+    "publisherEmail": "person@constoso.com",
+    "sku": "Developer",
+    "skuCapacity": 1,
+    "tags": [
+        "ApplicationName=AIM-MessageBus",
+        "Env=prod"
+    ]
+}

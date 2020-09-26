@@ -1,0 +1,849 @@
+{
+	"info": {
+		"_postman_id": "49494ee4-30b4-4d39-bd2d-c4625ef447bf",
+		"name": "Test AIM Flows",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Routing Manager",
+			"item": [
+				{
+					"name": "Call GetLogicAppCallbackUrl",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/logicappcallbackurl/dev-aim-common-uks-aff-rg/AIMFlatFileDecoder?clearCache=false",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"logicappcallbackurl",
+								"dev-aim-common-uks-aff-rg",
+								"AIMFlatFileDecoder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call GetLogicAppCallbackUrl (Clear Cache)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/logicappcallbackurl/dev-aim-common-uks-aff-rg/AIMFlatFileDecoder?clearCache=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"logicappcallbackurl",
+								"dev-aim-common-uks-aff-rg",
+								"AIMFlatFileDecoder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call SendToNextRoute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/sendtonextroute?clearCache=false&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"sendtonextroute"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call SendToNextRoute (Clear Cache)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/sendtonextroute?clearCache=true&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"sendtonextroute"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call ResolveRoutingProperties",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/resolveroutingproperties?clearCache=false&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"resolveroutingproperties"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call ResolveRoutingProperties (Clear Cache)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingmanager/resolveroutingproperties?clearCache=true&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingmanager",
+								"resolveroutingproperties"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Messaging Manager",
+			"item": [
+				{
+					"name": "Call BuildEnvelopeMessage",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "text/csv"
+							},
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "ID, EmployeeName, DOB, Status\\r\\n11, Andy Carlton, 12/03/1956, Active\\r\\n15, John Simms, 28/05/1973, Retired"
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/buildenvelope/content/ReceiveFTP?clearCache=false&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"buildenvelope",
+								"content",
+								"ReceiveFTP"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call BuildEnvelopeMessage (Clear Cache)",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "text/csv"
+							},
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "ID, EmployeeName, DOB, Status\\r\\n11, Andy Carlton, 12/03/1956, Active\\r\\n15, John Simms, 28/05/1973, Retired"
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/buildenvelope/content/ReceiveFTP?clearCache=true&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"buildenvelope",
+								"content",
+								"ReceiveFTP"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call MergeProperties",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n\t{\r\n\t    \"property1\": \"value1\",\r\n\t    \"property2\": \"value2\"\r\n\t},\r\n\t{\r\n\t\t\"property3\": \"value3\",\r\n\t\t\"property1\": \"value4\"\r\n\t}\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/mergeproperties?clearCache=false&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"mergeproperties"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call MergeProperties (Clear Cache)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\r\n\t{\r\n\t    \"property1\": \"value1\",\r\n\t    \"property2\": \"value2\"\r\n\t},\r\n\t{\r\n\t\t\"property3\": \"value3\",\r\n\t\t\"property1\": \"value4\"\r\n\t}\r\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/mergeproperties?clearCache=true&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"mergeproperties"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call DecodeBodyContent",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/decodebodycontent?clearCache=false&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"decodebodycontent"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call DecodeBodyContent (Clear Cache)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"type": "text",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-29T14:06:23.8793843+00:00\",\r\n            \"messageId\": \"cfe4ef59-d4b8-4da9-9736-d0b27d1329fd\",\r\n            \"rootPart\": 1,\r\n            \"envelopeType\": \"content\",\r\n            \"trackingId\": \"9e70506b-4fce-435b-93f9-5e47ef7d9fe4\"\r\n        },\r\n        \"state\": {},\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.myorg.com/part1#root\"\r\n        },\r\n        \"routingSlip\": {\r\n            \"scenario\": \"ReceiveFTP\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": [\r\n                {\r\n                    \"name\": \"CommonFlatFileDecoder\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"flatFileDecoderChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonContentPromoter\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"contentPromoterChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/contentPromoterChannel\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"CommonTopicPublisher\",\r\n                    \"routingSteps\": {\r\n                        \"channel\": \"topicPublisherChannel\",\r\n                        \"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n                        \"channelAddress\": \"/routingManager/route/topicPublisherChannel\"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"body\": [\r\n        {\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.myorg.com/part1#root\",\r\n            \"$contentType\": \"text/csv\",\r\n            \"$contentTransferEncoding\": \"none\",\r\n            \"$content\": \"ID, EmployeeName, DOB, Status\\\\r\\\\n11, Andy Carlton, 12/03/1956, Active\\\\r\\\\n15, John Simms, 28/05/1973, Retired\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimmessagingmanager/decodebodycontent?clearCache=true&enableTrace=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimmessagingmanager",
+								"decodebodycontent"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								},
+								{
+									"key": "enableTrace",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Routing Store",
+			"item": [
+				{
+					"name": "Call GetRoutingSlip for Thunderstorm.Test.PurchaseOrder Scenario (Clear Cache)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingstore/routingslip/Thunderstorm.Test.PurchaseOrder?clearCache=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingstore",
+								"routingslip",
+								"Thunderstorm.Test.PurchaseOrder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call GetRoutingSlip for Thunderstorm.Test.PurchaseOrder Scenario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingstore/routingslip/Thunderstorm.Test.PurchaseOrder?clearCache=false",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingstore",
+								"routingslip",
+								"Thunderstorm.Test.PurchaseOrder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call GetRoutingProperties for Thunderstorm.Test.PurchaseOrder Scenario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingstore/routingproperties/Thunderstorm.Test.PurchaseOrder?clearCache=false",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingstore",
+								"routingproperties",
+								"Thunderstorm.Test.PurchaseOrder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Call GetRoutingProperties for Thunderstorm.Test.PurchaseOrder Scenario (Clear Cache)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "{{ApimProductSubscriptionKeyUnlimited}}"
+							},
+							{
+								"key": "Ocp-Apim-Trace",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{ApimServiceName}}.azure-api.net/aimroutingstore/routingproperties/Thunderstorm.Test.PurchaseOrder?clearCache=true",
+							"protocol": "https",
+							"host": [
+								"{{ApimServiceName}}",
+								"azure-api",
+								"net"
+							],
+							"path": [
+								"aimroutingstore",
+								"routingproperties",
+								"Thunderstorm.Test.PurchaseOrder"
+							],
+							"query": [
+								{
+									"key": "clearCache",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Endpoints",
+			"item": [
+				{
+					"name": "Submit FTP Content to Handler",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"$content\": \"ID, EmployeeName, DOB, Status\\r\\n11, Andy Carlton, 12/03/1956, Active\\r\\n15, John Simms, 28/05/1973, Retired\",\n    \"$contentType\": \"text/csv\",\n\t\"$contentTransferEncoding\": \"none\",\n\t\"properties\":\n\t{\n        \"scenarioName\": \"ReceiveFTP\",\n        \"ReceiveFileName\": \"EmployeeData.csv\"\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://prod-20.uksouth.logic.azure.com:443/workflows/b74c36024a9b43c3ac1b7f5154c6c2cc/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=lofikQ_me1LJbrzgyflJmbDJoGUpniPnG3-ZV1H4XsE",
+							"protocol": "https",
+							"host": [
+								"prod-20",
+								"uksouth",
+								"logic",
+								"azure",
+								"com"
+							],
+							"port": "443",
+							"path": [
+								"workflows",
+								"b74c36024a9b43c3ac1b7f5154c6c2cc",
+								"triggers",
+								"manual",
+								"paths",
+								"invoke"
+							],
+							"query": [
+								{
+									"key": "api-version",
+									"value": "2016-10-01"
+								},
+								{
+									"key": "sp",
+									"value": "%2Ftriggers%2Fmanual%2Frun"
+								},
+								{
+									"key": "sv",
+									"value": "1.0"
+								},
+								{
+									"key": "sig",
+									"value": "lofikQ_me1LJbrzgyflJmbDJoGUpniPnG3-ZV1H4XsE"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

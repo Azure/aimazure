@@ -1,0 +1,23 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- assign counter = 0 -%}
+{%- assign expression = "" -%}
+{%- for property in workflow_object.properties -%}
+    {%- capture expression_name -%}Expression{{ counter }}{%- endcapture -%}
+    {%- if property.key == expression_name -%}
+        {%- assign expression_value = property.value -%}
+        {%- assign expression = expression | append: expression_value | append: "\r\n\r\n" -%}
+        {%- assign counter = counter | plus: 1 -%}
+    {%- endif -%}
+{%- endfor -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "JavaScriptCode",
+            "description": "{{ workflow_object.properties.ConstructedMessage }}",
+            "inputs": {
+                "code": "/*\r\n{{ expression | to_json_string }}\r\n*/\r\nvar activity = \"{{ workflow_object.name }}\";\r\nreturn activity;"
+            }
+        }
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "apiName": {
+            "value": "{{ resource_template.parameters.api_name }}"
+        },
+        "routingManagerAppServiceName": {
+            "value": "{{ resource_template.parameters.routing_manager_func_name }}"
+        },
+        "cacheTimeout": {
+            "value": "21600"
+        }
+    }
+}

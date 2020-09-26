@@ -1,0 +1,101 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "type": "string",
+            "metadata": {
+                "description": "FTP Server Name"
+            }
+        },
+        "apiConnectorLocation": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location (region) or ISE that this connection is to be deployed to. Defaults to the ResourceGroup location."
+            }
+        },
+        "serverAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "FTP Server Address"
+            }
+        },
+        "userName": {
+            "type": "string",
+            "metadata": {
+                "description": "User Name for the FTP Server"
+            }
+        },
+        "password": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the FTP Server"
+            }
+        },
+        "isBinaryTransport": {
+            "type": "bool",
+            "metadata": {
+                "description": "Indicates if Binary or ASCII mode should be used"
+            }
+        },
+        "serverPort": {
+            "type": "int",
+            "defaultValue": 21,
+            "metadata": {
+                "description": "FTP Port Number (example: 21)"
+            }
+        },
+        "isSSL": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates if SSL needs to be enabled (i.e. FTPS)"
+            }
+        },
+        "disableCertificateValidation": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates if Certificate Validation needs to be disabled"
+            }
+        },
+        "closeConnectionAfterRequestCompletion": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates if the session should be closed every time after request completes. Enable if you hit Max Connections limit."
+            }
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('apiConnectorName')]",
+            "location": "[parameters('apiConnectorLocation')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "api": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'ftp')]"
+                },
+                "displayName": "Ftp-Send-Connector",
+                "parameterValues": {
+                    "serverAddress": "[parameters('serverAddress')]",
+                    "userName": "[parameters('userName')]",
+                    "password": "[parameters('password')]",
+                    "serverPort": "[parameters('serverPort')]",
+                    "isSSL": "[parameters('isSSL')]",
+                    "isBinaryTransport": "[parameters('isBinaryTransport')]",
+                    "disableCertificateValidation": "[parameters('disableCertificateValidation')]",
+                    "closeConnectionAfterRequestCompletion": "[parameters('closeConnectionAfterRequestCompletion')]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,0 +1,13 @@
+<#
+.SYNOPSIS
+Invokes the deployment of an App Insights resource for use by various AIM components.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+./Deploy-30-MessageBusOps-AppInsights.ps1
+#>
+
+$params = Get-Content -Path $PSScriptRoot\messagebusops.appi.dev.psparameters.json -Raw | ConvertFrom-Json
+& $PSScriptRoot\New-MessageBusOps-AppInsights.ps1 -resourceGroupName $params.resourceGroupName -name $params.name -location $params.location -tags $params.tags

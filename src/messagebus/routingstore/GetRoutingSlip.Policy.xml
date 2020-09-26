@@ -1,0 +1,164 @@
+<!--
+    IMPORTANT:
+    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.
+    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.
+    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.
+    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.
+    - To remove a policy, delete the corresponding policy statement from the policy document.
+    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.
+    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.
+    - Policies are applied in the order of their appearance, from the top down.
+    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.
+-->
+<policies>
+    <inbound>
+        <set-variable name="scenario" value="@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters["scenario"]))" />
+        <set-variable name="cacheKey" value="@("Cache:RoutingSlip:" + context.Variables["scenario"])" />
+        <set-variable name="managementUrl" value="@("https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-MessageBusResourceGroupName}}/providers/Microsoft.AppConfiguration/configurationStores/{{AIM-RoutingStoreAppConfigName}}/listKeyValue?api-version=2019-10-01")" />
+        <choose>
+            <when condition="@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault("clearCache"), "true", true) == 0)">
+                <cache-remove-value key="@(context.Variables.GetValueOrDefault<string>("cacheKey"))" caching-type="prefer-external" />
+                <set-variable name="managementResponse" value="@(null)" />
+            </when>
+            <otherwise>
+                <cache-lookup-value key="@(context.Variables.GetValueOrDefault<string>("cacheKey"))" variable-name="managementResponse" caching-type="prefer-external" />
+            </otherwise>
+        </choose>
+        <choose>
+            <when condition="@(context.Variables.GetValueOrDefault<IResponse>("managementResponse") == null)">
+                <send-request ignore-error="false" timeout="20" response-variable-name="managementResponse" mode="new">
+                    <set-url>@(context.Variables.GetValueOrDefault<string>("managementUrl"))</set-url>
+                    <set-method>POST</set-method>
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>@{
+                        return new JObject(
+                                new JProperty("key", context.Variables["scenario"]),
+                                new JProperty("label", "RoutingSlip")
+                                ).ToString();
+                    }</set-body>
+                    <authentication-managed-identity resource="https://management.azure.com" />
+                </send-request>
+                <choose>
+                    <when condition="@(((IResponse)context.Variables["managementResponse"]).Body == null)">
+                        <cache-remove-value key="@(context.Variables.GetValueOrDefault<string>("cacheKey"))" caching-type="prefer-external" />
+                        <return-response>
+                            <set-status code="500" reason="Internal Server Error" />
+                            <set-body>@(
+                                new JObject(
+                                    new JProperty("fault", 
+                                        new JObject(
+                                                new JProperty("faultActor", "https://management.azure.com"),
+                                                new JProperty("faultCode", ((IResponse)context.Variables["managementResponse"]).StatusCode),
+                                                new JProperty("faultReason",((IResponse)context.Variables["managementResponse"]).StatusReason),
+                                                new JProperty("faultCategory", "Error"),
+                                                new JProperty("faultMessage", "Found a RoutingSlip for this scenario in AppConfig but it is blank")
+                                        )
+                                    )
+                                ).ToString()
+                            )</set-body>
+                        </return-response>
+                    </when>
+                    <when condition="@(((IResponse)context.Variables["managementResponse"]).StatusCode != 200)">
+                        <cache-remove-value key="@(context.Variables.GetValueOrDefault<string>("cacheKey"))" caching-type="prefer-external" />
+                        <return-response>
+                            <set-status code="500" reason="Internal Server Error" />
+                            <set-header name="Content-Type" exists-action="override">
+                                <value>application/json</value>
+                            </set-header>
+                            <set-body>@{
+                                        var additionalDetails = string.Empty;
+                                        var internalFault = ((IResponse)context.Variables["managementResponse"]).Body.As<JObject>();
+                                        if (internalFault != null)
+                                        {
+                                            if (internalFault?["error"] != null)
+                                            {
+                                                additionalDetails = " Code: " + ((string)internalFault?["error"]?["code"] ?? "(unknown)") + ", Error: " + ((string)internalFault?["error"]?["message"] ?? "(unknown)");
+                                            }
+                                            else if (internalFault?["message"] != null)
+                                            {
+                                                 additionalDetails = " Code: " + ((string)internalFault?["code"] ?? "(unknown)") + ", Error: " + ((string)internalFault?["message"] ?? "(unknown)");
+                                            }
+                                        }
+
+                                        return new JObject(
+                                            new JProperty("fault", 
+                                                new JObject(
+                                                        new JProperty("faultActor", context.Variables.GetValueOrDefault<string>("managementUrl")),
+                                                        new JProperty("faultCode", ((IResponse)context.Variables["managementResponse"]).StatusCode),
+                                                        new JProperty("faultReason",((IResponse)context.Variables["managementResponse"]).StatusReason),
+                                                        new JProperty("faultCategory", "Error"),
+                                                        new JProperty("faultMessage", "An error occurred trying to get a RoutingSlip from AppConfig." + additionalDetails)
+                                                )
+                                            )
+                                        ).ToString();
+                            }</set-body>
+                        </return-response>
+                    </when>
+                    <otherwise>
+                        <cache-store-value key="@(context.Variables.GetValueOrDefault<string>("cacheKey"))" value="@((IResponse)context.Variables["managementResponse"])" duration="{{AIM-CacheTimeout}}" caching-type="prefer-external" />
+                    </otherwise>
+                </choose>
+            </when>
+        </choose>
+        <choose>
+            <when condition="@(((IResponse)context.Variables["managementResponse"]).StatusCode != 200)">
+                <return-response>
+                    <set-status code="500" reason="Internal Server Error" />
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>@{
+                                        var additionalDetails = string.Empty;
+                                        var internalFault = ((IResponse)context.Variables["managementResponse"]).Body.As<JObject>();
+                                        if (internalFault != null)
+                                        {
+                                            if (internalFault?["error"] != null)
+                                            {
+                                                additionalDetails = " Code: " + ((string)internalFault?["error"]?["code"] ?? "(unknown)") + ", Error: " + ((string)internalFault?["error"]?["message"] ?? "(unknown)");
+                                            }
+                                            else if (internalFault?["message"] != null)
+                                            {
+                                                 additionalDetails = " Code: " + ((string)internalFault?["code"] ?? "(unknown)") + ", Error: " + ((string)internalFault?["message"] ?? "(unknown)");
+                                            }
+                                        }
+
+                                        return new JObject(
+                                            new JProperty("fault", 
+                                                new JObject(
+                                                        new JProperty("faultActor", context.Variables.GetValueOrDefault<string>("managementUrl")),
+                                                        new JProperty("faultCode", ((IResponse)context.Variables["managementResponse"]).StatusCode),
+                                                        new JProperty("faultReason",((IResponse)context.Variables["managementResponse"]).StatusReason),
+                                                        new JProperty("faultCategory", "Error"),
+                                                        new JProperty("faultMessage", "An error occurred trying to get a RoutingSlip from AppConfig." + additionalDetails)
+                                                )
+                                            )
+                                        ).ToString();
+                            }</set-body>
+                </return-response>
+            </when>
+            <otherwise>
+                <return-response>
+                    <set-status code="200" reason="OK" />
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>@(
+                        ((IResponse)context.Variables["managementResponse"]).Body.As<JObject>()["value"].ToString()
+                    )</set-body>
+                </return-response>
+            </otherwise>
+        </choose>
+        <base />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

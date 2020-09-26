@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "mapType": "Xslt",
+    "metadata": {
+      "sourceSchemas": [
+        "http://Aim.XmlMapping.Schema1#Payment"
+      ],
+      "targetSchemas": [
+        "http://Aim.XmlMapping.Schema1#PaymentOutbound"
+      ]
+    },
+    "content": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:msxsl=\"urn:schemas-microsoft-com:xslt\" xmlns:var=\"http://schemas.microsoft.com/BizTalk/2003/var\" exclude-result-prefixes=\"msxsl var\" version=\"1.0\" xmlns:ns0=\"http://Aim.XmlMapping.Schema1\">\r\n  <xsl:output omit-xml-declaration=\"yes\" method=\"xml\" version=\"1.0\" />\r\n  <xsl:template match=\"/\">\r\n    <xsl:apply-templates select=\"/ns0:Payment\" />\r\n  </xsl:template>\r\n  <xsl:template match=\"/ns0:Payment\">\r\n    <ns0:PaymentOutbound>\r\n      <Amount>\r\n        <xsl:value-of select=\"Amount/text()\" />\r\n      </Amount>\r\n      <Currency>\r\n        <xsl:value-of select=\"Currency/text()\" />\r\n      </Currency>\r\n    </ns0:PaymentOutbound>\r\n  </xsl:template>\r\n</xsl:stylesheet>",
+    "contentType": "application/xml"
+  },
+  "location": "UK South"
+}

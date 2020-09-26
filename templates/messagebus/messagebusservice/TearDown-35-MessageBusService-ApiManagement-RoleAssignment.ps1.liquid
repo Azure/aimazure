@@ -1,0 +1,12 @@
+<#
+.SYNOPSIS
+Invokes the teardown of the role assignment for the API Management resource.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+./TearDown-35-MessageBusService-ApiManagement-RoleAsignment.ps1
+#>
+
+& $PSScriptRoot\Remove-MessageBusService-ApiManagement-RoleAssignment.ps1 -subscriptionId "{{ resource_template.parameters.azure_subscription_id }}" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -name "{{ resource_template.resource_name }}" -messageBusResourceGroupName "{{ resource_template.parameters.azure_message_bus_resource_group_name }}" -role "{{ resource_template.parameters.role_name }}"

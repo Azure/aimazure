@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "schemaType": "Xml",
+    "metadata": {
+      "messageType": "http://BizTalk_Server_Project1.TestSchema#RootTest"
+    },
+    "content": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<xs:schema xmlns=\"http://BizTalk_Server_Project1.TestSchema\" xmlns:b=\"http://schemas.microsoft.com/BizTalk/2003\" targetNamespace=\"http://BizTalk_Server_Project1.TestSchema\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\r\n  <xs:element name=\"RootTest\">\r\n    <xs:complexType>\r\n      <xs:sequence>\r\n        <xs:element name=\"ChildTest\">\r\n          <xs:complexType />\r\n        </xs:element>\r\n      </xs:sequence>\r\n      <xs:attribute name=\"TestAttribute\" type=\"xs:string\" />\r\n    </xs:complexType>\r\n  </xs:element>\r\n</xs:schema>",
+    "contentType": "application/xml"
+  },
+  "location": "uksouth"
+}

@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionAppName": {
+            "value": "func-aimroutemgr-dev-001"
+        },
+        "functionAppLocation": {
+            "value": "UK South"
+        },
+        "storageAccountName": {
+            "value": "staimmsgbussvcdev001"
+        },
+        "appInsightsName": {
+            "value": "appi-aimmsgbusops-dev"
+        },
+        "appServicePlanName": {
+            "value": "plan-aimmsgbussvc-dev"
+        },
+        "apiManagementServiceName": {
+            "value": "apim-aimmsgbussvc-dev"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "AIM-MessageBus",
+                "Env": "dev"
+            }
+        }
+    }
+}

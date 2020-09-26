@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "rootFolder": {
+            "value": "{{ resource_template.parameters.azure_file_root_folder }}"
+        },
+        "userName": {
+            "value": "{{ resource_template.parameters.azure_file_user_name }}"
+        },
+        "password": {
+            "value": "{{ resource_template.parameters.azure_file_password }}"
+        },
+        "gatewayResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_gateway_resource_group_name }}"
+        },
+        "gatewayName": {
+            "value": "{{ resource_template.parameters.azure_gateway_resource_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

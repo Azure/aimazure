@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schema.management.azure.com/messagebus-header-routing-properties.json",
+    "type": "object",
+    "required": [],
+    "additionalProperties": { "type": [ "string", "null" ] },
+    "properties": {
+        "MessageType": {
+            "$id": "#/properties/MessageType",
+            "type": [ "string", "null" ]
+        },
+        "SessionId": {
+            "$id": "#/properties/SessionId",
+            "type": [ "string", "null" ]
+        },
+        "CorrelationId": {
+            "$id": "#/properties/CorrelationId",
+            "type": [ "string", "null" ]
+        }
+    }
+}

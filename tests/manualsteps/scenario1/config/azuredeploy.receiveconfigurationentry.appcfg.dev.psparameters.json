@@ -1,0 +1,11 @@
+{
+    "configKey": "Aim.FtpPassthru.Aim.FtpPassthru.ReceivePort.Aim.FtpPassthru.ReceiveLocation",
+    "configValueFileName": "receiveconfigurationentry.appcfg.json",
+    "configLabel": "ConfigurationEntry",
+    "configStoreName": "appcfg-aimrstore-dev-",
+    "configType": "application/json",
+    "configTags": [
+        "Application=Aim-FtpPassthru",
+        "Env=dev"
+    ]
+}

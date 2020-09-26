@@ -1,0 +1,58 @@
+{
+    "name": "{{ resource_template.resource_name }}",
+    "serviceBusNamespace": "{{ resource_template.parameters.service_bus_namespace }}",
+    "serviceBusTopic": "{{ resource_template.parameters.topic_name }}",
+    "resourceGroupName": "{{ resource_template.parameters.azure_resource_group_name }}",
+    "enableSession": {{ resource_template.parameters.service_bus_sessions_enabled }},
+    "rules": [
+{%- for application in model.migration_target.message_bus.applications %}
+    {%- if application.name == resource_template.parameters.app_name -%}
+        {%- for channel in application.channels -%}
+            {%- if channel.name == resource_template.parameters.channel_name -%}
+                {%- for subscription in channel.subscriptions -%}
+                    {%- if subscription.name == resource_template.parameters.subscription_name -%}
+                        {%- for subscription_filter in subscription.filters -%}
+                            {%- if subscription_filter.filter_group.filters.size > 0 %}
+        {
+            "name": "{{ subscription_filter.filter_group.operation }}Group{{ forloop.index }}",
+            "expression": "
+                                {%- for filter in subscription_filter.filter_group.filters -%}
+                                    {%- if forloop.last == false %}
+            {{- filter.filter_expression -}}{{ subscription_filter.filter_group.operation | string.upcase | prepend: ' ' | append: ' ' }}
+                                    {%- else %}
+            {{- filter.filter_expression -}}"
+                                    {%- endif -%}
+                                {%- endfor -%}
+                                {%- if forloop.last == false %}
+        },
+                                {%- else %}
+        }
+                                {%- endif -%}
+                            {%- else -%}
+                                {%- for filter_group in subscription_filter.filter_group.groups %}
+        {
+            "name": "{{ filter_group.operation }}Group{{ forloop.index }}",
+            "expression": "
+                                    {%- for filter in filter_group.filters %}
+                                        {%- if forloop.last == false %}
+            {{- filter.filter_expression -}}{{ filter_group.operation | string.upcase | prepend: ' ' | append: ' ' }}
+                                        {%- else %}
+            {{- filter.filter_expression -}}"
+                                        {%- endif -%}
+                                    {%- endfor -%}
+                                    {%- if forloop.last == false %}
+        },
+                                    {%- else %}
+        }
+                                    {%- endif -%}
+                                {%- endfor -%}
+                            {%- endif -%}
+                        {%- endfor -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor %}
+    ]
+}

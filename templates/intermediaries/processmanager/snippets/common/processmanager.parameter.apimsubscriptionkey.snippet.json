@@ -1,0 +1,21 @@
+{
+    "armTemplateParameter": {
+        "apimSubscriptionKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Subscription Key used to access the Message Bus API Management service."
+            }
+        }
+    },
+    "workflowParameter": {
+        "apimSubscriptionKey": {
+            "value": "[parameters('apimSubscriptionKey')]"
+        }
+    },
+    "workflowDefinitionParameter": {
+        "apimSubscriptionKey": {
+            "type": "SecureString",
+            "description": "Subscription Key used to access the Message Bus API Management service."
+        }
+    }
+}

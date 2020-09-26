@@ -1,0 +1,32 @@
+{
+    "armParameter": {
+        "serviceBusTopicSubscribeApiConnectionName": {
+            "value": "{{ resource_template.parameters.azure_topic_subscriber_api_connection_name }}"
+        }
+    },
+    "armTemplateParameter": {
+        "serviceBusTopicSubscribeApiConnectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the API Connection used for ServiceBus Topic Subscribe operations."
+            }
+        }
+    },
+    "workflowParameter": {
+        "$connections": {
+            "value": {
+                "servicebussubscribe": {
+                    "connectionId": "[variables('serviceBusTopicSubscribeApiConnectionResourceId')]",
+                    "connectionName": "[parameters('serviceBusTopicSubscribeApiConnectionName')]",
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
+                }
+            }
+        }
+    },
+    "workflowDefinitionParameter": {
+        "$connections": {
+            "defaultValue": {},
+            "type": "Object"
+        }
+    }
+}

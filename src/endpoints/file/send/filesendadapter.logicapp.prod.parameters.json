@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimfilesadapter-sendfile-file-prod-xxxxx"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "logic-aimroutingsliprouter-prod-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "fileSystemSendApiConnectionName": {
+            "value": "apic-aimfilesconnector-sendfile-file-prod-xxxxx"
+        },
+        "scenarioStep": {
+            "value": "fileSendAdapter"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-File",
+                "Env": "prod"
+            }
+        }
+    }
+}

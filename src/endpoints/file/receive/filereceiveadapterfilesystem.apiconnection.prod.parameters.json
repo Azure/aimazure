@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "apic-aimfilerconnector-filereceiveadapter-prod-xxxxx"
+        },
+        "rootFolder": {
+            "value": "c:\\aim\\input"
+        },
+        "userName": {
+            "value": "domain\\btsuser"
+        },
+        "password": {
+            "value": "place-holder"
+        },
+        "gatewayResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "gatewayName": {
+            "value": "cgw-msgbus-prod-uksouth-xxxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-File",
+                "Env": "prod"
+            }
+        }
+    }
+}

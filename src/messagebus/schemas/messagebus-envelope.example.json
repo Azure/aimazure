@@ -1,0 +1,72 @@
+{
+    "header": {
+        "properties": 
+        {
+            "contentType": "application/xml",
+            "prop1": "prop1val",
+            "prop2": "prop2val"
+        },
+        "state": 
+        {
+            "mycustomobj": { "customobjparam1": "param1val" },
+            "someotherprop": "someotherpropval"
+        },
+        "routing": 
+        {
+            "MessageType": "https://somenamespace.com/purchaseorder-v1#PO",
+            "SessionId": "some-session-id",
+            "CorrelationId": "id-to-correlate-requests",
+            "someotherroutingprop": "val1"
+        },
+        "routingSlip": 
+        {
+            "scenario": "<port-name>",
+            "nextRoute": 0,
+            "routes": 
+            [
+                {
+                    "channel": "flatFileDecoderChannel",
+                    "channelType": "microsoft.channels.trigger.azure-apim",
+                    "channelAddress": "/routingManager/route/flatFileDecoderChannel"
+                },
+                {
+                    "channel": "xmlValidatorChannel",
+                    "channelType": "microsoft.channels.trigger.azure-apim",
+                    "channelAddress": "/routingManager/route/xmlValidatorChannel"
+                },
+                {
+                    "channel": "contentBasedRouterChannel",
+                    "channelType": "microsoft.channels.trigger.azure-apim",
+                    "channelAddress": "/routingManager/route/contentBasedRouterChannel"
+                }
+            ]
+        }
+    },
+    "body": 
+    [
+        {
+            "$part": 1,
+            "$partType": "http://schemas.myorg.com/part1#root",
+            "$contentType": "application/octet-stream",
+            "$contentTransferEncoding": "base64",
+            "$content": "QWZmaW51cyBhbmQgMzQ1IFRlY2hub2xvZ3kgTGltaXRlZCA9PSBBenVyZSBJbnRlZ3JhdGlvbiBHcm91cA=="
+        },
+        {
+            "$part": 2,
+            "$partType": "http://schemas.myorg.com/part2#myjsonobject",
+            "$contentType": "application/json",
+            "$contentTransferEncoding": null,
+            "$content": 
+            {
+                "MyJsonObjectProperty": "SomePropertyValue"
+            }
+        },
+        {
+            "$part": 3,
+            "$partType": "http://schemas.myorg.com/part3#po",
+            "$contentType": "application/xml",
+            "$contentTransferEncoding": "base64",
+            "$content": "PHBvPjxpZD5QTzEyMzQ1PC9pZD48L3BvPg=="
+        }
+    ]
+}

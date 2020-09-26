@@ -1,0 +1,763 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+        },
+        "apiName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "defaultValue": "aimmessagingmanager"
+        },
+        "messagingManagerAppServiceName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60
+        }
+    },
+    "variables": {
+        "apiTagName": "[concat(parameters('apiName'), 'tag')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "Messaging Manager",
+                "description": "AIM Message Manager API - handles creation and update of messages.",
+                "apiRevision": "1",
+                "subscriptionRequired": true,
+                "path": "aimmessagingmanager",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true
+            },
+            "resources": [
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/tags', parameters('apimServiceName'), variables('apiTagName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/backends",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [],
+            "properties": {
+                "description": "AIM Messaging Manager Function Backend",
+                "url": "[concat('https://', parameters('messagingManagerAppServiceName'), '.azurewebsites.net/api')]",
+                "protocol": "http",
+                "resourceId": "[concat('https://management.azure.com', resourceId('Microsoft.Web/sites', parameters('messagingManagerAppServiceName')))]",
+                "credentials": {
+                    "header": {
+                        "x-functions-key": [
+                            "[listkeys(concat(resourceId('Microsoft.Web/sites/', parameters('messagingManagerAppServiceName')), '/host/default/'),'2016-08-01').functionKeys.apiManagement]"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/buildenvelope')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "BuildEnvelope",
+                "description": "Builds an envelope using the supplied body.",
+                "method": "POST",
+                "urlTemplate": "/buildenvelope/{envelopeType}/{scenario}",
+                "templateParameters": [
+                    {
+                        "name": "envelopeType",
+                        "description": "Type of envelope to build.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    },
+                    {
+                        "name": "scenario",
+                        "description": "Name of the scenario to build the envelope for.",
+                        "type": "string",
+                        "required": false,
+                        "values": []
+                    }
+                ],
+                "request": {
+                    "description": "Body content to use for the envelope's root part.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        },
+                        {
+                            "name": "encodeBody",
+                            "description": "If true, then body content is always encoded using Bse64.",
+                            "type": "bool",
+                            "defaultValue": "true",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Content-Transfer-Encoding",
+                            "description": "Transfer encoding used for the supplied body.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": "none",
+                            "values": [
+                                "none",
+                                "base64"
+                            ]
+                        },
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/plain"
+                        },
+                        {
+                            "contentType": "text/json"
+                        },
+                        {
+                            "contentType": "text/xml"
+                        },
+                        {
+                            "contentType": "text/csv"
+                        },
+                        {
+                            "contentType": "application/json"
+                        },
+                        {
+                            "contentType": "application/xml"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Have successfully built and returned an envelope message.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-18T12:07:48.8125659Z\",\r\n            \"envelopeType\": \"ack\",\r\n            \"messageId\": \"f655c39f-55af-4255-afc2-813d765b6156\",\r\n            \"rootPart\": 1\r\n        },\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.microsoft.com/aim#ack\"\r\n        },\r\n        \"routingSlip\": {},\r\n        \"state\": {}\r\n    }\r\n    \"body\": [\r\n        {\r\n            \"$contentType\": \"application/json\",\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.microsoft.com/aim#ack\",\r\n\t\t\t\"$content\": \"No more routes to process in RoutingSlip\"\r\n        }\r\n    ]\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"BuildEnvelope\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/convertxmltojson')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "ConvertXmlToJson",
+                "method": "POST",
+                "urlTemplate": "/convertxmltojson",
+                "templateParameters": [],
+                "description": "Converts a given XML Body to JSON. Can optionally remove the root node form the XML before converting.",
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "removeOuterEnvelope",
+                            "description": "Indicates if we should remove the outer element from the supplied XML before converting it.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": [
+                        {
+                            "contentType": "application/json"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "The supplied XML has been successfully converted to JSON.",
+                        "representations": [
+                            {
+                                "contentType": "application/xml"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An error occurred trying to convert the XML to JSON and a Fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"ConvertXmlToJson\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/convertjsontoxml')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "ConvertJsonToXml",
+                "method": "POST",
+                "urlTemplate": "/convertjsontoxml",
+                "templateParameters": [],
+                "description": "Converts a given JSON Body to XML. Can optionally wrap the converted JSON in a root node with a namespace. Note: if the JSON message contains multiple root properties, an XML Root Node must be supplied.",
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "addMessageBodyForEmptyMessage",
+                            "description": "Indicates if we create an XML body if an empty JSON message is supplied.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "true",
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "rootNode",
+                            "description": "Optional XML Root Node name, used to wrap the generated XML.",
+                            "type": "string",
+                            "values": []
+                        },
+                        {
+                            "name": "rootNodeNamespace",
+                            "description": "Optional XML Root Node Namespace to use.",
+                            "type": "string",
+                            "values": []
+                        },
+                        {
+                            "name": "writeArrayAttribute",
+                            "description": "Indicates if we should add a special attribute to arrays, so that if we convert back to JSON, arrays with a single element are correctly handled",
+                            "type": "boolean",
+                            "defaultValue": "true",
+                            "values": [
+                                "true",
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "encodeSpecialCharacters",
+                            "description": "Indicates if we encode JSON control characters.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": [
+                        {
+                            "contentType": "application/json"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "The supplied JSON has been successfully converted to XML.",
+                        "representations": [
+                            {
+                                "contentType": "application/xml"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An error occurred trying to convert the JSON to XML and a Fault object has been returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"ConvertJsonToXml\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/wrapxmlenvelope')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "WrapXmlEnvelope",
+                "method": "POST",
+                "urlTemplate": "/wrapxmlenvelope",
+                "templateParameters": [],
+                "description": "Wraps an XML envelope around the supplied XML body content.",
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "emitXMlDeclaration",
+                            "description": "Indicates if we emit an XML Declaration at the start of the returned content.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "true",
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "envelopeSpecNames",
+                            "description": "Pipe-separated list of envelope schema names.",
+                            "type": "string",
+                            "values": []
+                        }
+                    ],
+                    "headers": [],
+                    "representations": [
+                        {
+                            "contentType": "application/xml"
+                        },
+                        {
+                            "contentType": "text/xml"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "The supplied XML content has been successfully wrapped in an envelope.",
+                        "representations": [
+                            {
+                                "contentType": "application/xml"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An error occurred trying to wrap the content in an Envelope and a Fault object has been returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"WrapXmlEnvelope\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body does not contain XML.\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/decodebodycontent')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "DecodeBodyContent",
+                "description": "Decodes and returns the content from the root body part in the supplied envelope message.",
+                "method": "POST",
+                "urlTemplate": "/decodebodycontent",
+                "templateParameters": [],
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Body content has been retrieved and returned.",
+                        "representations": [
+                            {
+                                "contentType": "text/plain"
+                            },
+                            {
+                                "contentType": "text/json"
+                            },
+                            {
+                                "contentType": "text/xml"
+                            },
+                            {
+                                "contentType": "text/csv"
+                            },
+                            {
+                                "contentType": "application/json"
+                            },
+                            {
+                                "contentType": "application/xml"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"DecodeBodyContent\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getbodycontent')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetBodyContent",
+                "description": "Returns encoded content from the root body part in the supplied envelope message.",
+                "method": "POST",
+                "urlTemplate": "/getbodycontent",
+                "templateParameters": [],
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Body content has been retrieved and returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n    \"$contentType\": \"text/plain\",\r\n    \"$content\": \"SGVsbG8\"\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"GetBodyContent\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/mergeproperties')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "MergeProperties",
+                "description": "Merges the contents of an array of property bags together and returns the result.",
+                "method": "POST",
+                "urlTemplate": "/mergeproperties",
+                "templateParameters": [],
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "[\r\n    {\r\n        \"properties\": \r\n        {\r\n            \"property1\": \"value1\",\r\n            \"property2\": \"value2\"\r\n        }\r\n    },\r\n    {\r\n        \"properties\": \r\n        {\r\n            \"property1\": \"value3\",\r\n            \"property4\": \"value4\"\r\n        }\r\n    }\r\n]\r\n"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "[\r\n    {\r\n        \"properties\": \r\n        {\r\n            \"property1\": \"value1\",\r\n            \"property2\": \"value2\"\r\n        }\r\n    },\r\n    {\r\n        \"properties\": \r\n        {\r\n            \"property1\": \"value3\",\r\n            \"property4\": \"value4\"\r\n        }\r\n    }\r\n]\r\n"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Property bags have been merged successfully.",
+                        "representations": [
+                            {
+                                "contentType": "application/json"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"MergeProperties\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/buildenvelope/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'buildenvelope')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/convertjsontoxml/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'convertjsontoxml')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/convertxmltojson/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'convertxmltojson')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/wrapxmlenvelope/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'wrapxmlenvelope')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/decodebodycontent/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'decodebodycontent')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getbodycontent/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getbodycontent')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/mergeproperties/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'mergeproperties')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimmessagingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "messagingmanager"
+            }
+        }
+    ]
+}

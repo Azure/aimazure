@@ -1,0 +1,59 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimtopicsubscriber-aim-ftppassthru-sendport-prod-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-prod-uksouth-xxxxx"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "logic-aimmessagesuspendprocessor-prod-xxxxx"
+        },
+        "suspendQueueTopicName": {
+            "value": "suspendqueue"
+        },
+        "serviceBusTopicSubscribeApiConnectionName": {
+            "value": "apic-topicsubscriberconnector-aim-ftppassthru-sendport-prod-xxxxx"
+        },
+        "serviceBusTopicName": {
+            "value": "messagebox"
+        },
+        "serviceBusTopicSubscriptionName": {
+            "value": "sbs-aimmsgbox-ftp-passthru-xxxxx"
+        },
+        "serviceBusRecurrenceFrequency": {
+            "value": "Second"
+        },
+        "serviceBusRecurrenceInterval": {
+            "value": 10
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "logic-aimroutingsliprouter-prod-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "apimSubscriptionKey": {
+            "value": ""
+        },
+        "scenario": {
+            "value": "aim-ftppassthru.aim-ftppassthru-sendport"
+        },
+        "scenarioStep": {
+            "value": "messageSubscriber"
+        },
+        "tags": {
+            "value": {
+                "Env": "prod"
+            }
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "Name": "Get Logic App Callback Url",
+    "IsCustom": true,
+    "Description": "Allows API Management to get the Logic App callback URL.",
+    "Actions": [
+        "Microsoft.Logic/workflows/triggers/listCallbackUrl/action",
+        "Microsoft.Logic/workflows/listCallbackUrl/action"
+    ],
+    "DataActions": [
+    ],
+    "NotDataActions": [
+    ],
+    "AssignableScopes": [
+        "/subscriptions/{subscriptionId}"
+    ]
+}

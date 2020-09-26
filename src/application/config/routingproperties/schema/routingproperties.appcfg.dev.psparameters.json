@@ -1,0 +1,11 @@
+{
+    "configKey": "SimpleReferencedApplication.Schema1WithPromotedFields",
+    "configValueFileName": "SimpleReferencedApplication.Schema1WithPromotedFields.json",
+    "configLabel": "RoutingProperties",
+    "configStoreName": "appcfg-aimroutestore-dev",
+    "configType": "application/json",
+    "configTags": [
+        "ApplicationName=SimpleReferencedApplication",
+        "Env=dev"
+    ]
+}

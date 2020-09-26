@@ -1,0 +1,188 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schema.management.azure.com/aim-messagebus-envelope.json",
+    "type": "object",
+    "required": [ "header", "body" ],
+    "additionalProperties": false,
+    "properties": 
+    {
+        "header": 
+        {
+            "$id": "#/properties/header",
+            "type": "object",
+            "required": 
+            [
+                "properties",
+                "state",
+                "routing",
+                "routingSlip"
+            ],
+            "additionalProperties": true,
+            "properties": 
+            {
+                "properties": 
+                {
+                    "$id": "#/properties/header/properties/properties",
+                    "type": "object",
+                    "required": [],
+                    "additionalProperties": { "type": [ "integer", "string", "null" ] },
+                    "properties": {}
+                },
+                "state": 
+                {
+                    "$id": "#/properties/header/properties/state",
+                    "type": "object",
+                    "required": [],
+                    "additionalProperties": { "type": [ "integer", "string", "object", "null" ] },
+                    "properties": {}
+                },
+                "routing":
+                {
+                    "$id": "#/properties/header/properties/routing",
+                    "type": "object",
+                    "required": [],
+                    "additionalProperties": { "type": [ "string", "null" ] },
+                    "properties": 
+                    {
+                        "MessageType": 
+                        {
+                            "$id": "#/properties/header/properties/routing/properties/MessageType",
+                            "type": [ "string", "null" ]
+                        },
+                        "SessionId": 
+                        {
+                            "$id": "#/properties/header/properties/routing/properties/SessionId",
+                            "type": [ "string", "null" ]
+                        },
+                        "CorrelationId": 
+                        {
+                            "$id": "#/properties/header/properties/routing/properties/CorrelationId",
+                            "type": [ "string", "null" ]
+                        }
+                    }
+                },
+                "routingSlip": 
+                {
+                    "$id": "#/properties/header/properties/routingSlip",
+                    "type": "object",
+                    "required":
+                    [
+                        "scenario",
+                        "nextRoute",
+                        "routes"
+                    ],
+                    "additionalProperties": true,
+                    "properties": 
+                    {
+                        "scenario": 
+                        {
+                            "$id": "#/properties/header/properties/routingSlip/properties/scenario",
+                            "type": "string"
+                        },
+                        "nextRoute": 
+                        {
+                            "$id": "#/properties/header/properties/routingSlip/properties/nextRoute",
+                            "type": "integer"
+                        },
+                        "routes": 
+                        {
+                            "$id": "#/properties/header/properties/routingSlip/properties/routes",
+                            "type": "array",
+                            "additionalItems": true,
+                            "items": 
+                            {
+                                "anyOf": 
+                                [
+                                    {
+                                        "$id": "#/properties/header/properties/routingSlip/properties/routes/items/anyOf/0",
+                                        "type": "object",
+                                        "required": 
+                                        [
+                                            "channel",
+                                            "channelType",
+                                            "channelAddress"
+                                        ],
+                                        "additionalProperties": true,
+                                        "properties": 
+                                        {
+                                            "channel": 
+                                            {
+                                                "$id": "#/properties/header/properties/routingSlip/properties/routes/items/anyOf/0/properties/channel",
+                                                "type": "string"
+                                            },
+                                            "channelType": 
+                                            {
+                                                "$id": "#/properties/header/properties/routingSlip/properties/routes/items/anyOf/0/properties/channelType",
+                                                "type": "string"
+                                            },
+                                            "channelAddress": 
+                                            {
+                                                "$id": "#/properties/header/properties/routingSlip/properties/routes/items/anyOf/0/properties/channelAddress",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "$id": "#/properties/header/properties/routingSlip/properties/routes/items"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "body": 
+        {
+            "$id": "#/properties/body",
+            "type": "array",
+            "additionalItems": false,
+            "items": 
+            {
+                "anyOf": 
+                [
+                    {
+                        "$id": "#/properties/body/items/anyOf/0",
+                        "type": "object",
+                        "required": 
+                        [
+                            "$part",
+                            "$partType",
+                            "$contentType",
+                            "$contentTransferEncoding",
+                            "$content"
+                        ],
+                        "additionalProperties": true,
+                        "properties": 
+                        {
+                            "$part": 
+                            {
+                                "$id": "#/properties/body/items/anyOf/0/properties/$part",
+                                "type": "integer"
+                            },
+                            "$partType": 
+                            {
+                                "$id": "#/properties/body/items/anyOf/0/properties/$partType",
+                                "type": "string"
+                            },
+                            "$contentType": 
+                            {
+                                "$id": "#/properties/body/items/anyOf/0/properties/$contentType",
+                                "type": "string"
+                            },
+                            "$contentTransferEncoding": 
+                            {
+                                "$id": "#/properties/body/items/anyOf/0/properties/$contentTransferEncoding",
+                                "type": [ "string", "null" ]
+                            },
+                            "$content": 
+                            {
+                                "$id": "#/properties/body/items/anyOf/0/properties/$content",
+                                "type": [ "object", "string" ]
+                            }
+                        }
+                    }
+                ],
+                "$id": "#/properties/body/items"
+            }
+        }
+    }
+}

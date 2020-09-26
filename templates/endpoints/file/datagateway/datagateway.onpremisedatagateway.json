@@ -1,0 +1,37 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dataGatewayName": {
+            "type": "String"
+        },
+        "dataGatewayLocation": {
+            "type": "String"
+        },
+        "connectionGatewayInstallationId": {
+            "type": "String"
+        },
+        "connectionGatewayInstallationLocation": {
+            "type": "String"
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/connectionGateways",
+            "name": "[parameters('dataGatewayName')]",
+            "apiVersion": "2016-06-01",
+            "location": "[parameters('dataGatewayLocation')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "connectionGatewayInstallation": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('connectionGatewayInstallationLocation'), '/connectionGatewayInstallations/', parameters('connectionGatewayInstallationId'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

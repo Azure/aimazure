@@ -1,0 +1,5 @@
+{
+    "armTemplateVariable": {
+        "integrationAccountResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Logic/integrationAccounts', parameters('integrationAccountName'))]"
+    }
+}

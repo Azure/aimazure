@@ -1,0 +1,41 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture switch_expression_action_name -%}{{ workflow_object_name }}:Run_Switch_Expression{%- endcapture -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "Scope",
+            "description": "{{ workflow_object.type }}",
+            "actions": {
+                "{{ switch_expression_action_name }}": {
+                    "runAfter": {},
+                    "type": "JavaScriptCode",
+                    "description": "{{ workflow_object.type }}",
+                    "inputs": {
+                        "code": "/*\r\nvar decision = \"\";\r\n\r\n
+{%- for decision_branch in workflow_object.activities -%}
+    {%- if forloop.first == true -%}
+        if ({{ decision_branch.properties.Expression | to_json_string }}) {\r\n\tdecision = \"{{ decision_branch.name | to_json_string }}\"\r\n}
+    {%- elsif forloop.last == true -%}
+        \u0020else {\r\n\tdecision = \"{{ decision_branch.name }}\"\r\n}
+    {%- else -%}
+        \u0020else if ({{ decision_branch.properties.Expression | to_json_string }}) {\r\n\tdecision = \"{{ decision_branch.name | to_json_string }}\"\r\n}
+    {%- endif -%}
+{%- endfor -%}
+                           \r\n\r\nreturn decision;\r\n*/\r\nvar activity = \"{{ workflow_object.name }}\";\r\nreturn activity;"
+                    }
+                },
+                "{{ workflow_object_name }}:Check_Result": {
+                    "runAfter": {},
+                    "type": "Switch",
+                    "expression": "@outputs('{{ switch_expression_action_name }}')",
+                    "cases": {},
+                    "default": {
+                        "actions": {}
+                    }
+                }
+            }
+        }
+    },
+    "workflowDefinitionActionPath": "$.['{{ workflow_object.type }}:_{{ workflow_object_name }}'].actions"
+}

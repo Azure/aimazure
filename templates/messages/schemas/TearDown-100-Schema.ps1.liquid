@@ -1,0 +1,12 @@
+<#
+.SYNOPSIS
+Invokes the teardown of a schema from store.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+TearDown-100-Schema.ps1
+#>
+
+& $PSScriptRoot\Remove-Schema.ps1 -schemaFile "\\?\$PSScriptRoot\{{ resource_template.parameters.azure_message_schema_name }}.xsd" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -integrationAccountName "{{ resource_template.parameters.azure_integration_account_name }}"

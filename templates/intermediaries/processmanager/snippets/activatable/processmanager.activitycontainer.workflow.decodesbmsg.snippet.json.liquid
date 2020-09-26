@@ -1,0 +1,71 @@
+{%- for channel in messaging_object.workflow_model.channels -%}
+    {%- if channel.activator == true -%}
+        {%- for message in channel.messages_in -%}
+            {%- if message.properties.Activate == true -%}
+                {%- assign activatable_message_name = message.name -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor -%}
+{
+    "workflowDefinitionAction": {
+        "Action:_Decode_Received_Service_Bus_Message": {
+            "runAfter": {},
+            "type": "Switch",
+            "expression": "@if(greaterOrEquals(indexOf(triggerBody()?['ContentType'], '/'), 0), split(triggerBody()?['ContentType'], '/')?[1], triggerBody()?['ContentType'])",
+            "cases": {
+                "Json": {
+                    "case": "json",
+                    "actions": {
+                        "DecodeMessage:Json:_Set_{{ activatable_message_name | replace: " ", "_" | replace: ".", "_" }}": {
+                            "runAfter": {},
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "{{ activatable_message_name }}",
+                                "value": "@if(equals(triggerBody()?['ContentTransferEncoding'], 'Base64'), json(decodeBase64(triggerBody()?['ContentData'])), triggerBody()?['ContentData'])"
+                            }
+                        }
+                    }
+                },
+                "Xml": {
+                    "case": "xml",
+                    "actions": {
+                        "DecodeMessage:Xml:_Create_Content_Message": {
+                            "runAfter": {},
+                            "type": "Compose",
+                            "inputs": {
+                                "$content": "@triggerBody()?['ContentData']",
+                                "$contentTransferEncoding": "@triggerBody()?['ContentTransferEncoding']",
+                                "$contentType": "@triggerBody()?['ContentType']"
+                            }
+                        },
+                        "DecodeMessage:Xml:_Set_{{ activatable_message_name | replace: " ", "_" | replace: ".", "_" }}": {
+                            "runAfter": {
+                                "DecodeMessage:Xml:_Create_Content_Message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "{{ activatable_message_name }}",
+                                "value": "@outputs('DecodeMessage:Xml:_Create_Content_Message')"
+                            }
+                        }
+                    }
+                }
+            },
+            "default": {
+                "actions": {
+                    "DecodeMessage:Unsupported:_Set_ErrorMessage": {
+                        "runAfter": {},
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "ErrorMessage",
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp: the subscribed ServiceBus message has an unsupported ContentType value of @{coalesce(triggerBody()?['ContentType'], '(none)')}."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

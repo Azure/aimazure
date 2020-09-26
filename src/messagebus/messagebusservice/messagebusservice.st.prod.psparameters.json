@@ -1,0 +1,11 @@
+{
+    "name": "staimmsgbussvcprod001",
+    "resourceGroupName": "rg-aimmsgbus-prod-uksouth",
+    "location": "UK South",
+    "kind": "StorageV2",
+    "sku": "Standard_LRS",
+    "tags": [
+        "ApplicationName=AIM-MessageBus",
+        "Env=prod"
+    ]
+}

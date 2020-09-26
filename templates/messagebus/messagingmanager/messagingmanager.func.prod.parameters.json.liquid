@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "functionAppLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "storageAccountName": {
+            "value": "{{ resource_template.parameters.azure_storage_account_name }}"
+        },
+        "appInsightsName": {
+            "value": "{{ resource_template.parameters.azure_app_insights_name }}"
+        },
+        "appServicePlanName": {
+            "value": "{{ resource_template.parameters.azure_app_service_plan_name }}"
+        },
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.azure_api_management_service_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

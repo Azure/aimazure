@@ -1,0 +1,18 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod"
+        },
+        "apiName": {
+            "value": "aimroutingmanager"
+        },
+        "routingManagerAppServiceName": {
+            "value": "func-aimroutemgr-prod-001"
+        },
+        "cacheTimeout": {
+            "value": "21600"
+        }
+    }
+}

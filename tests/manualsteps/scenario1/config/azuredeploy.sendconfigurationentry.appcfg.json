@@ -1,0 +1,8 @@
+{
+    "messageSubscriber": {},
+    "ftpSendAdapter": {},
+    "globalConfig": {
+        "clearCache": false,
+        "enableTrace": false
+    }
+}

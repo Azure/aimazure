@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "schemaType": "Xml",
+    "metadata": {
+      "messageType": "{{ resource_template.parameters.message_type }}"
+    },
+    "content": "",
+    "contentType": "application/xml"
+  },
+  "location": "{{ resource_template.parameters.azure_primary_region }}",
+  "tags": {
+    "integrationAccountSchemaName": "{{ resource_template.parameters.azure_integration_account_name }}"
+  }
+}

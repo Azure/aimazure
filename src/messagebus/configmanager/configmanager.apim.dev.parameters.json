@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "apiName": {
+            "value": "aimconfigurationmanager"
+        },
+        "configurationManagerAppConfigName": {
+            "value": "appcfg-aimrstore-dev-xxxxx"
+        },
+        "configurationManagerResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "artifactStoreName": {
+            "value": "intacc-aimartifactstore-dev-uksouth-xxxxx"
+        },
+        "artifactStoreResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "cacheTimeout": {
+            "value": "3600"
+        }
+    }
+}

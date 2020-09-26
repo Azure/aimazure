@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>biztalkmigrator-azure</id>
+    <!-- Note This version will be overriden by the command line. -->
+    <version>0.0.1-beta</version>
+    <packageSourceUrl>https://github.com/azure/aimazure</packageSourceUrl>
+    <title>BizTalk to Azure Integration Services Migration - Azure templates</title>
+    <authors>Microsoft</authors>
+    <projectUrl>https://github.com/azure/aimazure</projectUrl>
+    <licenseUrl>https://github.com/azure/aimazure/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <tags>biztalkmigrator-azure BizTalk Azure AIS CLI</tags>
+    <description>Azure templates to migrate BizTalk applications to Microsoft Azure Integration Services.</description>
+  </metadata>
+  <files>
+    <file src="..\..\..\templates\**" target="tools\templates"/>
+  </files>
+</package>

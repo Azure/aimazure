@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "apic-aimfilesconnector-sendfile-file-dev-xxxxx"
+        },
+        "rootFolder": {
+            "value": "c:\\aim\\output"
+        },
+        "userName": {
+            "value": "domain\\btsuser"
+        },
+        "password": {
+            "value": "domain\\password"
+        },
+        "gatewayResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "gatewayName": {
+            "value": "cgw-msgbus-dev-uksouth-xxxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-File",
+                "Env": "dev"
+            }
+        }
+    }
+}

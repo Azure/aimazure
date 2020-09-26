@@ -1,0 +1,8 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schema.management.azure.com/messagebus-header-properties.json",
+    "type": "object",
+    "required": [],
+    "additionalProperties": { "type": [ "integer", "string", "null" ] },
+    "properties": {}
+}

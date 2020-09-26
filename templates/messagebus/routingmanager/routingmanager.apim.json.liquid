@@ -1,0 +1,497 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+        },
+        "apiName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "defaultValue": "aimroutingmanager"
+        },
+        "routingManagerAppServiceName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60
+        },
+        "cacheTimeout": {
+            "type": "string",
+            "defaultValue": "21600"
+        }
+    },
+    "variables": {
+        "aimCacheTimeoutNamedValue": "aimcachetimeout",
+        "aimSubscriptionIdNamedValue": "aimsubscriptionid",
+        "apiTagName": "[concat(parameters('apiName'), 'tag')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "Routing Manager",
+                "description": "AIM Routing Manager API - handles routing of messages and retrieval of routing-related properties.",
+                "apiRevision": "1",
+                "subscriptionRequired": true,
+                "path": "aimroutingmanager",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true
+            },
+            "resources": [
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/tags', parameters('apimServiceName'), variables('apiTagName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/backends",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [],
+            "properties": {
+                "description": "AIM Routing Manager Function Backend",
+                "url": "[concat('https://', parameters('routingManagerAppServiceName'), '.azurewebsites.net/api')]",
+                "protocol": "http",
+                "resourceId": "[concat('https://management.azure.com', resourceId('Microsoft.Web/sites', parameters('routingManagerAppServiceName')))]",
+                "credentials": {
+                    "header": {
+                        "x-functions-key": [
+                            "[listkeys(concat(resourceId('Microsoft.Web/sites/', parameters('routingManagerAppServiceName')), '/host/default/'),'2016-08-01').functionKeys.apiManagement]"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/sendtonextroute')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "SendToNextRoute",
+                "description": "Sends the envelope to the next destination in the routing slip and if there are no more destinations, returns an ACK message.",
+                "method": "POST",
+                "urlTemplate": "/sendtonextroute",
+                "templateParameters": [],
+                "request": {
+                    "description": "JSON payload containing an envelope message.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Have sent the envelope to all routes and an ACK message has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n    \"header\": {\r\n        \"properties\": {\r\n            \"createDate\": \"2020-06-18T12:07:48.8125659Z\",\r\n            \"envelopeType\": \"ack\",\r\n            \"messageId\": \"f655c39f-55af-4255-afc2-813d765b6156\",\r\n            \"rootPart\": 1\r\n        },\r\n        \"routing\": {\r\n            \"MessageType\": \"http://schemas.microsoft.com/aim#ack\"\r\n        },\r\n        \"routingSlip\": {},\r\n        \"state\": {}\r\n    }\r\n    \"body\": [\r\n        {\r\n            \"$contentType\": \"application/json\",\r\n            \"$part\": 1,\r\n            \"$partType\": \"http://schemas.microsoft.com/aim#ack\",\r\n\t\t\t\"$content\": \"No more routes to process in RoutingSlip\"\r\n        }\r\n    ]\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"SendToNextRoute\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/resolveroutingproperties')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "ResolveRoutingProperties",
+                "description": "Calculates the routing properties for this envelope, adds them to the routing section and returns the updated envelope.",
+                "method": "POST",
+                "urlTemplate": "/resolveroutingproperties",
+                "templateParameters": [],
+                "request": {
+                    "description": "JSON payload containing an envelope message.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Routing properties have been calculated and an updated envelope message has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"ResolveRoutingProperties\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/demotemessageproperties')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "DemoteMessageProperties",
+                "description": "Demotes message properties into the body content and returns the updated envelope.",
+                "method": "POST",
+                "urlTemplate": "/demotemessageproperties",
+                "templateParameters": [],
+                "request": {
+                    "description": "JSON payload containing an envelope message.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then any cached config is cleared, and config is retrieved from App Config again.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        },
+                        {
+                            "name": "enableTrace",
+                            "description": "If true, then an APIM trace URL is returned as a response header.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                        {
+                            "name": "Aim-Tracking-Id",
+                            "description": "Tracking ID used to link disparate messages together by AIM.",
+                            "type": "string",
+                            "required": false,
+                            "defaultValue": ""
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "text/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        },
+                        {
+                            "contentType": "application/json",
+                            "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Message properties have been demoted and an updated envelope message has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n    \"header\": {\r\n        \"properties\": {},\r\n        \"state\": {},\r\n        \"routing\": {},\r\n        \"routingSlip\": {\r\n            \"scenario\": \"\",\r\n            \"nextRoute\": 0,\r\n            \"routes\": []\r\n        }\r\n    },\r\n    \"body\": []\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred, and a fault object has been returned.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"fault\": {\r\n    \"faultActor\": \"DemoteMessageProperties\",\r\n    \"faultCode\": \"500\",\r\n    \"faultReason\": \"Unknown error\",\r\n    \"faultCategory\": \"Error\",\r\n    \"faultMessage\": \"The supplied request body contains an empty JSON array\"\r\n  }\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getlogicappcallbackurl')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetLogicAppCallbackUrl",
+                "description": "Gets the Callback URL for a given LogicApp.",
+                "method": "GET",
+                "urlTemplate": "/logicappcallbackurl/{resourceGroupName}/{logicAppName}",
+                "templateParameters": [
+                    {
+                        "name": "resourceGroupName",
+                        "description": "Name of the Resource Group the LogicApp is in.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    },
+                    {
+                        "name": "logicAppName",
+                        "description": "Name of the LogicApp to get the CallbackUrl for.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved a LogicApp Callback URL.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"logicAppUrl\": \"https://prod-20.westus.logic.azure.com:443/workflows/\"\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving a LogicApp Callback URL, a Fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/sendtonextroute/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'sendtonextroute')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimroutingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/resolveroutingproperties/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'resolveroutingproperties')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimroutingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+                {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/demotemessageproperties/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'demotemessageproperties')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"aimroutingmanager\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getlogicappcallbackurl/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getlogicappcallbackurl')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "{% raw %}<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"resourceGroupName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;resourceGroupName&quot;]))\" />\r\n    <set-variable name=\"logicAppName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;logicAppName&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:LogicAppCallbackUrl:&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;:&quot; + context.Variables[&quot;logicAppName&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;/providers/Microsoft.Logic/workflows/&quot; + context.Variables[&quot;logicAppName&quot;] + &quot;/triggers/manual/listCallbackURL?api-version=2016-06-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a CallbackUrl for this LogicApp but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(\r\n                        new JObject(\r\n                            new JProperty(\"logicAppUrl\",((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"])\r\n                        ).ToString()\r\n                    )</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>{% endraw %}",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimCacheTimeoutNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-CacheTimeout",
+                "value": "[parameters('cacheTimeout')]",
+                "tags": [
+                ],
+                "secret": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimSubscriptionIdNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-SubscriptionId",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[subscription().subscriptionId]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "routingmanager"
+            }
+        }
+    ]
+}

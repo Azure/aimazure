@@ -1,0 +1,14 @@
+{
+    "namespace": "sb-aimmsgbox-dev-uksouth",
+    "resourceGroupName": "rg-aimapp-systemapplication-dev-uksouth",
+    "location": "uksouth",
+    "sku": "Standard",
+    "tags": [
+        "ApplicationName=AIM-System",
+        "Env=dev"
+    ],
+    "topic": {
+        "name": "messagebox",
+        "enablePartitioning": true
+    }
+}

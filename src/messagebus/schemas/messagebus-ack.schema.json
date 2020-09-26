@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schema.management.azure.com/messagebus-ack.json",
+    "type": "object",
+    "required": [
+        "code",
+        "message"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "code": {
+            "$id": "#/properties/code",
+            "type": "integer"
+        },
+        "message": {
+            "$id": "#/properties/message",
+            "type": "string"
+        }
+    }
+}

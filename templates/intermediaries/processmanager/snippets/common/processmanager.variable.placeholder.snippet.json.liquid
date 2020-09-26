@@ -1,0 +1,51 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{
+    "workflowDefinitionVariable": {
+        "Variable:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "description": "{{ workflow_object.type }}",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "{{ workflow_object.name }}",
+{% if workflow_object.initial_value != null %}
+    {% case workflow_object.type %}
+        {% when 'System.TimeSpan' %}
+                        "value": "{{ workflow_object.initial_value | downcase }}",
+        {% else  %}
+                        "value": {{ workflow_object.initial_value | downcase }},
+    {% endcase %}
+{% endif %}
+{% case workflow_object.type %}
+    {% when 'System.TimeSpan' %}
+                        "type": "string"
+    {% when 'System.String' %}
+                        "type": "string"
+    {% when 'System.Guid' %}
+                        "type": "string"
+    {% when 'System.Int16' %}
+                        "type": "integer"
+    {% when 'System.Int32' %}
+                        "type": "integer"
+    {% when 'System.Int64' %}
+                        "type": "integer"
+    {% when 'System.Boolean' %}
+                        "type": "boolean"
+    {% when 'System.Single' %}
+                        "type": "float"
+    {% when 'System.Double' %}
+                        "type": "float"
+    {% when 'System.Decimal' %}
+                        "type": "float"
+    {% when 'System.Array' %}
+                        "type": "array"
+    {% else  %}
+                        "type": "object"
+{% endcase %}
+                    }
+                ]   
+            }
+        }
+    }
+}

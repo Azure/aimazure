@@ -1,0 +1,16 @@
+{
+    "configKey": "{{ resource_template.parameters.azure_routing_properties_config_key }}",
+    "configValueFileName": "{{ resource_template.parameters.azure_routing_properties_config_name | append: ".routingproperties.json" }}",
+    "configLabel" : "RoutingProperties",
+    "configStoreName": "{{ resource_template.parameters.azure_config_store }}",
+    "configType": "application/json",
+    "configTags": [
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+        "{{ tag.key }}={{ tag.value }}",
+    {%- else %}
+        "{{ tag.key }}={{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+    ]
+}

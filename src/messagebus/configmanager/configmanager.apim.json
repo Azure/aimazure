@@ -1,0 +1,545 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "metadata": {
+                "description": "Name of the APIM instance this API is to be deployed to."
+            }
+        },
+        "apiName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "defaultValue": "aimconfigurationmanager",
+            "metadata": {
+                "description": "Name of this API."
+            }
+        },
+        "configurationManagerAppConfigName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure App Configuration store that holds config."
+            }
+        },
+        "configurationManagerResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ResourceGroup that Azure App Configuration is deployed to."
+            }
+        },
+        "artifactStoreName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Integration Account that stores artifacts."
+            }
+        },
+        "artifactStoreResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ResourceGroup that the IntegrationAccount is deployed to."
+            }
+        },
+        "cacheTimeout": {
+            "defaultValue": "3600",
+            "type": "string",
+            "metadata": {
+                "description": "Amount of time (in seconds) that config entries are cached for, before they are retrieved again."
+            }
+        }
+    },
+    "variables": {
+        "aimCacheTimeoutNamedValue": "aimcachetimeout",
+        "aimConfigurationManagerAppConfigNamedValue": "aimconfigurationmanagerappconfigname",
+        "aimConfigurationManagerResourceGroupNamedValue": "aimconfigurationmanagerresourcegroupname",
+        "aimMessageBusResourceGroupNamedValue": "aimmessagebusresourcegroupname",
+        "aimArtifactStoreNamedValue": "aimartifactstorename",
+        "aimArtifactStoreResourceGroupNamedValue": "aimartifactstoreresourcegroupname",
+        "aimSubscriptionIdNamedValue": "aimsubscriptionid",
+        "apiTagName": "[concat(parameters('apiName'), 'tag')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "Configuration Manager",
+                "description": "AIM Configuration Manager API - handles retrieval and storage of general configuration.",
+                "apiRevision": "1",
+                "subscriptionRequired": true,
+                "path": "aimconfigurationmanager",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true
+            },
+            "resources": [
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/tags', parameters('apimServiceName'), variables('apiTagName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getconfiguration')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetConfiguration",
+                "description": "Gets a configuration entry from the cache or App Configuration.",
+                "method": "GET",
+                "urlTemplate": "/configuration/{scenario}",
+                "templateParameters": [
+                    {
+                        "name": "scenario",
+                        "description": "Name of the scenario to get configuration for, for example ftppassthrureceive.",
+                        "type": "string",
+                        "required": true,
+                        "values": [
+                        ]
+                    }
+                ],
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                    ],
+                    "representations": [
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved configuration for this scenario.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"ftpReceiveAdapter\": {\r\n\t\t\"failedMessageRouting\": true\r\n\t},\r\n    \"contentPromoter\": {\r\n       \"someconfig\": \"blah\"\r\n    },\r\n\t\"topicPublisher\": {\r\n\t\t\"topicName\": \"hjh\"\r\n\t},\r\n\t\"globalConfig\": {\r\n\t\t\"clearCache\": true,\r\n\t\t\"enableTrace\": false\r\n\t}\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving configuration, a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getconfigurationforstep')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetConfigurationForStep",
+                "description": "Gets a configuration entry from the cache or App Configuration, filtering it by scenario step name.",
+                "method": "GET",
+                "urlTemplate": "/configuration/{scenario}/{step}",
+                "templateParameters": [
+                    {
+                        "name": "scenario",
+                        "description": "Name of the scenario to get configuration for, for example ftppassthrureceive.",
+                        "type": "string",
+                        "required": true,
+                        "values": [
+                        ]
+                    },
+                    {
+                        "name": "step",
+                        "description": "Name of the step in the scenario to filter configuration by, for example ftpReceiveAdapter",
+                        "type": "string",
+                        "required": true,
+                        "values": [
+                        ]
+                    }
+                ],
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                    ],
+                    "representations": [
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved configuration for this scenario and step.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"topicPublisher\": {\r\n\t\t\"topicName\": \"hjh\"\r\n\t},\r\n\t\"globalConfig\": {\r\n\t\t\"clearCache\": true,\r\n\t\t\"enableTrace\": false\r\n\t}\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving configuration, a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getschemabymessagetype')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetSchemaByMessageType",
+                "description": "Gets the properties for a schema in the Artifact Store by its MessageType.",
+                "method": "GET",
+                "urlTemplate": "/schemabymessagetype/{messageType}",
+                "templateParameters": [
+                    {
+                        "name": "messageType",
+                        "description": "MessageType to get a schema properties for, for example, contoso.com#Employees.",
+                        "type": "text",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved properties for this MessageType.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"schemaName\": \"Employees\"\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving schemas, a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getschemacontentbyname')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetSchemaContentByName",
+                "method": "GET",
+                "urlTemplate": "/schemacontentbyname/{schemaName}",
+                "templateParameters": [
+                    {
+                        "name": "schemaName",
+                        "description": "Name of the schema",
+                        "type": "text",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "description": "Gets the content of a schema in the Artifact Store by its Name.",
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "boolean",
+                            "defaultValue": "false",
+                            "values": [
+                                "false",
+                                "true"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved schema content for this schema by name.",
+                        "representations": [
+                            {
+                                "contentType": "application/xml",
+                                "sample": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"></xs:schema>"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving schemas, a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getconfiguration/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getconfiguration')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimConfigurationManagerAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimMessageBusResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"scenario\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;scenario&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:ConfigurationEntry:&quot; + context.Variables[&quot;scenario&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-ConfigurationManagerResourceGroupName}}/providers/Microsoft.AppConfiguration/configurationStores/{{AIM-ConfigurationManagerAppConfigName}}/listKeyValue?api-version=2019-10-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                        return new JObject(\r\n                                new JProperty(\"key\", context.Variables[\"scenario\"]),\r\n                                new JProperty(\"label\", \"ConfigurationEntry\")\r\n                                ).ToString();\r\n                    }</set-body>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a ConfigurationEntry for this scenario in AppConfig but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a ConfigurationEntry from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a ConfigurationEntry from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"].ToString())</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getconfigurationforstep/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getconfigurationforstep')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimConfigurationManagerAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimMessageBusResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"scenario\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;scenario&quot;]))\" />\r\n    <set-variable name=\"step\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;step&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:ConfigurationEntry:&quot; + context.Variables[&quot;scenario&quot;])\" />\r\n    <set-variable name=\"response\" value=\"\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-ConfigurationManagerResourceGroupName}}/providers/Microsoft.AppConfiguration/configurationStores/{{AIM-ConfigurationManagerAppConfigName}}/listKeyValue?api-version=2019-10-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                        return new JObject(\r\n                                new JProperty(\"key\", context.Variables[\"scenario\"]),\r\n                                new JProperty(\"label\", \"ConfigurationEntry\")\r\n                                ).ToString();\r\n                    }</set-body>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a ConfigurationEntry for this scenario in AppConfig but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a ConfigurationEntry from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a ConfigurationEntry from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <choose>\r\n          <when condition=\"@(System.String.IsNullOrWhiteSpace(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;step&quot;)) == true)\">\r\n            <set-variable name=\"response\" value=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body.As&lt;JObject&gt;()[&quot;value&quot;].ToString())\" />\r\n          </when>\r\n          <otherwise>\r\n            <set-variable name=\"response\" value=\"@{&#xA;                            try&#xA;                            {&#xA;                                var appConfigResponse = ((IResponse)context.Variables[&quot;managementResponse&quot;]).Body.As&lt;JObject&gt;();&#xA;                                var configEntry = JToken.Parse(appConfigResponse?[&quot;value&quot;].Value&lt;string&gt;()) as JObject;&#xA;                                return new JObject(&#xA;                                    new JProperty(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;step&quot;), configEntry?[context.Variables.GetValueOrDefault&lt;string&gt;(&quot;step&quot;)]),&#xA;                                    new JProperty(&quot;globalConfig&quot;, configEntry?[&quot;globalConfig&quot;])&#xA;                                ).ToString();&#xA;                            }&#xA;                            catch (Exception ex)&#xA;                            {&#xA;                                return new JObject(&#xA;                                    new JProperty(&quot;fault&quot;, &#xA;                                        new JObject(&#xA;                                                new JProperty(&quot;faultActor&quot;, context.Variables.GetValueOrDefault&lt;string&gt;(&quot;managementUrl&quot;)),&#xA;                                                new JProperty(&quot;faultCode&quot;, 500),&#xA;                                                new JProperty(&quot;faultReason&quot;, ex.Message),&#xA;                                                new JProperty(&quot;faultCategory&quot;, &quot;Error&quot;),&#xA;                                                new JProperty(&quot;faultMessage&quot;, &quot;An error occurred trying to select the step value from a configuration entry&quot;)&#xA;                                        )&#xA;                                    )&#xA;                                ).ToString();&#xA;                            }&#xA;                    }\" />\r\n          </otherwise>\r\n        </choose>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"response\"))</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getschemabymessagetype/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getschemabymessagetype')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimConfigurationManagerAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimMessageBusResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimArtifactStoreNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"messageType\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;messageType&quot;]))\" />\r\n    <set-variable name=\"filter\" value=\"@(&quot;tagName eq 'MessageType' and tagValue eq '&quot; + context.Variables[&quot;messageType&quot;] + &quot;'&quot;)\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;ResourceCache:Schema:&quot; + context.Variables[&quot;messageType&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-ArtifactStoreResourceGroupName}}/providers/Microsoft.Logic/integrationAccounts/{{AIM-ArtifactStoreName}}/schemas?api-version=2016-06-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>GET</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found no schemas in the Integration Account.\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a list of schemas from the IntegrationAccount.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a list of schemas from the IntegrationAccount.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <set-variable name=\"schema\" value=\"@{&#xA;                    JArray schemas = ((IResponse)context.Variables[&quot;managementResponse&quot;]).Body.As&lt;JObject&gt;()[&quot;value&quot;] as JArray;&#xA;                    JToken schema = schemas.FirstOrDefault(a =&gt; ((string)a?[&quot;properties&quot;]?[&quot;metadata&quot;]?[&quot;messageType&quot;]) == context.Variables.GetValueOrDefault&lt;string&gt;(&quot;messageType&quot;));&#xA;                    if (schema != null)&#xA;                    {&#xA;                        return schema;&#xA;                    }&#xA;                    else&#xA;                    {&#xA;                        return null;&#xA;                    }&#xA;                }\" />\r\n        <choose>\r\n          <when condition=\"@(context.Variables.GetValueOrDefault&lt;JObject&gt;(&quot;schema&quot;) == null)\">\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"OK\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@(\r\n                                        new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", 500),\r\n                                                        new JProperty(\"faultReason\", \"No Schema found\"),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"Unable to find a Schema for MesageType \" + context.Variables.GetValueOrDefault&lt;string&gt;(\"messageType\") + \".\")\r\n                                                )\r\n                                            )\r\n                                        ).ToString()\r\n                                )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <return-response>\r\n              <set-status code=\"200\" reason=\"OK\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@(\r\n                                        new JObject(\r\n                                            new JProperty(\"schemaName\", context.Variables.GetValueOrDefault&lt;JObject&gt;(\"schema\")?[\"name\"]),\r\n                                            new JProperty(\"contentUri\", context.Variables.GetValueOrDefault&lt;JObject&gt;(\"schema\")?[\"properties\"]?[\"contentLink\"]?[\"uri\"])\r\n                                        ).ToString()\r\n                                )</set-body>\r\n            </return-response>\r\n          </otherwise>\r\n        </choose>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getschemacontentbyname/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getschemacontentbyname')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimConfigurationManagerAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimMessageBusResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimArtifactStoreNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"schemaName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;schemaName&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;ResourceCache:Schema:&quot; + context.Variables[&quot;schemaName&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-ArtifactStoreResourceGroupName}}/providers/Microsoft.Logic/integrationAccounts/{{AIM-ArtifactStoreName}}/schemas/&quot; + context.Variables.GetValueOrDefault&lt;string&gt;(&quot;schemaName&quot;) + &quot;?api-version=2016-06-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>GET</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"fault\", \r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCategory\", \"Error\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultMessage\", \"Found no schemas in the Integration Account.\")\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t).ToString()\r\n\t\t\t\t\t\t\t\t\t\t\t)</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n\t\t\t\t\t\t\t\t\t\t\t\tvar additionalDetails = string.Empty;\r\n\t\t\t\t\t\t\t\t\t\t\t\tvar internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n\t\t\t\t\t\t\t\t\t\t\t\tif (internalFault != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tif (internalFault?[\"error\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\t\t\telse if (internalFault?[\"message\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\r\n\t\t\t\t\t\t\t\t\t\t\t\treturn new JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"fault\", \r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n\t\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n\t\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n\t\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCategory\", \"Error\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultMessage\", \"An error occurred trying to get a list of schemas from the IntegrationAccount.\" + additionalDetails)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t).ToString();\r\n\t\t\t\t\t\t\t\t\t\t\t}</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n\t\t\t\t\t\t\t\t\t\tvar additionalDetails = string.Empty;\r\n\t\t\t\t\t\t\t\t\t\tvar internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n\t\t\t\t\t\t\t\t\t\tif (internalFault != null)\r\n\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\tif (internalFault?[\"error\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\telse if (internalFault?[\"message\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\t}\r\n\r\n\t\t\t\t\t\t\t\t\t\treturn new JObject(\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"fault\", \r\n\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCategory\", \"Error\"),\r\n\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultMessage\", \"An error occurred trying to get a list of schemas from the IntegrationAccount.\" + additionalDetails)\r\n\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t).ToString();\r\n\t\t\t\t\t\t\t\t\t}</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <set-variable name=\"contentUri\" value=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body.As&lt;JObject&gt;()?[&quot;properties&quot;]?[&quot;contentLink&quot;]?[&quot;uri&quot;]?.Value&lt;string&gt;())\" />\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"schemaResponse\" mode=\"new\">\r\n          <set-url>@((string)context.Variables[\"contentUri\"])</set-url>\r\n          <set-method>GET</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;schemaResponse&quot;]).Body == null)\">\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"fault\", \r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCode\", ((IResponse)context.Variables[\"schemaResponse\"]).StatusCode),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultReason\",((IResponse)context.Variables[\"schemaResponse\"]).StatusReason),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCategory\", \"Error\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultMessage\", \"Found no schema in the Integration Account with the given name.\")\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t).ToString()\r\n\t\t\t\t\t\t\t\t\t\t\t)</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;schemaResponse&quot;]).StatusCode != 200)\">\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n\t\t\t\t\t\t\t\t\t\t\t\tvar additionalDetails = string.Empty;\r\n\t\t\t\t\t\t\t\t\t\t\t\tvar internalFault = ((IResponse)context.Variables[\"schemaResponse\"]).Body.As&lt;JObject&gt;();\r\n\t\t\t\t\t\t\t\t\t\t\t\tif (internalFault != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tif (internalFault?[\"error\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\t\t\telse if (internalFault?[\"message\"] != null)\r\n\t\t\t\t\t\t\t\t\t\t\t\t{\r\n\t\t\t\t\t\t\t\t\t\t\t\tadditionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\t\t\t\t\t}\r\n\r\n\t\t\t\t\t\t\t\t\t\t\t\treturn new JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"fault\", \r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JObject(\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCode\", ((IResponse)context.Variables[\"schemaResponse\"]).StatusCode),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultReason\",((IResponse)context.Variables[\"schemaResponse\"]).StatusReason),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultCategory\", \"Error\"),\r\n\t\t\t\t\t\t\t\t\t\t\t\tnew JProperty(\"faultMessage\", \"An error occurred trying to get a schema from the IntegrationAccount.\" + additionalDetails)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t)\r\n\t\t\t\t\t\t\t\t\t\t\t\t).ToString();\r\n\t\t\t\t\t\t\t\t\t\t\t}</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <return-response>\r\n              <set-status code=\"200\" reason=\"OK\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/xml</value>\r\n              </set-header>\r\n              <set-body>@(\r\n\t\t\t\t\t\t\t\t\t\t\t\t((IResponse)context.Variables[\"schemaResponse\"]).Body.As&lt;string&gt;()\r\n\t\t\t\t\t\t\t\t\t\t\t)</set-body>\r\n            </return-response>\r\n          </otherwise>\r\n        </choose>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimCacheTimeoutNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-CacheTimeout",
+                "value": "[parameters('cacheTimeout')]",
+                "tags": [
+                ],
+                "secret": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimConfigurationManagerAppConfigNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-ConfigurationManagerAppConfigName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('configurationManagerAppConfigName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimConfigurationManagerResourceGroupNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-ConfigurationManagerResourceGroupName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('configurationManagerResourceGroupName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimMessageBusResourceGroupNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-MessageBusResourceGroupName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[resourceGroup().name]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimArtifactStoreNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-ArtifactStoreName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('artifactStoreName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimArtifactStoreResourceGroupNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-ArtifactStoreResourceGroupName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('artifactStoreResourceGroupName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimSubscriptionIdNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-SubscriptionId",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[subscription().subscriptionId]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "configurationmanager"
+            }
+        }
+    ]
+}

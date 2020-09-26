@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "logicAppLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "messageBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
+        },
+        "serviceBusTopicPublishApiConnectionName": {
+            "value": "{{ resource_template.parameters.azure_topic_publisher_api_connection_name }}"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "{{ resource_template.parameters.routing_slip_router_name }}"
+        },
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

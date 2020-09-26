@@ -1,0 +1,17 @@
+{
+    "virtualMachine": {
+        "name": "vmaimtestftpserver001",
+        "publicDnsName": "aim-ftpserver",
+        "resourceGroupName": "rg-aimftpserver-dev-uksouth",
+        "location": "UK South",
+        "adminUserName": "azureadmin",
+        "ftpUserName": "ftpuser",
+        "tags": [
+            "ApplicationName=AIM-TestFtpServer",
+            "Env=dev"
+        ]
+    },
+    "osImage": {
+        "urn": "/subscriptions/300fa959-b95d-42b4-8688-93de8c006ea7/resourceGroups/rg-aimsharedimages-dev-uksouth/providers/Microsoft.Compute/galleries/sigaimimagesdevuksouth/images/img-aimftpserver-dev-uk-south/versions/1.0.0"
+    }
+}

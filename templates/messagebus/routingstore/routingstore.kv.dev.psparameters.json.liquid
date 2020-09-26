@@ -1,0 +1,15 @@
+{
+    "name": "{{ resource_template.resource_name }}",
+    "resourceGroupName": "{{ resource_template.parameters.azure_resource_group_name }}",
+    "location": "{{ resource_template.parameters.azure_primary_region }}",
+    "sku": "{{ resource_template.parameters.azure_sku }}",
+    "tags": [
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+        "{{ tag.key }}={{ tag.value }}",
+    {%- else %}
+        "{{ tag.key }}={{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+    ]
+}

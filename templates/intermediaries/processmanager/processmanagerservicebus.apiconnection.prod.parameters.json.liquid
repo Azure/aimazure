@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "apiConnectionLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "serviceBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_resource_group_name }}"
+        },
+        "serviceBusNamespaceName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_namespace }}"
+        },
+        "serviceBusPolicyName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_policy_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

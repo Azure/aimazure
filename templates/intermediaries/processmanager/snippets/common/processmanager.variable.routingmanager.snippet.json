@@ -1,0 +1,5 @@
+{
+    "armTemplateVariable": {
+        "routingManagerApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimroutingmanager')]"
+    }
+}

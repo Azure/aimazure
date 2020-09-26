@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "logicAppLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "messageBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_system_resource_group_name }}"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "{{ resource_template.parameters.azure_message_suspend_processor_logic_app_name }}"
+        },
+        "suspendQueueTopicName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}"
+        },
+        "serviceBusTopicSubscribeApiConnectionName": {
+            "value": "{{ resource_template.parameters.azure_topic_subscriber_api_connection_name }}"
+        },
+        "serviceBusTopicName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_topic_name }}"
+        },
+        "serviceBusTopicSubscriptionName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_subscription_name }}"
+        },
+        "serviceBusRecurrenceFrequency": {
+            "value": "{{ resource_template.parameters.azure_service_bus_recurrence_frequency }}"
+        },
+        "serviceBusRecurrenceInterval": {
+            "value": {{ resource_template.parameters.azure_service_bus_recurrence_interval }}
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "{{ resource_template.parameters.routing_slip_router_name }}"
+        },
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "scenario": {
+            "value": "{{ resource_template.parameters.scenario }}"
+        },
+        "scenarioStep": {
+            "value": "{{ resource_template.parameters.scenario_step_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

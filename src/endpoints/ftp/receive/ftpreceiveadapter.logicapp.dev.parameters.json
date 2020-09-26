@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimftpradapter-aim-ftppassthru-receivelocation-dev-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-dev-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-dev-uksouth-xxxxx"
+        },
+        "messageConstructorLogicAppName": {
+            "value": "logic-aimmessageconstructor-dev-xxxxx"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "logic-aimmessagesuspendprocessor-dev-xxxxx"
+        },
+        "suspendQueueTopicName": {
+            "value": "suspendqueue"
+        },
+        "ftpReceiveApiConnectionName": {
+            "value": "apic-aimftprconnector-aim-ftppassthru-receivelocation-dev-xxxxx"
+        },
+        "ftpReceiveFolder": {
+            "value": "/"
+        },
+        "ftpFileMask": {
+            "value": "*.*"
+        },
+        "ftpMaxFileCount": {
+            "value": 10
+        },
+        "ftpRecurrenceFrequency": {
+            "value": "Minute"
+        },
+        "ftpRecurrenceInterval": {
+            "value": 1
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "serviceBusTopicPublishApiConnectionName": {
+            "value": "apic-aimservicebuspublishconnector-rcvfile-ftp-dev-xxxxx"
+        },
+        "scenario": {
+            "value": "aim-ftppassthru.aim-ftppassthru-receiveport"
+        },
+        "scenarioStep": {
+            "value": "ftpReceiveAdapter"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "aim-ftppassthru",
+                "Env": "dev"
+            }
+        }
+    }
+}

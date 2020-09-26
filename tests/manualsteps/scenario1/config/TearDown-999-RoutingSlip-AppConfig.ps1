@@ -1,0 +1,26 @@
+<#
+.SYNOPSIS
+Invokes the teardown of routing properties configuration from application configuration.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.PARAMETER uniqueDeploymentId
+The unique deployment id used in the automated deployment.
+
+.EXAMPLE
+.\TearDown-999-RoutingProperties-AppConfig.ps1 -uniqueDeploymentId 'xxxxx'
+#>
+
+[CmdletBinding()]
+Param(
+    [parameter(Mandatory = $true)]    
+    [string] $uniqueDeploymentId
+)
+
+$params = Get-Content -Path $PSScriptRoot\routingproperties.appcfg.dev.psparameters.json -Raw | ConvertFrom-Json
+
+$params.configStoreName = $params.configStoreName + $uniqueDeploymentId
+
+& $PSScriptRoot\Remove-RoutingProperties-AppConfig.ps1 -configStoreName $params.configStoreName -key $params.configKey -label $params.configLabel
+

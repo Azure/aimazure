@@ -1,0 +1,13 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+<#
+.SYNOPSIS
+Invokes the deployment of a process manager service bus api connection.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+.\Deploy-100-ProcessManagerServiceBus-ApiConnection.ps1
+#>
+
+& $PSScriptRoot\New-ProcessManagerServiceBus-ApiConnection.ps1 -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -templateFile "$PSScriptRoot\processmanagerservicebus.apiconnection.json" -templateParameterFile "$PSScriptRoot\processmanagerservicebus.apiconnection.{{ model.migration_target.deployment_environment | downcase }}.parameters.json" -deploymentName "processmanagerservicebus.apic.{{ formatted_azure_primary_region }}.{{ model.migration_target.unique_deployment_id | downcase }}"

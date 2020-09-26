@@ -1,0 +1,320 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimServiceName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+        },
+        "apiName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "defaultValue": "aimroutingstore"
+        },
+        "routingStoreAppConfigName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure App Configuration store that holds routing information."
+            }
+        },
+        "routingStoreResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ResourceGroup that Azure App Configuration is deployed to."
+            }
+        },
+        "cacheTimeout": {
+            "type": "string",
+            "defaultValue": "21600"
+        }
+    },
+    "variables": {
+        "aimCacheTimeoutNamedValue": "aimcachetimeout",
+        "aimRoutingStoreAppConfigNamedValue": "aimroutingstoreappconfigname",
+        "aimRoutingStoreResourceGroupNamedValue": "aimroutingstoreresourcegroupname",
+        "aimMessageBusResourceGroupNamedValue": "aimmessagebusresourcegroupname",
+        "aimSubscriptionIdNamedValue": "aimsubscriptionid",
+        "apiTagName": "[concat(parameters('apiName'), 'tag')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "Routing Store",
+                "description": "AIM Routing Store API - handles retrieval and storage of routing configuration.",
+                "apiRevision": "1",
+                "subscriptionRequired": true,
+                "path": "aimroutingstore",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true
+            },
+            "resources": [
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/tags', parameters('apimServiceName'), variables('apiTagName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getroutingslip')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetRoutingSlip",
+                "description": "Gets a routing slip which contains the intermediaries that will process a message.",
+                "method": "GET",
+                "urlTemplate": "/routingslip/{scenario}",
+                "templateParameters": [
+                    {
+                        "name": "scenario",
+                        "description": "Name of the scenario to get the routing slip for, for example, ftppassthrureceive.",
+                        "type": "string",
+                        "required": true,
+                        "values": [
+                        ]
+                    }
+                ],
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                    ],
+                    "representations": [
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved the routing slip for this scenario.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"routes\": [\r\n\t\t{\r\n\t\t\t\"name\": \"CommonFlatFileDecoder\",\r\n\t\t\t\"routingSteps\": {\r\n\t\t\t\t\"channel\": \"flatFileDecoderChannel\",\r\n\t\t\t\t\"channelType\": \"microsoft.channels.trigger.azure-apim\",\r\n\t\t\t\t\"channelAddress\": \"/routingManager/route/flatFileDecoderChannel\"\r\n\t\t\t},\r\n\t\t\t\"routingParameters\": {\r\n\t\t\t\t\"messageReceiverType\": \"logicapps\",\r\n\t\t\t\t\"parameters\": {\r\n\t\t\t\t\t\"resourceId\": \"/rg-aimcore-dev/AIMFlatFileDecoder\",\r\n\t\t\t\t\t\"bodySchemaName\": \"EmployeeData\",\r\n\t\t\t\t\t\"headerSchemaName\": \"StandardHeader\"\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t]\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving a routing slip, a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getroutingproperties')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetRoutingProperties",
+                "description": "Gets the routing properties specific to the processing of the message by intermediaries.",
+                "method": "GET",
+                "urlTemplate": "/routingproperties/{scenario}",
+                "templateParameters": [
+                    {
+                        "name": "scenario",
+                        "description": "Name of the scenario to get the routing properties for, for example, ftppassthrureceive.",
+                        "type": "string",
+                        "required": true,
+                        "values": [
+                        ]
+                    }
+                ],
+                "request": {
+                    "description": "No body is required for this request.",
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving config items.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "false"
+                            ]
+                        }
+                    ],
+                    "headers": [
+                    ],
+                    "representations": [
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved the routing properties for this scenario.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"routingProperties\": [\r\n\t\t{\r\n\t\t\t\"propertyName\": \"property1\",\r\n\t\t\t\"propertyType\": \"literal\",\r\n\t\t\t\"propertyValue\": \"Test\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"propertyName\": \"Property2\",\r\n\t\t\t\"propertyType\": \"xpath\",\r\n\t\t\t\"propertyValue\": \"//Employee[1]/Name/text()\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"propertyName\": \"property3\",\r\n\t\t\t\"propertyType\": \"literal\",\r\n\t\t\t\"propertyValue\": 3\r\n\t\t}\r\n\t]\r\n}"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving routing properties - a fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getroutingslip/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getroutingslip')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimRoutingStoreAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimRoutingStoreResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"scenario\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;scenario&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:RoutingSlip:&quot; + context.Variables[&quot;scenario&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-RoutingStoreResourceGroupName}}/providers/Microsoft.AppConfiguration/configurationStores/{{AIM-RoutingStoreAppConfigName}}/listKeyValue?api-version=2019-10-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                        return new JObject(\r\n                                new JProperty(\"key\", context.Variables[\"scenario\"]),\r\n                                new JProperty(\"label\", \"RoutingSlip\")\r\n                                ).ToString();\r\n                    }</set-body>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", \"https://management.azure.com\"),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a RoutingSlip for this scenario in AppConfig but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a RoutingSlip from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a RoutingSlip from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(\r\n                        ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"].ToString()\r\n                    )</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/aimroutingstore/getroutingproperties/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getroutingproperties')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimRoutingStoreAppConfigNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimRoutingStoreResourceGroupNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"scenario\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;scenario&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:RoutingProperties:&quot; + context.Variables[&quot;scenario&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/{{AIM-RoutingStoreResourceGroupName}}/providers/Microsoft.AppConfiguration/configurationStores/{{AIM-RoutingStoreAppConfigName}}/listKeyValue?api-version=2019-10-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                        return new JObject(\r\n                                new JProperty(\"key\", context.Variables[\"scenario\"]),\r\n                                new JProperty(\"label\", \"RoutingProperties\")\r\n                                ).ToString();\r\n                    }</set-body>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a RoutingProperties for this scenario in AppConfig but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get RoutingProperties from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get RoutingProperties from AppConfig.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(\r\n                        ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"].ToString()\r\n                    )</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimCacheTimeoutNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-CacheTimeout",
+                "value": "[parameters('cacheTimeout')]",
+                "tags": [
+                ],
+                "secret": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimRoutingStoreAppConfigNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-RoutingStoreAppConfigName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('routingStoreAppConfigName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimRoutingStoreResourceGroupNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-RoutingStoreResourceGroupName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[parameters('routingStoreResourceGroupName')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimMessageBusResourceGroupNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-MessageBusResourceGroupName",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[resourceGroup().name]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/namedValues",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('aimSubscriptionIdNamedValue'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "AIM-SubscriptionId",
+                "tags": [
+                ],
+                "secret": true,
+                "value": "[subscription().subscriptionId]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/tags",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', variables('apiTagName'))]",
+            "dependsOn": [
+            ],
+            "properties": {
+                "displayName": "routingstore"
+            }
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "ftpReceiveAdapter": {
+        "failedMessageRouting": true,
+        "receivePortName": "Aim.FtpPassthru.ReceivePort"
+    },
+    "contentPromoter": {},
+    "topicPublisher": {
+        "topicName": "messagebox"
+    },
+    "globalConfig": {
+        "clearCache": false,
+        "enableTrace": false
+    }
+}

@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"name": "Root",
+			"path": "."
+		},
+		{
+			"name": "AIM Core Library",
+			"path": "src\\core"
+		},
+		{
+			"name": "AIM Routing Manager Function",
+			"path": "src\\messagebus\\routingmanager\\functions"
+		},
+		{
+			"name": "AIM Messaging Manager Function",
+			"path": "src\\messagebus\\messagingmanager\\functions"
+		}
+	],
+	"settings": {},
+	"launch": {
+		"configurations": [],
+		"compounds": [
+			{
+				"name": "Attach to all functions",
+				"configurations": [
+					"Attach to Messaging Manager",
+					"Attach to Routing Manager"
+				]
+			}
+		]
+	}
+}

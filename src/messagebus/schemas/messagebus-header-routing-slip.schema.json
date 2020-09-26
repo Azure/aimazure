@@ -1,0 +1,55 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://schemas.microsoft.com/messagebus-header-routing-slip.json",
+    "type": "object",
+    "required": [
+        "scenario",
+        "nextRoute",
+        "routes"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "scenario": {
+            "$id": "#/properties/scenario",
+            "type": "string"
+        },
+        "nextRoute": {
+            "$id": "#/properties/nextRoute",
+            "type": "integer"
+        },
+        "routes": {
+            "$id": "#/properties/routes",
+            "type": "array",
+            "additionalItems": true,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/routes/items/anyOf/0",
+                        "type": "object",
+                        "required": [
+                            "channel",
+                            "channelType",
+                            "channelAddress"
+                        ],
+                        "additionalProperties": true,
+                        "properties": {
+                            "channel": {
+                                "$id": "#/properties/routes/items/anyOf/0/properties/channel",
+                                "type": "string"
+                            },
+                            "channelType": {
+                                "$id": "#/properties/routes/items/anyOf/0/properties/channelType",
+                                "type": "string"
+                            },
+                            "channelAddress": {
+                                "$id": "#/properties/routes/items/anyOf/0/properties/channelAddress",
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "$id": "#/properties/routes/items"
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "name": "sbs-aimmsgbox-ftp-passthru",
+    "serviceBusNamespace": "sb-aimmsgbox-dev-uksouth-xxxxx",
+    "serviceBusTopic": "messagebox",
+    "resourceGroupName": "rg-aimapp-app1-dev-uksouth-xxxxx",
+    "enableSession": true,
+    "rules": [
+        {
+            "name": "AndGroup1",
+            "expression": "AzureBlobStorage.BlobName >= 'A' AND AzureBlobStorage.BlobName <= 'J'"
+        },
+        {
+            "name": "AndGroup2",
+            "expression": "AzureBlobStorage.BlobName >= 'K' AND AzureBlobStorage.BlobName <= 'Z'"
+        }
+    ]
+}

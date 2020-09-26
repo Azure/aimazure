@@ -1,0 +1,52 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimhttpradapter-purchaseorderhttpjsonreceive-prod-xxxxx"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-prod-uksouth-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-prod-uksouth-xxxxx"
+        },
+        "messageConstructorLogicAppName": {
+            "value": "logic-aimmessageconstructor-prod-xxxxx"
+        },
+        "messageResponseHandlerLogicAppName": {
+            "value": "logic-aimmessageresponsehandler-prod-xxxxx"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "logic-aimmessagesuspendprocessor-prod-xxxxx"
+        },
+        "suspendQueueTopicName": {
+            "value": "suspendqueue"
+        },
+        "responseTopicName": {
+            "value": "messagebox"
+        },
+        "responseSubscriptionName": {
+            "value": ""
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "scenario": {
+            "value": "Aim.HttpJsonOrch.PurchaseOrderRequestResponsePort.PurchaseOrderHttpJsonReceive"
+        },
+        "scenarioStep": {
+            "value": "httpReceiveAdapter"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-HttpJsonOrch",
+                "Scenario": "Aim.HttpJsonOrch.PurchaseOrderRequestResponsePort.PurchaseOrderHttpJsonReceive",
+                "Env": "prod"
+            }
+        }
+    }
+}

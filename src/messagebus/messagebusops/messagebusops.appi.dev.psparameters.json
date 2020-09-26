@@ -1,0 +1,9 @@
+{
+    "name": "appi-aimmsgbusops-dev",
+    "resourceGroupName": "rg-aimmsgbus-dev-uksouth",
+    "location": "UK South",
+    "tags": [
+        "ApplicationName=AIM-MessageBus",
+        "Env=dev"
+    ]
+}

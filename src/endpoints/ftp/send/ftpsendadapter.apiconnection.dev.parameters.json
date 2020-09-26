@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "value": "apic-aimftpsconnector-aim-ftppassthru-sendport-dev-xxxxx"
+        },
+        "apiConnectorLocation": {
+            "value": "UK South"
+        },
+        "serverAddress": {
+            "value": "127.0.0.1"
+        },
+        "serverPort": {
+            "value": 22
+        },
+        "userName": {
+            "value": ""
+        },
+        "password": {
+            "value": ""
+        },
+        "isBinaryTransport": {
+            "value": true
+        },
+        "isSSL": {
+            "value": false
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-FtpPassthru",
+                "Env": "dev"
+            }
+        }
+    }
+}

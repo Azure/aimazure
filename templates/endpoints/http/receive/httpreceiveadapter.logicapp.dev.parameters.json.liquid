@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "messageBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_system_resource_group_name }}"
+        },
+        "integrationAccountName": {
+            "value": "{{ resource_template.parameters.azure_integration_account_name }}"
+        },
+        "messageConstructorLogicAppName": {
+            "value": "{{ resource_template.parameters.azure_message_constructor_logic_app_name }}"
+        },
+        "messageResponseHandlerLogicAppName": {
+            "value": "{{ resource_template.parameters.azure_message_response_handler_logic_app_name }}"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "{{ resource_template.parameters.azure_message_suspend_processor_logic_app_name }}"
+        },
+        "suspendQueueTopicName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}"
+        },
+        "responseTopicName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_response_topic_name }}"
+        },
+        "responseSubscriptionName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_response_subscription_name }}"
+        },
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "scenario": {
+            "value": "{{ resource_template.parameters.scenario_name }}"
+        },
+        "scenarioStep": {
+            "value": "{{ resource_template.parameters.scenario_step_name }}"
+        },
+        "tags": {
+            "value": {
+    {%- for tag in resource_template.tags -%}
+        {%- if forloop.last == false %}
+                    "{{ tag.key }}" : "{{ tag.value }}",
+        {%- else %}
+                    "{{ tag.key }}" : "{{ tag.value }}"
+        {%- endif -%}
+    {%- endfor %}
+            }
+        }
+    }
+}

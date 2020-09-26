@@ -1,0 +1,6 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+{
+    "resourceGroupName": "{{ resource_template.parameters.azure_resource_group_name }}",
+    "connectionGatewayInstallationLocation": "{{ formatted_azure_primary_region }}",
+    "connectionGatewayInstallationDisplayName": "{{ resource_template.parameters.gateway_installation_display_name }}"
+}
