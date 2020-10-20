@@ -9,5 +9,5 @@ Prior to running this script ensure you are authenticated against Azure and have
 .\TearDown-30-DataGateway.ps1
 #>
 
-$params = Get-Content -Path $PSScriptRoot\datagateway.onpremisedatagateway.dev.psparameters.json -Raw | ConvertFrom-Json
+$params = Get-Content -Path $PSScriptRoot\datagateway.onpremisedatagateway.{{ model.migration_target.deployment_environment | downcase }}.psparameters.json -Raw | ConvertFrom-Json
 & $PSScriptRoot\Remove-DataGateway.ps1 -resourceGroupName $params.resourceGroupName -dataGatewayName "{{ resource_template.resource_name }}"

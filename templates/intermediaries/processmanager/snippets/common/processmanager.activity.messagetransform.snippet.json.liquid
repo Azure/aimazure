@@ -1,4 +1,4 @@
-{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
 {%- capture source_message -%}{{ workflow_object.properties.SourceMessageReferences | first | split: '.' | first }}{%- endcapture -%}
 {%- capture target_message -%}{{ workflow_object.properties.TargetMessageReferences | first | split: '.' | first }}{%- endcapture -%}
 {%- if workflow_object.properties.IsMultiSource == false and workflow_object.properties.IsMultiTarget == false -%}
@@ -9,7 +9,7 @@
             "type": "Scope",
             "description": "{{ workflow_object.type }}",
             "actions": {
-                "{{ workflow_object_name }}:Call_GetBodyContent": {
+                "{{ workflow_object_name }}:_Call_GetBodyContent": {
                     "runAfter": {},
                     "type": "ApiManagement",
                     "inputs": {
@@ -34,15 +34,15 @@
                         "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
                     }
                 },
-                "{{ workflow_object_name }}:Transform": {
+                "{{ workflow_object_name }}:_Transform": {
                     "runAfter": {
-                        "{{ workflow_object_name }}:Call_GetBodyContent": [
+                        "{{ workflow_object_name }}:_Call_GetBodyContent": [
                             "Succeeded"
                         ]
                     },
                     "type": "Xslt",
                     "inputs": {
-                        "content": "@{xml(decodeBase64(body('{{ workflow_object_name }}:Call_GetBodyContent')?['$content']))}",
+                        "content": "@{xml(decodeBase64(body('{{ workflow_object_name }}:_Call_GetBodyContent')?['$content']))}",
                         "integrationAccount": {
                             "map": {
                                 "name": "{{ workflow_object.properties.Map }}"
@@ -51,9 +51,9 @@
                         "transformOptions": "ApplyXsltOutputAttributes"
                     }
                 },
-                "{{ workflow_object_name }}:Call_BuildEnvelope": {
+                "{{ workflow_object_name }}:_Call_BuildEnvelope": {
                     "runAfter": {
-                        "{{ workflow_object_name }}:Transform": [
+                        "{{ workflow_object_name }}:_Transform": [
                             "Succeeded"
                         ]
                     },
@@ -62,7 +62,7 @@
                         "api": {
                             "id": "[variables('messagingManagerApiResourceId')]"
                         },
-                        "body": "@body('{{ workflow_object_name }}:Transform')",
+                        "body": "@body('{{ workflow_object_name }}:_Transform')",
                         "headers": {
                             "Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
                             "Content-Type": "application/xml"
@@ -83,28 +83,28 @@
                         "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
                     }
                 },
-                "{{ workflow_object_name }}:Set_MessageType": {
+                "{{ workflow_object_name }}:_Set_MessageType": {
                     "runAfter": {
-                        "{{ workflow_object_name }}:Call_BuildEnvelope": [
+                        "{{ workflow_object_name }}:_Call_BuildEnvelope": [
                             "Succeeded"
                         ]
                     },
                     "type": "SetVariable",
                     "inputs": {
                         "name": "MessageType",
-                        "value": "@{coalesce(xpath(xml(body('{{ workflow_object_name }}:Transform')), 'namespace-uri(/*)'), '')}#@{coalesce(xpath(xml(body('{{ workflow_object_name }}:Transform')), 'local-name(/*)'), '')}"
+                        "value": "@{coalesce(xpath(xml(body('{{ workflow_object_name }}:_Transform')), 'namespace-uri(/*)'), '')}#@{coalesce(xpath(xml(body('{{ workflow_object_name }}:_Transform')), 'local-name(/*)'), '')}"
                     }
                 },
-                "{{ workflow_object_name }}:Set_{{ target_message }}": {
+                "{{ workflow_object_name }}:_Set_Message": {
                     "runAfter": {
-                        "{{ workflow_object_name }}:Set_MessageType": [
+                        "{{ workflow_object_name }}:_Set_MessageType": [
                             "Succeeded"
                         ]
                     },
                     "type": "SetVariable",
                     "inputs": {
                         "name": "{{ target_message }}",
-                        "value": "@setProperty(body('{{ workflow_object_name }}:Call_BuildEnvelope'), 'header', setProperty(body('{{ workflow_object_name }}:Call_BuildEnvelope')?['header'], 'properties', setProperty(body('{{ workflow_object_name }}:Call_BuildEnvelope')?['header']?['properties'], 'btsMessageType', variables('MessageType'))))"
+                        "value": "@setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope'), 'header', setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope')?['header'], 'properties', setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope')?['header']?['properties'], 'btsMessageType', variables('MessageType'))))"
                     }
                 }
             }
@@ -117,7 +117,7 @@
         "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
             "runAfter": {},
             "type": "JavaScriptCode",
-            "description": "{{ workflow_object.type }}",
+            "description": "{{ workflow_object.type }} - Unsupported Multimap Transform",
             "inputs": {
                 "code": "var activity = \"{{ workflow_object.name }}\";\r\nreturn activity;"
             }

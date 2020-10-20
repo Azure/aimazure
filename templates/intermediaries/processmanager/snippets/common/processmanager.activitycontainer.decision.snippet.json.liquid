@@ -1,4 +1,4 @@
-{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
 {%- capture switch_expression_action_name -%}{{ workflow_object_name }}:Run_Switch_Expression{%- endcapture -%}
 {
     "workflowDefinitionAction": {

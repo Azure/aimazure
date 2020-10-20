@@ -9,5 +9,5 @@ Prior to running this script ensure you are authenticated against Azure and have
 ./Deploy-30-MessageBusOps-AppInsights.ps1
 #>
 
-$params = Get-Content -Path $PSScriptRoot\messagebusops.appi.dev.psparameters.json -Raw | ConvertFrom-Json
+$params = Get-Content -Path $PSScriptRoot\messagebusops.appi.{{ model.migration_target.deployment_environment | downcase }}.psparameters.json -Raw | ConvertFrom-Json
 & $PSScriptRoot\New-MessageBusOps-AppInsights.ps1 -resourceGroupName $params.resourceGroupName -name $params.name -location $params.location -tags $params.tags
