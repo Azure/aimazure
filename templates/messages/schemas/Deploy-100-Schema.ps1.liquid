@@ -9,4 +9,4 @@ Prior to running this script ensure you are authenticated against Azure and have
 Deploy-100-Schema.ps1
 #>
 
-& $PSScriptRoot\New-Schema.ps1 -requestBodyFile "\\?\$PSScriptRoot\requestbody.dev.json" -schemaFile "\\?\$PSScriptRoot\{{ resource_template.parameters.azure_message_schema_name }}.xsd" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -integrationAccountName "{{ resource_template.parameters.azure_integration_account_name }}"
+& $PSScriptRoot\New-Schema.ps1 -requestBodyFile "\\?\$PSScriptRoot\requestbody.{{ model.migration_target.deployment_environment | downcase }}.json" -schemaFile "\\?\$PSScriptRoot\{{ resource_template.parameters.azure_message_schema_name }}.xsd" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -integrationAccountName "{{ resource_template.parameters.azure_integration_account_name }}"

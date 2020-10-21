@@ -9,4 +9,4 @@ Prior to running this script ensure you are authenticated against Azure and have
 Deploy-120-Map.ps1
 #>
 
-& $PSScriptRoot\New-Map.ps1 -requestBodyFile "\\?\$PSScriptRoot\requestbody.dev.json" -mapFile "\\?\$PSScriptRoot\{{ resource_template.parameters.azure_message_map_name }}.xslt" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -integrationAccountName "{{ resource_template.parameters.azure_integration_account_name }}"
+& $PSScriptRoot\New-Map.ps1 -requestBodyFile "\\?\$PSScriptRoot\requestbody.{{ model.migration_target.deployment_environment | downcase }}.json" -mapFile "\\?\$PSScriptRoot\{{ resource_template.parameters.azure_message_map_name }}.xslt" -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -integrationAccountName "{{ resource_template.parameters.azure_integration_account_name }}"

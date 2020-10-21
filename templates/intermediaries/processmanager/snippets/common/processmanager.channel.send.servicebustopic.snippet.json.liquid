@@ -1,4 +1,4 @@
-{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
 {%- assign message_properties = workflow_object.properties.messageProperties -%}
 {%- assign message_properties_size = message_properties | size -%}
 {%- assign request_message_properties = workflow_object.properties.requestMessageProperties -%}
@@ -32,7 +32,7 @@
                         "{{ workflow_object_name }}:Compose_Header_{{ property.key }}": {
                             "runAfter": {},
                             "type": "Compose",
-                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'properties', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties'], '{{ property.key }}', '{{ property.value }}')))"
+                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'properties', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties'], '{{ property.key }}', '{{ property.value | to_json_string }}')))"
                         },
                         "{{ workflow_object_name }}:Set_Header_{{ property.key }}": {
                             "runAfter": {},
@@ -56,7 +56,7 @@
                         "{{ workflow_object_name }}:Get_Header_{{ property.value }}": {
                             "runAfter": {},
                             "type": "Compose",
-                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'properties', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties'], '{{ property.key }}', variables('{{ request_message.name }}')?['header']?['properties']?['{{ property.value }}'])))"
+                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'properties', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties'], '{{ property.key }}', variables('{{ request_message.name }}')?['header']?['properties']?['{{ property.value | to_json_string }}'])))"
                         },
                         "{{ workflow_object_name }}:Copy_Header_{{ property.value }}": {
                             "runAfter": {},
@@ -80,7 +80,7 @@
                         "{{ workflow_object_name }}:Compose_Routing_{{ property.key }}": {
                             "runAfter": {},
                             "type": "Compose",
-                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'routing', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['routing'], '{{ property.key }}', variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties']?['{{ property.value }}'])))"
+                            "inputs": "@setProperty(variables('{{ workflow_object.properties.MessageName }}'), 'header', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header'], 'routing', setProperty(variables('{{ workflow_object.properties.MessageName }}')?['header']?['routing'], '{{ property.key }}', variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties']?['{{ property.value | to_json_string }}'])))"
                         },
                         "{{ workflow_object_name }}:Set_Routing_{{ property.key }}": {
                             "runAfter": {},
