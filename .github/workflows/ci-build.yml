@@ -54,10 +54,15 @@ jobs:
           seconds_since_midnight_padded=`printf %05d $seconds_since_midnight`
           echo ::set-env name=VERSION_NUMBER_SUFFIX_SEM1::-$(cat ./version-suffix.txt)-$(date --utc +%Y%m%d$seconds_since_midnight_padded)
 
-      - name: Set the version number	
-        shell: bash	
+      - name: Set the version number
+        shell: bash
         run: |	
           echo ::set-env name=VERSION_NUMBER_SEM1::$(cat ./version-number.txt)${{ env.VERSION_NUMBER_SUFFIX_SEM1 }}
+
+      - name: Copy the license file for Chocolatey
+        shell: bash
+        run: |         
+          cp ./LICENSE ./templates/LICENSE
 
       - name: Create the Chocolatey package output directory
         shell: bash
