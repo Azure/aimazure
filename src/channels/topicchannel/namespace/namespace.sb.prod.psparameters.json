@@ -1,12 +1,10 @@
 {
     "namespace": "sb-aimmsgbox-prod-uksouth-xxxxx",
     "resourceGroupName": "rg-aimapp-systemapplication-prod-uksouth-xxxxx",
+    "location": "UK South",
+    "sku": "Standard",
     "tags": [
         "ApplicationName=AIM-System",
         "Env=prod"
-    ],
-    "topic": {
-        "name": "messagebox",
-        "enablePartitioning": true
-    }
+    ]
 }

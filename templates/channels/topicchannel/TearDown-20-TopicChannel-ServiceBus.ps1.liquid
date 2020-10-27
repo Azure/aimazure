@@ -9,4 +9,4 @@ Prior to running this script ensure you are authenticated against Azure and have
 
 $params = Get-Content -Path $PSScriptRoot\topicchannel.sb.{{ model.migration_target.deployment_environment | downcase }}.psparameters.json -Raw | ConvertFrom-Json
 
-& $PSScriptRoot\Remove-TopicChannel-ServiceBus.ps1 -resourceGroupName $params.resourceGroupName -resourceName $params.namespace
+& $PSScriptRoot\Remove-TopicChannel-ServiceBus.ps1 -resourceGroupName $params.resourceGroupName -namespace $params.namespace -topic $params.topic.name
