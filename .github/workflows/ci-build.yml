@@ -13,7 +13,6 @@ env:
   ARM_TEMPLATE_TEST_DIR: 'tests/armtemplates'
   CHOCO_CONFIG_DIR: 'build/chocolatey'
   CHOCO_PACKAGE_OUTPUT_DIR: 'choco-package'
-  CHOCO_PACKAGE_REPO_INTERNAL: 'https://push.chocolatey.org'
   CHOCO_PACKAGE_REPO_PUBLIC: 'https://push.chocolatey.org'
   OUTPUT_DIR: 'dist'
   SCRIPT_MAX_RETRIES: 4
@@ -81,7 +80,7 @@ jobs:
           while read f; do
             retryCount=0
             while true; do 
-              choco push $f -s ${{ env.CHOCO_PACKAGE_REPO_INTERNAL }} -k ${{ secrets.AIM_CHOCO_INTERNAL_REPO_TOKEN }} && break
+              choco push $f -s ${{ env.CHOCO_PACKAGE_REPO_PUBLIC }} -k ${{ secrets.AIM_CHOCO_PUBLIC_REPO_TOKEN }} && break
               retryCount=$((retryCount+1))
               if (( "$retryCount" <= ${{ env.SCRIPT_MAX_RETRIES }} )); then
                 echo "Retrying the processing of $f"			
