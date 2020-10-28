@@ -5,12 +5,12 @@
     <!-- Note This version will be overriden by the command line. -->
     <version>0.0.1-beta</version>
     <packageSourceUrl>https://github.com/azure/aimazure</packageSourceUrl>
-    <title>BizTalk to Azure Integration Services Migration - Azure templates</title>
+    <title>BizTalk Migrator Dependency - Azure Templates</title>
     <authors>Microsoft</authors>
     <projectUrl>https://github.com/azure/aimazure</projectUrl>
     <licenseUrl>https://github.com/azure/aimazure/blob/master/LICENSE</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <tags>biztalkmigrator-azure BizTalk Azure AIS CLI</tags>
+    <tags>biztalkmigrator-azure BizTalk Azure Integration AIM AIS CLI</tags>
     <description>Azure templates to migrate BizTalk applications to Microsoft Azure Integration Services.</description>
   </metadata>
   <files>
