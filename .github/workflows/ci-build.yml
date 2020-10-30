@@ -14,6 +14,7 @@ env:
   CHOCO_CONFIG_DIR: 'build/chocolatey'
   CHOCO_PACKAGE_OUTPUT_DIR: 'choco-package'
   CHOCO_PACKAGE_REPO_PUBLIC: 'https://push.chocolatey.org'
+  CHOCO_SRC_DIR: 'choco-src'
   OUTPUT_DIR: 'dist'
   SCRIPT_MAX_RETRIES: 4
   SCRIPT_RETRY_SLEEP_IN_SECONDS: 10
@@ -59,8 +60,9 @@ jobs:
       - name: Create the Chocolatey verification file and copy the license file
         shell: bash
         run: |         
-          cp ./LICENSE ./templates/LICENSE
-          verificationFile=./templates/VERIFICATION
+          mkdir -p ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}
+          cp ./LICENSE ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/LICENSE
+          verificationFile=./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION
           touch $verificationFile
           find ./templates -type f  | 
           while read f
@@ -80,8 +82,8 @@ jobs:
             choco pack $f --version=${{ env.VERSION_NUMBER_SEM1 }} --outputdirectory ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_PACKAGE_OUTPUT_DIR }}
           done
   
-      - name: Push the Chocolatey package to the public repo
-        if: github.event_name == 'release' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      - name: Push the Chocolatey package to the public repo on a GitHub Release
+        if: github.event_name == 'release'
         shell: bash
         run: | 
           find ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_PACKAGE_OUTPUT_DIR }}/ -name "*.nupkg" |

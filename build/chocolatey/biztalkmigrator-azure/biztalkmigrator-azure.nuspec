@@ -14,6 +14,7 @@
     <description>Azure templates to migrate BizTalk applications to Microsoft Azure Integration Services.</description>
   </metadata>
   <files>
+    <file src="..\..\..\dist\choco-src\**" target="tools"/>
     <file src="..\..\..\templates\**" target="tools\templates"/>
   </files>
 </package>
