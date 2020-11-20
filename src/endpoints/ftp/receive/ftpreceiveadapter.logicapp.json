@@ -437,7 +437,7 @@
                                         "type": "Workflow",
                                         "inputs": {
                                             "body": {
-                                                "nackMessage": "variables('ResponseMessage')",
+                                                "nackMessage": "@variables('ResponseMessage')",
                                                 "originalMessage": "@triggerBody()",
                                                 "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
                                                 "failedMessageRouting": "@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['failedMessageRouting'], false)",
@@ -1168,11 +1168,6 @@
                                 "connectionId": "[variables('ftpApiConnectionResourceId')]",
                                 "connectionName": "[parameters('ftpReceiveApiConnectionName')]",
                                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/ftp')]"
-                            },
-                            "servicebuspublish": {
-                                "connectionId": "[variables('serviceBusTopicPublishApiConnectionResourceId')]",
-                                "connectionName": "[parameters('serviceBusTopicPublishApiConnectionName')]",
-                                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
                             }
                         }
                     },
