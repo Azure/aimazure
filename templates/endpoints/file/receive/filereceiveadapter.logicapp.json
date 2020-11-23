@@ -426,7 +426,7 @@
                                         "type": "Workflow",
                                         "inputs": {
                                             "body": {
-                                                "nackMessage": "variables('ResponseMessage')",
+                                                "nackMessage": "@variables('ResponseMessage')",
                                                 "originalMessage": "@triggerBody()",
                                                 "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
                                                 "failedMessageRouting": "@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['failedMessageRouting'], false)",
@@ -1156,11 +1156,6 @@
                                 "connectionId": "[variables('fileSystemApiConnectionResourceId')]",
                                 "connectionName": "[parameters('fileSystemReceiveApiConnectionName')]",
                                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/filesystem')]"
-                            },
-                            "servicebuspublish": {
-                                "connectionId": "[variables('serviceBusTopicPublishApiConnectionResourceId')]",
-                                "connectionName": "[parameters('serviceBusTopicPublishApiConnectionName')]",
-                                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
                             }
                         }
                     },
