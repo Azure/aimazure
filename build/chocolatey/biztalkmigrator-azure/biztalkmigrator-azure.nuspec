@@ -8,10 +8,14 @@
     <title>BizTalk Migrator Dependency - Azure Templates</title>
     <authors>Microsoft</authors>
     <projectUrl>https://github.com/azure/aimazure</projectUrl>
+    <projectSourceUrl>https://github.com/azure/aimazure</projectSourceUrl>
+    <bugTrackerUrl>https://github.com/Azure/aimazure/issues</bugTrackerUrl>
     <licenseUrl>https://github.com/azure/aimazure/blob/master/LICENSE</licenseUrl>
+    <docsUrl>https://github.com/Azure/aimazure#readme</docsUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <tags>biztalkmigrator-azure BizTalk Azure Integration AIM AIS CLI</tags>
     <description>Azure templates to migrate BizTalk applications to Microsoft Azure Integration Services.</description>
+    <tags>biztalkmigrator-azure BizTalk Azure Integration AIM AIS CLI</tags>
+    <summary>Azure templates to migrate BizTalk applications to Microsoft Azure Integration Services.</summary>
   </metadata>
   <files>
     <file src="..\..\..\dist\choco-src\**" target="tools"/>
