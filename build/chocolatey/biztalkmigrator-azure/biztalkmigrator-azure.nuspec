@@ -8,7 +8,7 @@
     <title>BizTalk Migrator Dependency - Azure Templates</title>
     <authors>Microsoft</authors>
     <projectUrl>https://github.com/azure/aimazure</projectUrl>
-    <projectSourceUrl>https://github.com/azure/aimazure</<projectSourceUrl>
+    <projectSourceUrl>https://github.com/azure/aimazure</projectSourceUrl>
     <bugTrackerUrl>https://github.com/Azure/aimazure/issues</bugTrackerUrl>
     <licenseUrl>https://github.com/azure/aimazure/blob/master/LICENSE</licenseUrl>
     <docsUrl>https://github.com/Azure/aimazure#readme</docsUrl>
