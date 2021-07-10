@@ -1,0 +1,33 @@
+{
+	"workflowname.servicebusSubscribeConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/servicebus"
+	},
+	"workflowname.servicebusSubscribeConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.servicebusSubscribeConnection.name')"
+	},
+	"workflowname.servicebusSubscribeConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('workflowname.servicebusSubscribeConnection.key')"
+		}
+	},
+	"workflowname.topicSubscriber.scenarioName": {
+		"type": "String",
+		"value": "scenario",
+		"description": "The name of the scenario for this specific Topic Subscriber."
+	},
+	"workflowname.topicSubscriber.topicName": {
+		"type": "String",
+		"value": "messagebox",
+		"description": "The name of the topic used for this specific Scenario."
+	},
+	"workflowname.topicSubscriber.subscriptionName": {
+		"type": "String",
+		"value": "",
+		"description": "The name of the topic subscription used for this specific Scenario."
+	}
+}

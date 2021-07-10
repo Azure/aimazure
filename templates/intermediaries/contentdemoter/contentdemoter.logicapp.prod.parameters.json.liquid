@@ -5,18 +5,36 @@
         "logicAppName": {
             "value": "{{ resource_template.resource_name }}"
         },
-        "logicAppLocation": {
+		"logicAppLocation": {
             "value": "{{ resource_template.parameters.azure_primary_region }}"
         },
-        "messageBusResourceGroupName": {
+        "storageAccountName": {
+            "value": "{{ resource_template.parameters.azure_storage_account_name }}"
+        },
+        "appServicePlanName": {
+            "value": "{{ resource_template.parameters.azure_app_service_plan_name }}"
+        },
+		"messageBusResourceGroupName": {
             "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
         },
-        "routingSlipRouterLogicAppName": {
-            "value": "{{ resource_template.parameters.routing_slip_router_name }}"
-        },
-        "apimServiceName": {
+		"serviceBusResourceGroupName": {
+			"value": "{{ resource_template.parameters.azure_service_bus_resource_group_name }}"
+		},
+		"serviceBusNamespaceName": {
+			"value": "{{ resource_template.parameters.azure_service_bus_namespace_name }}"
+		},
+		"serviceBusPublishPolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"serviceBusSubscribePolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"apimServiceName": {
             "value": "{{ resource_template.parameters.apim_service_name }}"
         },
+		"serviceBusSubscribeApiConnectionName": {
+			"value": "{{ resource_template.parameters.service_bus_api_connection_name }}"
+		},
         "tags": {
             "value": {
 {%- for tag in resource_template.tags -%}

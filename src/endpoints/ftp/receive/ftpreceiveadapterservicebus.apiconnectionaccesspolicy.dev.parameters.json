@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "apic-topicpublisherconnector-ftpreceivelocation-dev-xxxx"
+        },
+        "apiConnectionLocation": {
+            "value": "UK South"
+        },
+        "logicAppName": {
+            "value": "logic-application-dev-xxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName" : "Application",
+                "Env" : "dev"
+            }
+        }
+    }
+}

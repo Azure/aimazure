@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appServicePlanName": {
+            "value": "plan-logicapp-aimmsgbussvc-dev-xxxxx"
+        },
+        "appServicePlanLocation": {
+            "value": "UK South"
+        },
+        "skuName": {
+            "value": "WS1"
+        },
+        "skuTier": {
+            "value": "WorkflowStandard"
+        },
+		"skuFamily": {
+            "value": "WS"
+        },		
+        "skuCapacity": {
+            "value": 1
+        },
+        "tags": {
+            "value": {
+                "ApplicationName" : "AIM-MessageBus",
+                "Env" : "dev"
+            }
+        }
+    }
+}

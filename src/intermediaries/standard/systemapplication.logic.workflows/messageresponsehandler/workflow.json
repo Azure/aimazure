@@ -1,0 +1,598 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_StatusCode_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "StatusCode",
+                            "type": "integer",
+                            "value": 500
+                        }
+                    ]
+                },
+                "runAfter": {}
+            },
+            "Initialize_FaultMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "FaultMessage",
+                            "type": "object",
+                            "value": null
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_StatusCode_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ErrorMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ErrorMessage",
+                            "type": "string",
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_FaultMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Checkpoint_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Checkpoint",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ErrorMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ResponseBodyArray_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ResponseBodyArray",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Checkpoint_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ResponseCount_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ResponseCount",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ResponseBodyArray_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "SendResponse:_Check_Outcome": {
+                "type": "If",
+                "expression": {
+                    "or": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "WaitForResponseSuccess"
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "WaitForResponseFailure"
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "WaitForResponseTimeout"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "SendResponse:_Switch_on_Checkpoint": {
+                        "type": "Switch",
+                        "expression": "@variables('Checkpoint')",
+                        "cases": {
+                            "Success": {
+                                "case": "WaitForResponseSuccess",
+                                "actions": {
+                                    "SendResponse:Success:_Complete_each_Response_Message": {
+                                        "type": "Foreach",
+                                        "foreach": "@variables('ResponseBodyArray')",
+                                        "actions": {
+                                            "SendResponse:Success:_Complete_Current_Response_message": {
+                                                "type": "ApiConnection",
+                                                "inputs": {
+                                                    "host": {
+                                                        "connection": {
+                                                            "referenceName": "serviceBusSubscribe"
+                                                        }
+                                                    },
+                                                    "method": "delete",
+                                                    "path": "/@{encodeURIComponent(triggerBody()?['responseTopicName'])}/subscriptions/@{encodeURIComponent(triggerBody()?['responseSubscriptionName'])}/messages/complete",
+                                                    "queries": {
+                                                        "lockToken": "@items('SendResponse:Success:_Complete_each_Response_Message')?['LockToken']",
+                                                        "subscriptionType": "Main",
+                                                        "sessionId": "@items('SendResponse:Success:_Complete_each_Response_Message')?['SessionId']"
+                                                    },
+                                                    "retryPolicy": {
+                                                        "type": "none"
+                                                    }
+                                                },
+                                                "runAfter": {}
+                                            }
+                                        },
+                                        "runAfter": {}
+                                    },
+                                    "SendResponse:Success:_Build_Response": {
+                                        "type": "Compose",
+                                        "inputs": {
+                                            "$content-type": "@variables('ResponseBodyArray')?[0]?['ContentType']",
+                                            "$content": "@variables('ResponseBodyArray')?[0]?['ContentData']",
+                                            "$content-encoding": "@variables('ResponseBodyArray')?[0]?['ContentTransferEncoding']"
+                                        },
+                                        "runAfter": {
+                                            "SendResponse:Success:_Complete_each_Response_Message": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    },
+                                    "SendResponse:Success:_Send_Response": {
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "statusCode": 200,
+                                            "headers": {
+                                                "Content-Type": "application/json"
+                                            },
+                                            "body": "@outputs('SendResponse:Success:_Build_Response')"
+                                        },
+                                        "runAfter": {
+                                            "SendResponse:Success:_Build_Response": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    },
+                                    "SendResponse:Success:_Send_Fault_Response": {
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "statusCode": 500,
+                                            "headers": {
+                                                "Content-Type": "application/json"
+                                            },
+                                            "body": {
+                                                "fault": {
+                                                    "faultActor": "@{workflow()['name']} (@{workflow()?['run']?['name']})",
+                                                    "faultCategory": "Error",
+                                                    "faultCode": "500",
+                                                    "faultMessage": "An error occurred trying to complete the response messages received for this session.",
+                                                    "faultReason": ""
+                                                }
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "SendResponse:Success:_Complete_each_Response_Message": [
+                                                "Failed",
+                                                "Skipped",
+                                                "TimedOut"
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            "Failure": {
+                                "case": "WaitForResponseFailure",
+                                "actions": {
+                                    "SendResponse:Failure:_Send_Fault_Response": {
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "statusCode": 500,
+                                            "headers": {
+                                                "Content-Type": "application/json"
+                                            },
+                                            "body": "@variables('FaultMessage')"
+                                        },
+                                        "runAfter": {}
+                                    }
+                                }
+                            },
+                            "Timeout": {
+                                "case": "WaitForResponseTimeout",
+                                "actions": {
+                                    "SendResponse:Timeout:_Send_Fault_Response": {
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "statusCode": 504,
+                                            "headers": {
+                                                "Content-Type": "application/json"
+                                            },
+                                            "body": {
+                                                "fault": {
+                                                    "faultActor": "@{workflow()['name']} (@{workflow()?['run']?['name']})",
+                                                    "faultCategory": "Error",
+                                                    "faultCode": "504",
+                                                    "faultMessage": "Timed out waiting for a response message.",
+                                                    "faultReason": ""
+                                                }
+                                            }
+                                        },
+                                        "runAfter": {}
+                                    }
+                                }
+                            }
+                        },
+                        "default": {
+                            "actions": {
+                                "SendResponse:UnknownCheckpoint:_Send_Fault_Response": {
+                                    "type": "Response",
+                                    "kind": "Http",
+                                    "inputs": {
+                                        "statusCode": 500,
+                                        "headers": {
+                                            "Content-Type": "application/json"
+                                        },
+                                        "body": {
+                                            "fault": {
+                                                "faultActor": "@{workflow()['name']} (@{workflow()?['run']?['name']})",
+                                                "faultCategory": "Error",
+                                                "faultCode": "500",
+                                                "faultMessage": "Unexpected Checkpoint value of '@{variables('Checkpoint')}' in LogicApp @{workflow()['name']}. Unable to continue.",
+                                                "faultReason": ""
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {}
+                                }
+                            }
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Step:_Wait_for_Response": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                },
+                "else": {
+                    "actions": {
+                        "Failure:_Do_we_have_a_Fault": {
+                            "type": "If",
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@coalesce(variables('FaultMessage'), '')",
+                                            ""
+                                        ]
+                                    }
+                                ]
+                            },
+                            "actions": {
+                                "Failure:NoFault:_Send_Fault_Response": {
+                                    "type": "Response",
+                                    "kind": "Http",
+                                    "inputs": {
+                                        "statusCode": 500,
+                                        "headers": {
+                                            "Content-Type": "application/json"
+                                        },
+                                        "body": {
+                                            "fault": {
+                                                "faultActor": "@{workflow()['name']} (@{workflow()?['run']?['name']})",
+                                                "faultCategory": "Error",
+                                                "faultCode": "500",
+                                                "faultMessage": "An error occurred in LogicApp @{workflow()['name']}. Unable to continue. Expected a Checkpoint of WaitForResponseSuccess/WaitForResponseFailure/WaitForResponseTimeout but received a Checkpoint of '@{variables('Checkpoint')}'.",
+                                                "faultReason": ""
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {}
+                                }
+                            },
+                            "runAfter": {},
+                            "else": {
+                                "actions": {
+                                    "Failure:HaveFault:_Send_Fault_Response": {
+                                        "type": "Response",
+                                        "kind": "Http",
+                                        "inputs": {
+                                            "statusCode": 500,
+                                            "headers": {
+                                                "Content-Type": "application/json"
+                                            },
+                                            "body": "@variables('FaultMessage')"
+                                        },
+                                        "runAfter": {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Step:_Wait_for_Response": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "WaitForResponse:_Loop_until_we_get_Response_or_TimeOut": {
+                        "type": "Until",
+                        "expression": "@or(greater(variables('ResponseCount'), 0), equals(variables('Checkpoint'), 'WaitForResponseFailure'))",
+                        "limit": {
+                            "count": "@mul(coalesce(triggerBody()?['responseTimeoutInMinutes'], 3), 2)",
+                            "timeout": "PT@{coalesce(triggerBody()?['responseTimeoutInMinutes'], 3)}M"
+                        },
+                        "actions": {
+                            "WaitForResponse:_Get_Response_Message_from_Topic": {
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "referenceName": "serviceBusSubscribe"
+                                        }
+                                    },
+                                    "method": "get",
+                                    "path": "/@{encodeURIComponent(encodeURIComponent(triggerBody()?['responseTopicName']))}/subscriptions/@{encodeURIComponent(triggerBody()?['responseSubscriptionName'])}/messages/batch/peek",
+                                    "queries": {
+                                        "maxMessageCount": 1,
+                                        "subscriptionType": "Main",
+                                        "sessionId": "@{triggerBody()?['correlationId']}"
+                                    },
+                                    "retryPolicy": {
+                                        "type": "none"
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "WaitForResponse:_Set_StatusCode_variable": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "StatusCode",
+                                    "value": "@coalesce(outputs('WaitForResponse:_Get_Response_Message_from_Topic')?['statusCode'], 500)"
+                                },
+                                "runAfter": {
+                                    "WaitForResponse:_Get_Response_Message_from_Topic": [
+                                        "Succeeded",
+                                        "Failed",
+                                        "Skipped",
+                                        "TimedOut"
+                                    ]
+                                }
+                            },
+                            "WaitForResponse:_Check_Status_Code": {
+                                "type": "Switch",
+                                "expression": "@variables('StatusCode')",
+                                "cases": {
+                                    "Success": {
+                                        "case": 200,
+                                        "actions": {
+                                            "WaitForResponse:Success:_Set_ResponseBodyArray_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ResponseBodyArray",
+                                                    "value": "@array(body('WaitForResponse:_Get_Response_Message_from_Topic'))"
+                                                },
+                                                "runAfter": {}
+                                            },
+                                            "WaitForResponse:Success:_Set_ResponseCount_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ResponseCount",
+                                                    "value": "@length(variables('ResponseBodyArray'))"
+                                                },
+                                                "runAfter": {
+                                                    "WaitForResponse:Success:_Set_ResponseBodyArray_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "default": {
+                                    "actions": {
+                                        "WaitForResponse:Failure:_Create_Fault_Message": {
+                                            "type": "Compose",
+                                            "inputs": {
+                                                "fault": {
+                                                    "faultActor": "@{workflow()?['name']}.@{actions('WaitForResponse:_Get_Response_Message_from_Topic')?['name']} (@{workflow()?['run']?['name']})",
+                                                    "faultCategory": "Error",
+                                                    "faultCode": "@{coalesce(outputs('WaitForResponse:_Get_Response_Message_from_Topic')?['statusCode'], outputs('WaitForResponse:_Get_Response_Message_from_Topic')?['body']?['statusCode'], actions('WaitForResponse:_Get_Response_Message_from_Topic')?['error']?['code'])}",
+                                                    "faultMessage": "@{coalesce(outputs('WaitForResponse:_Get_Response_Message_from_Topic')?['error']?['message'], body('WaitForResponse:_Get_Response_Message_from_Topic')?['message'], body('WaitForResponse:_Get_Response_Message_from_Topic')?['error']?['message'], actions('WaitForResponse:_Get_Response_Message_from_Topic')?['error']?['message'])}",
+                                                    "faultReason": "@{actions('WaitForResponse:_Get_Response_Message_from_Topic')?['status']}"
+                                                }
+                                            },
+                                            "runAfter": {}
+                                        },
+                                        "WaitForResponse:Failure:_Set_FaultMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "FaultMessage",
+                                                "value": "@outputs('WaitForResponse:Failure:_Create_Fault_Message')"
+                                            },
+                                            "runAfter": {
+                                                "WaitForResponse:Failure:_Create_Fault_Message": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        },
+                                        "WaitForResponse:Failure:_Set_ErrorMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "ErrorMessage",
+                                                "value": "An error occurred executing the @{actions('WaitForResponse:_Get_Response_Message_from_Topic')?['name']} action to get the response message."
+                                            },
+                                            "runAfter": {
+                                                "WaitForResponse:Failure:_Set_FaultMessage_variable": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        },
+                                        "WaitForResponse:Failure:_Set_Checkpoint_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "Checkpoint",
+                                                "value": "WaitForResponseFailure"
+                                            },
+                                            "runAfter": {
+                                                "WaitForResponse:Failure:_Set_ErrorMessage_variable": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "runAfter": {
+                                    "WaitForResponse:_Set_StatusCode_variable": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        },
+                        "runAfter": {}
+                    },
+                    "WaitForResponse:_Check_Outcome": {
+                        "type": "If",
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@variables('Checkpoint')",
+                                        ""
+                                    ]
+                                },
+                                {
+                                    "greater": [
+                                        "@variables('ResponseCount')",
+                                        0
+                                    ]
+                                }
+                            ]
+                        },
+                        "actions": {
+                            "WaitForResponse:Success:_Set_Checkpoint_variable": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "Checkpoint",
+                                    "value": "WaitForResponseSuccess"
+                                },
+                                "runAfter": {}
+                            }
+                        },
+                        "runAfter": {
+                            "WaitForResponse:_Loop_until_we_get_Response_or_TimeOut": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
+                            ]
+                        },
+                        "else": {
+                            "actions": {
+                                "WaitForResponse:TimeOut:_Set_Checkpoint_variable": {
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "Checkpoint",
+                                        "value": "WaitForResponseTimeout"
+                                    },
+                                    "runAfter": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_ResponseCount_variable": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "properties": {
+                            "correlationId": {
+                                "type": "string"
+                            },
+                            "responseSubscriptionName": {
+                                "type": "string"
+                            },
+                            "responseTimeoutInMinutes": {
+                                "type": "integer"
+                            },
+                            "responseTopicName": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "correlationId",
+                            "responseTopicName",
+                            "responseSubscriptionName",
+                            "responseTimeoutInMinutes"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "operationOptions": "EnableSchemaValidation",
+                "correlation": {}
+            }
+        },
+        "contentVersion": "1.0.0.0"
+    },
+    "kind": "Stateful"
+}

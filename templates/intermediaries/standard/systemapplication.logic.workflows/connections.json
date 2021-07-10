@@ -1,0 +1,34 @@
+{
+	"serviceProviderConnections": {
+		"serviceBusPublish": {
+			"parameterValues": {
+				"connectionString": "@appsetting('servicebusPublishConnectionString')"
+			},
+			"serviceProvider": {
+				"id": "/serviceProviders/serviceBus"
+			},
+			"displayName": "servicebuspublish"
+		},
+		"serviceBusSubscribe": {
+			"parameterValues": {
+				"connectionString": "@appsetting('servicebusSubscribeConnectionString')"
+			},
+			"serviceProvider": {
+				"id": "/serviceProviders/serviceBus"
+			},
+			"displayName": "servicebussubscribe"
+		}
+	},
+	"managedApiConnections": {
+		"servicebusSubscribe": {
+			"api": {
+				"id": "@parameters('servicebusSubscribeConnectionApiId')"
+			},
+			"connection": {
+				"id": "@parameters('servicebusSubscribeConnectionResourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('servicebusSubscribeConnectionRuntimeUrl')",
+			"authentication": "@parameters('servicebusSubscribeManagedApiAuthentication')"
+		}
+	}
+}

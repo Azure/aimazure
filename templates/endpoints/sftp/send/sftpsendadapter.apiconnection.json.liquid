@@ -1,0 +1,107 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "type": "string",
+            "metadata": {
+                "description": "API Connection Name"
+            }
+        },
+        "apiConnectorLocation": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location (region) or ISE that this connection is to be deployed to. Defaults to the ResourceGroup location."
+            }
+        },
+        "serverAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "SFTP Server Address"
+            }
+        },
+        "userName": {
+            "type": "string",
+            "metadata": {
+                "description": "User Name for the SFTP Server"
+            }
+        },
+        "password": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the SFTP Server (mandatory if private key is not provided)"
+            }
+        },
+        "serverPort": {
+            "type": "int",
+            "defaultValue": 22,
+            "metadata": {
+                "description": "SFTP Port Number (example: 22)"
+            }
+        },
+        "acceptAnySshHostKey": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Indicates if SSH host key validation needs to be disabled"
+            }
+        },
+        "rootFolder": {
+            "type": "string",
+            "metadata": {
+                "description": "Root folder path"
+            }
+        },
+        "sshHostKeyFingerprint": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH host key finger-print"
+            }
+        },
+        "sshPrivateKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH private key (the content of the file should be provided entirely as is, in the multiline format) - in OpenSSH/SSH.com (PEM) format"
+            }
+        },
+        "sshPrivateKeyPassphrase": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH private key passphrase (if the private key is protected by a passphrase)"
+            }
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('apiConnectorName')]",
+            "location": "[parameters('apiConnectorLocation')]",
+			"kind": "{{ resource_template.parameters.azure_api_connection_version }}",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "api": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'sftpwithssh')]"
+                },
+                "displayName": "[parameters('apiConnectorName')]",
+                "parameterValues": {
+                    "hostName": "[parameters('serverAddress')]",
+                    "userName": "[parameters('userName')]",
+                    "password": "[parameters('password')]",
+                    "portNumber": "[parameters('serverPort')]",
+                    "acceptAnySshHostKey": "[parameters('acceptAnySshHostKey')]",
+                    "rootFolder": "[parameters('rootFolder')]",
+                    "sshHostKeyFingerprint": "[parameters('sshHostKeyFingerprint')]",
+                    "sshPrivateKey": "[parameters('sshPrivateKey')]",
+                    "sshPrivateKeyPassphrase": "[parameters('sshPrivateKeyPassphrase')]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

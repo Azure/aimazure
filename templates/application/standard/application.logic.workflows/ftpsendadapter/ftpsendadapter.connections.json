@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"workflowname.ftpSendConnection": {
+			"api": {
+				"id": "@parameters('workflowname.ftpSendConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('workflowname.ftpSendConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('workflowname.ftpSendConnection.runtimeUrl')",
+			"authentication": "@parameters('workflowname.ftpSendConnection.apiAuthentication')"
+		}
+	}
+}

@@ -1,0 +1,46 @@
+{
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/ftp"
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.name')"
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "ManagedServiceIdentity"
+		}
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.scenarioName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_scenario }}",
+		"description": "The name of the scenario for this specific Receive Adapter."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpReceiveFolder": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_target_folder }}",
+		"description": "The path where the File connector looks for new/updated files."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.fileNameMask": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_file_mask }}",
+		"description": "The file mask to use when checking for files."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpMaxFileCount": {
+		"type": "Int",
+		"value": {{ resource_template.parameters.azure_ftp_max_file_count }},
+		"description": "The max number of files the File Connector will retrieve per polling interval."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpRecurrenceFrequency": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_frequency }}",
+		"description": "The frequency with which to check for new files on the File server."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpRecurrenceInterval": {
+		"type": "Int",
+		"value": {{ resource_template.parameters.azure_ftp_recurrence }},
+		"description": "The interval with which to check for new files on the File server."
+	}
+}

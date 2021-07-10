@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimsftpsadapter-aim-sftppassthru-sendport-dev-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev-xxxxx"
+        },
+        "routingSlipRouterLogicAppName": {
+            "value": "logic-aimroutingsliprouter-dev-xxxxx"
+        },
+        "sftpSendApiConnectionName": {
+            "value": "apic-aimsftpsconnector-aim-sftppassthru-sendport-dev-xxxxx"
+        },
+        "sftpSendFolder": {
+            "value": "/"
+        },
+        "sftpSendFileName": {
+            "value": "{MessageId}-{ReceivedFileName}"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName" : "Aim-SftpPassthru",
+                "Env" : "dev"
+            }
+        }
+    }
+}

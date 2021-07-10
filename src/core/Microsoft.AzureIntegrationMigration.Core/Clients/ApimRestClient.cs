@@ -101,12 +101,12 @@ namespace Microsoft.AzureIntegrationMigration.Core.Clients
         }
 
         /// <summary>
-        /// Gets a <see cref="Uri"/> instance containing a CallbackUrl for the given LogicApp from APIM.
+        /// Gets a <see cref="Uri"/> instance containing a CallbackUrl for the given Consumption LogicApp from APIM.
         /// </summary>
-        /// <param name="resourceGroupName">Name of the ResourceGroup the LogicApp is in.</param>
-        /// <param name="logicAppName">Name of the LogicApp.</param>
+        /// <param name="resourceGroupName">Name of the ResourceGroup the Consumption LogicApp is in.</param>
+        /// <param name="logicAppName">Name of the Consumption LogicApp.</param>
         /// <returns><see cref="Task{Uri}"/> instance containing a CallbackUrl.</returns>
-        public async Task<Uri> GetLogicAppCallbackUrlAsync(string resourceGroupName, string logicAppName)
+        public async Task<Uri> GetConsumptionLogicAppCallbackUrlAsync(string resourceGroupName, string logicAppName)
         {
             Argument.AssertNotNullOrEmpty(ApimInstanceName, nameof(ApimInstanceName));
             Argument.AssertNotNullOrEmpty(resourceGroupName, nameof(resourceGroupName));
@@ -114,18 +114,47 @@ namespace Microsoft.AzureIntegrationMigration.Core.Clients
 
             // Make a call to APIM to get LogicApp CallbackUrl
             Uri apimUri = new Uri($"{AuthenticationScope}aimroutingmanager/logicappcallbackurl/{resourceGroupName}/{logicAppName}?clearCache={_requestDetails.ClearCache}");
-            AzureResponse response = await GetFromAPIM(apimUri, "LogicApp CallbackUrl");
+            AzureResponse response = await GetFromAPIM(apimUri, "Consumption LogicApp CallbackUrl");
 
             // Get and return the CallbackUrl as a Uri instance
             string logicAppUrl = ((JObject)response.BodyContentAsJson)?["logicAppUrl"]?.ToString();
             if (string.IsNullOrWhiteSpace(logicAppUrl))
             {
                 // No Url
-                throw new AzureResponseException(response, $"No valid Url in the JSON returned from APIM trying to get a LogicApp CallbackUrl");
+                throw new AzureResponseException(response, $"No valid Url in the JSON returned from APIM trying to get a Consumption LogicApp CallbackUrl");
             }
 
             return new Uri(logicAppUrl);
         }
+
+        /// <summary>
+        /// Gets a <see cref="Uri"/> instance containing a CallbackUrl for the given Standard LogicApp Workflow from APIM.
+        /// </summary>
+        /// <param name="resourceGroupName">Name of the ResourceGroup the Standard LogicApp is in.</param>
+        /// <param name="logicAppName">Name of the Standard LogicApp.</param>
+        /// <param name="workflowName">Name of the Workflow.</param>
+        /// <returns><see cref="Task{Uri}"/> instance containing a CallbackUrl.</returns>
+        public async Task<Uri> GetStandardLogicAppWorkflowCallbackUrlAsync(string resourceGroupName, string logicAppName, string workflowName)
+        {
+            Argument.AssertNotNullOrEmpty(ApimInstanceName, nameof(ApimInstanceName));
+            Argument.AssertNotNullOrEmpty(resourceGroupName, nameof(resourceGroupName));
+            Argument.AssertNotNullOrEmpty(logicAppName, nameof(logicAppName));
+            Argument.AssertNotNullOrEmpty(workflowName, nameof(workflowName));
+
+            // Make a call to APIM to get LogicApp CallbackUrl
+            Uri apimUri = new Uri($"{AuthenticationScope}aimroutingmanager/standardlogicappcallbackurl/{resourceGroupName}/{logicAppName}/{workflowName}?clearCache={_requestDetails.ClearCache}");
+            AzureResponse response = await GetFromAPIM(apimUri, "Standard LogicApp Workflow CallbackUrl");
+
+            // Get and return the CallbackUrl as a Uri instance
+            string logicAppUrl = ((JObject)response.BodyContentAsJson)?["logicAppUrl"]?.ToString();
+            if (string.IsNullOrWhiteSpace(logicAppUrl))
+            {
+                // No Url
+                throw new AzureResponseException(response, $"No valid Url in the JSON returned from APIM trying to get a Standard LogicApp Workflow CallbackUrl");
+            }
+
+            return new Uri(logicAppUrl);
+        }        
 
         /// <summary>
         /// Performs a Get operation on APIM, returning an <see cref="AzureResponse"/> instance.

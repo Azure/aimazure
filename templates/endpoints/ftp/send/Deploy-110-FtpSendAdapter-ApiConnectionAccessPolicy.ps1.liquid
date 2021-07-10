@@ -1,0 +1,13 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+<#
+.SYNOPSIS
+Invokes the deployment of the ftp send api connection access policy.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+.\Deploy-110-FtpSendAdapter-ApiConnectionAccessPolicy.ps1
+#>
+
+& $PSScriptRoot\New-FtpSendAdapter-ApiConnectionAccessPolicy.ps1 -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -templateFile "$PSScriptRoot\ftpsendadapter.apiconnectionaccesspolicy.json" -templateParameterFile "$PSScriptRoot\ftpsendadapter.apiconnectionaccesspolicy.dev.parameters.json" -deploymentName "ftpsendadapter.apicaccesspolicy.{{ formatted_azure_primary_region }}.{{ model.migration_target.unique_deployment_id | downcase }}"

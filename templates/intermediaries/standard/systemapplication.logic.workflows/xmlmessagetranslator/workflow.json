@@ -1,0 +1,1332 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "manual": {
+        "correlation": {
+          "clientTrackingId": "triggerBody()?['header']?['properties']?['trackingId']"
+        },
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "schema": {}
+        }
+      }
+    },
+    "actions": {
+      "Initialize_StatusCode_variable": {
+        "runAfter": {},
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "StatusCode",
+              "type": "integer",
+              "value": 500
+            }
+          ]
+        }
+      },
+      "Initialize_FaultMessage_variable": {
+        "runAfter": {
+          "Initialize_StatusCode_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "FaultMessage",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "Initialize_ErrorMessage_variable": {
+        "runAfter": {
+          "Initialize_FaultMessage_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "ErrorMessage",
+              "type": "string",
+              "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+            }
+          ]
+        }
+      },
+      "Initialize_ResponseMessage_variable": {
+        "runAfter": {
+          "Initialize_ErrorMessage_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "ResponseMessage",
+              "type": "object",
+              "value": null
+            }
+          ]
+        }
+      },
+      "Initialize_Checkpoint_variable": {
+        "runAfter": {
+          "Initialize_ResponseMessage_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "Checkpoint",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "Initialize_Envelope_variable": {
+        "runAfter": {
+          "Initialize_Checkpoint_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "Envelope",
+              "type": "object",
+              "value": "@triggerBody()"
+            }
+          ]
+        }
+      },
+      "Initialize_Configuration_variable": {
+        "runAfter": {
+          "Initialize_Envelope_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "Configuration",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "Initialize_BodyContent_variable": {
+        "runAfter": {
+          "Initialize_Configuration_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "BodyContent",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "Initialize_MessageType_variable": {
+        "runAfter": {
+          "Initialize_BodyContent_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "MessageType",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "Initialize_MapName_variable": {
+        "runAfter": {
+          "Initialize_MessageType_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "MapName",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "Initialize_TransformedContent_variable": {
+        "runAfter": {
+          "Initialize_MapName_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "TransformedContent",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "MessageSender:_Were_we_Successful": {
+        "actions": {
+          "Routing:_Call_RoutingSlipRouter": {
+            "runAfter": {},
+            "type": "Workflow",
+            "inputs": {
+              "body": "@variables('Envelope')",
+              "headers": {
+                "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+                "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                "Content-Type": "application/json"
+              },
+              "host": {
+                "workflow": {
+                    "id": "routingsliprouter"
+                }
+              },
+              "retryPolicy": {
+                "type": "none"
+              }
+            }
+          },
+          "Routing:_Check_StatusCode": {
+            "runAfter": {
+              "Routing:_Set_StatusCode_variable": [
+                "Succeeded"
+              ]
+            },
+            "cases": {
+              "Success": {
+                "case": 200,
+                "actions": {
+                  "Routing:Success:_Send_ACK-Content_response": {
+                    "runAfter": {},
+                    "type": "Response",
+                    "kind": "Http",
+                    "inputs": {
+                      "body": "@body('Routing:_Call_RoutingSlipRouter')",
+                      "headers": {
+                        "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                        "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+                        "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                        "Content-Type": "application/json"
+                      },
+                      "statusCode": 200
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "actions": {
+                "Routing:Error:_Build_NACK_message": {
+                  "runAfter": {
+                    "Routing:Error:_Do_we_have_a_Fault_Message": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": {
+                    "body": [
+                      {
+                        "$content": {
+                          "code": "500",
+                          "message": "@variables('ErrorMessage')",
+                          "lastCheckpoint": "@variables('Checkpoint')",
+                          "fault": "@variables('FaultMessage')"
+                        },
+                        "$contentType": "application/json",
+                        "$part": 1,
+                        "$partType": "http://schemas.microsoft.com/aim#nack"
+                      }
+                    ],
+                    "header": {
+                      "properties": {
+                        "createDate": "@utcNow()",
+                        "envelopeType": "nack",
+                        "messageId": "@guid()",
+                        "rootPart": 1,
+                        "trackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                      },
+                      "routing": {
+                        "MessageType": "http://schemas.microsoft.com/aim#nack"
+                      },
+                      "routingSlip": {},
+                      "state": {}
+                    }
+                  }
+                },
+                "Routing:Error:_Do_we_have_a_Fault_Message": {
+                  "actions": {
+                    "Routing:Error:Fault:_Set_ErrorMessage_variable": {
+                      "runAfter": {
+                        "Routing:Error:Fault:_Set_FaultMessage_variable": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ErrorMessage",
+                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the RoutingSlipRouter Logic App"
+                      }
+                    },
+                    "Routing:Error:Fault:_Set_FaultMessage_variable": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "FaultMessage",
+                        "value": "@body('Routing:_Call_RoutingSlipRouter')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "else": {
+                    "actions": {
+                      "Routing:Error:NoFault:_Create_Fault_Message": {
+                        "runAfter": {},
+                        "type": "Compose",
+                        "inputs": {
+                          "fault": {
+                            "faultActor": "@concat(workflow()?['name'], '.', actions('Routing:_Call_RoutingSlipRouter')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                            "faultCategory": "Error",
+                            "faultCode": "@{coalesce(outputs('Routing:_Call_RoutingSlipRouter')?['statusCode'], outputs('Routing:_Call_RoutingSlipRouter')?['body']?['statusCode'], actions('Routing:_Call_RoutingSlipRouter')?['error']?['code'])}",
+                            "faultMessage": "@{coalesce(outputs('Routing:_Call_RoutingSlipRouter')?['error']?['message'], outputs('Routing:_Call_RoutingSlipRouter')?['body']?['message'], actions('Routing:_Call_RoutingSlipRouter')?['error']?['message'])}",
+                            "faultReason": "@{actions('Routing:_Call_RoutingSlipRouter')?['status']}"
+                          }
+                        }
+                      },
+                      "Routing:Error:NoFault:_Set_ErrorMessage_variable": {
+                        "runAfter": {
+                          "Routing:Error:NoFault:_Set_FaultMessage_variable": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "ErrorMessage",
+                          "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the RoutingSlipRouter Logic App"
+                        }
+                      },
+                      "Routing:Error:NoFault:_Set_FaultMessage_variable": {
+                        "runAfter": {
+                          "Routing:Error:NoFault:_Create_Fault_Message": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "FaultMessage",
+                          "value": "@outputs('Routing:Error:NoFault:_Create_Fault_Message')"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@body('Routing:_Call_RoutingSlipRouter')?['fault']",
+                            null
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "type": "If"
+                },
+                "Routing:Error:_Send_NACK_response": {
+                  "runAfter": {
+                    "Routing:Error:_Build_NACK_message": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Response",
+                  "kind": "Http",
+                  "inputs": {
+                    "body": "@outputs('Routing:Error:_Build_NACK_message')",
+                    "headers": {
+                      "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                      "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+                      "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                      "Content-Type": "application/json"
+                    },
+                    "statusCode": 200
+                  }
+                }
+              }
+            },
+            "expression": "@variables('StatusCode')",
+            "type": "Switch"
+          },
+          "Routing:_Set_StatusCode_variable": {
+            "runAfter": {
+              "Routing:_Call_RoutingSlipRouter": [
+                "Succeeded",
+                "Failed",
+                "Skipped",
+                "TimedOut"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "StatusCode",
+              "value": "@coalesce(outputs('Routing:_Call_RoutingSlipRouter')?['statusCode'], 500)"
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Update_MessageType": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "else": {
+          "actions": {
+            "Failure:_Build_NACK_message": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": {
+                "body": [
+                  {
+                    "$content": {
+                      "code": "500",
+                      "message": "@variables('ErrorMessage')",
+                      "lastCheckpoint": "@variables('Checkpoint')",
+                      "fault": "@variables('FaultMessage')"
+                    },
+                    "$contentType": "application/json",
+                    "$part": 1,
+                    "$partType": "http://schemas.microsoft.com/aim#nack"
+                  }
+                ],
+                "header": {
+                  "properties": {
+                    "createDate": "@utcNow()",
+                    "envelopeType": "nack",
+                    "messageId": "@guid()",
+                    "rootPart": 1,
+                    "trackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                  },
+                  "routing": {
+                    "MessageType": "http://schemas.microsoft.com/aim#nack"
+                  },
+                  "routingSlip": {},
+                  "state": {}
+                }
+              }
+            },
+            "Failure:_Send_NACK_response": {
+              "runAfter": {
+                "Failure:_Build_NACK_message": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "body": "@outputs('Failure:_Build_NACK_message')",
+                "headers": {
+                  "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                  "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+                  "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                  "Content-Type": "application/json"
+                },
+                "statusCode": 200
+              }
+            }
+          }
+        },
+        "expression": {
+          "or": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "SkipXmlTranslation"
+              ]
+            },
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "UpdateMessageType"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Get_Configuration": {
+        "actions": {
+          "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": {
+            "runAfter": {},
+            "type": "Http",
+            "inputs": {
+              "method": "GET",
+              "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/xmlMessageTranslator",
+              "queries": {
+                "clearCache": "@{coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], 'false')}"
+              },
+              "retryPolicy": {
+                "type": "none"
+              },
+              "headers": {
+                "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+              }
+            }
+          },
+          "GetConfiguration:_Check_Status_Code": {
+            "runAfter": {
+              "GetConfiguration:_Set_StatusCode_variable": [
+                "Succeeded"
+              ]
+            },
+            "cases": {
+              "Success": {
+                "case": 200,
+                "actions": {
+                  "GetConfiguration:Success:_Set_Checkpoint_variable": {
+                    "runAfter": {
+                      "GetConfiguration:Success:_Set_Configuration_variable": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Checkpoint",
+                      "value": "GetConfiguration"
+                    }
+                  },
+                  "GetConfiguration:Success:_Set_Configuration_variable": {
+                    "runAfter": {},
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Configuration",
+                      "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "actions": {
+                "GetConfiguration:Failure:_Do_we_have_a_Fault_Message": {
+                  "actions": {
+                    "GetConfiguration:Fault:_Set_ErrorMessage_variable": {
+                      "runAfter": {
+                        "GetConfiguration:Fault:_Set_FaultMessage_variable": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ErrorMessage",
+                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                      }
+                    },
+                    "GetConfiguration:Fault:_Set_FaultMessage_variable": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "FaultMessage",
+                        "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "else": {
+                    "actions": {
+                      "GetConfiguration:NoFault:_Create_Fault_Message": {
+                        "runAfter": {},
+                        "type": "Compose",
+                        "inputs": {
+                          "fault": {
+                            "faultActor": "@concat(workflow()?['name'], '.', actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                            "faultCategory": "Error",
+                            "faultCode": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['statusCode'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['code'])}",
+                            "faultMessage": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['message'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'])}",
+                            "faultReason": "@{actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['status']}"
+                          }
+                        }
+                      },
+                      "GetConfiguration:NoFault:_Set_ErrorMessage_variable": {
+                        "runAfter": {
+                          "GetConfiguration:NoFault:_Set_FaultMessage_variable": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "ErrorMessage",
+                          "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                        }
+                      },
+                      "GetConfiguration:NoFault:_Set_FaultMessage_variable": {
+                        "runAfter": {
+                          "GetConfiguration:NoFault:_Create_Fault_Message": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "FaultMessage",
+                          "value": "@outputs('GetConfiguration:NoFault:_Create_Fault_Message')"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['fault']",
+                            null
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "type": "If"
+                }
+              }
+            },
+            "expression": "@variables('StatusCode')",
+            "type": "Switch"
+          },
+          "GetConfiguration:_Set_StatusCode_variable": {
+            "runAfter": {
+              "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": [
+                "Succeeded",
+                "Failed",
+                "Skipped",
+                "TimedOut"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "StatusCode",
+              "value": "@coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], 500)"
+            }
+          }
+        },
+        "runAfter": {
+          "Initialize_TransformedContent_variable": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                ""
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Get_MapName": {
+        "actions": {
+          "GetMapName:_Filter_Maps_Array": {
+            "inputs": {
+              "from": "@coalesce(variables('Configuration')?['xmlMessageTranslator']?['maps'], array(''))",
+              "where": "@equals(item()?['messageType'], coalesce(variables('Envelope')?['header']?['properties']?['btsMessageType'], '(undefined)'))"
+            },
+            "runAfter": {},
+            "type": "Query"
+          },
+          "GetMapName:_Set_MapName_variable": {
+            "inputs": {
+              "name": "MapName",
+              "value": "@if(equals(length(body('GetMapName:_Filter_Maps_Array')), 1), body('GetMapName:_Filter_Maps_Array')?[0]?['mapName'], '')"
+            },
+            "runAfter": {
+              "GetMapName:_Filter_Maps_Array": [
+                "Succeeded"
+              ]
+            },
+            "type": "SetVariable"
+          },
+          "GetMapName:Success:_Set_Checkpoint_variable": {
+            "runAfter": {
+              "GetMapName:_Set_MapName_variable": [
+                "Succeeded"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "Checkpoint",
+              "value": "GetMapName"
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Get_Configuration": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "GetConfiguration"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Check_MapName": {
+        "actions": {
+          "CheckMapName:_Is_MapName_blank": {
+            "actions": {
+              "CheckMapName:MapNameBlank:_Allow_unrecognized_MessageType": {
+                "actions": {
+                  "CheckMapName:MapNameBlank:SkipXmlTranslation:_Set_Checkpoint_variable": {
+                    "runAfter": {},
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Checkpoint",
+                      "value": "SkipXmlTranslation"
+                    }
+                  }
+                },
+                "runAfter": {},
+                "else": {
+                  "actions": {
+                    "CheckMapName:Failure:_Set_ErrorMessage_variable": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ErrorMessage",
+                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}): Unable to find a Map for the current MessageType for this envelope, and the allowUnrecognizedMessages config value is set to False. MessageType is: '@{coalesce(variables('Envelope')?['properties']?['btsMessageType'], '(undefined)')}'."
+                      }
+                    }
+                  }
+                },
+                "expression": {
+                  "and": [
+                    {
+                      "equals": [
+                        "@coalesce(variables('Configuration')?['xmlMessageTranslator']?['allowUnrecognizedMessages'], true)",
+                        true
+                      ]
+                    }
+                  ]
+                },
+                "type": "If"
+              }
+            },
+            "runAfter": {},
+            "else": {
+              "actions": {
+                "CheckMapName:Success:_Set_Checkpoint_variable": {
+                  "runAfter": {},
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "Checkpoint",
+                    "value": "PerformXmlTranslation"
+                  }
+                }
+              }
+            },
+            "expression": {
+              "and": [
+                {
+                  "equals": [
+                    "@{coalesce(variables('MapName'), '')}",
+                    ""
+                  ]
+                }
+              ]
+            },
+            "type": "If"
+          }
+        },
+        "runAfter": {
+          "Step:_Get_MapName": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "GetMapName"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Check_BodyContent": {
+        "actions": {
+          "CheckBodyContent:_Body_Content_is_missing": {
+            "actions": {
+              "CheckBodyContent:Failure:_Set_ErrorMessage_variable": {
+                "runAfter": {},
+                "type": "SetVariable",
+                "inputs": {
+                  "name": "ErrorMessage",
+                  "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}): No Root Body content can be found in the supplied Envelope"
+                }
+              }
+            },
+            "runAfter": {
+              "CheckBodyContent:_Select_Root_Part": [
+                "Succeeded"
+              ]
+            },
+            "else": {
+              "actions": {
+                "CheckBodyContent:Success:_Set_Checkpoint_variable": {
+                  "runAfter": {},
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "Checkpoint",
+                    "value": "CheckBodyContent"
+                  }
+                }
+              }
+            },
+            "expression": {
+              "and": [
+                {
+                  "equals": [
+                    "@coalesce(body('CheckBodyContent:_Select_Root_Part')?[0]?['$content'], '')",
+                    ""
+                  ]
+                }
+              ]
+            },
+            "type": "If"
+          },
+          "CheckBodyContent:_Select_Root_Part": {
+            "runAfter": {},
+            "type": "Query",
+            "inputs": {
+              "from": "@variables('Envelope')?['body']",
+              "where": "@equals(item()?['$part'], variables('Envelope')?['header']?['properties']?['rootPart'])"
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Check_MapName": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "PerformXmlTranslation"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Get_BodyContent": {
+        "actions": {
+          "GetBodyContent:_Call_APIM_MessageManager.GetBodyContent": {
+            "runAfter": {},
+            "type": "Http",
+            "inputs": {
+              "body": "@variables('Envelope')",
+              "method": "POST",
+              "uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/getbodycontent",
+              "queries": {
+                "clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                "enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+              },
+              "retryPolicy": {
+                "type": "none"
+              },
+              "headers": {
+                "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                "Content-Type": "application/json",
+                "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+              }
+            }
+          },
+          "GetBodyContent:_Check_Status_Code": {
+            "runAfter": {
+              "GetBodyContent:_Set_StatusCode_variable": [
+                "Succeeded"
+              ]
+            },
+            "cases": {
+              "Success": {
+                "case": 200,
+                "actions": {
+                  "GetBodyContent:Success:_Set_Checkpoint_variable": {
+                    "runAfter": {
+                      "GetBodyContent:Success:_Set_BodyContent_variable": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Checkpoint",
+                      "value": "GetBodyContent"
+                    }
+                  },
+                  "GetBodyContent:Success:_Set_BodyContent_variable": {
+                    "runAfter": {},
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "BodyContent",
+                      "value": "@{base64ToString(body('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['$content'])}"
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "actions": {
+                "GetBodyContent:Failure:_Do_we_have_a_Fault_Message": {
+                  "actions": {
+                    "GetBodyContent:Fault:_Set_ErrorMessage_variable": {
+                      "runAfter": {
+                        "GetBodyContent:Fault:_Set_FaultMessage_variable": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "ErrorMessage",
+                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager GetBodyContent operation"
+                      }
+                    },
+                    "GetBodyContent:Fault:_Set_FaultMessage_variable": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "FaultMessage",
+                        "value": "@body('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "else": {
+                    "actions": {
+                      "GetBodyContent:NoFault:_Create_Fault_Message": {
+                        "runAfter": {},
+                        "type": "Compose",
+                        "inputs": {
+                          "fault": {
+                            "faultActor": "@concat(workflow()?['name'], '.', actions('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                            "faultCategory": "Error",
+                            "faultCode": "@{coalesce(outputs('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['statusCode'], outputs('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['body']?['statusCode'], actions('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['error']?['code'])}",
+                            "faultMessage": "@{coalesce(outputs('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['error']?['message'], outputs('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['body']?['message'], actions('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['error']?['message'])}",
+                            "faultReason": "@{actions('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['status']}"
+                          }
+                        }
+                      },
+                      "GetBodyContent:NoFault:_Set_ErrorMessage_variable": {
+                        "runAfter": {
+                          "GetBodyContent:NoFault:_Set_FaultMessage_variable": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "ErrorMessage",
+                          "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager GetBodyContent operation"
+                        }
+                      },
+                      "GetBodyContent:NoFault:_Set_FaultMessage_variable": {
+                        "runAfter": {
+                          "GetBodyContent:NoFault:_Create_Fault_Message": [
+                            "Succeeded"
+                          ]
+                        },
+                        "type": "SetVariable",
+                        "inputs": {
+                          "name": "FaultMessage",
+                          "value": "@outputs('GetBodyContent:NoFault:_Create_Fault_Message')"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@body('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')?['fault']",
+                            null
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "type": "If"
+                }
+              }
+            },
+            "expression": "@variables('StatusCode')",
+            "type": "Switch"
+          },
+          "GetBodyContent:_Set_StatusCode_variable": {
+            "runAfter": {
+              "GetBodyContent:_Call_APIM_MessageManager.GetBodyContent": [
+                "Succeeded",
+                "Failed",
+                "Skipped",
+                "TimedOut"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "StatusCode",
+              "value": "@coalesce(outputs('GetBodyContent:_Call_APIM_MessageManager.GetBodyContent')['statusCode'], 500)"
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Check_BodyContent": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "CheckBodyContent"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Transform_Xml": {
+        "actions": {
+          "TransformXml:Failure:_Set_StatusCode_variable": {
+            "runAfter": {
+              "TransformXml:_Transform_Xml": [
+                "Failed",
+                "Skipped",
+                "TimedOut"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "StatusCode",
+              "value": 500
+            }
+          },
+          "TransformXml:Success:_Set_StatusCode_variable": {
+            "runAfter": {
+              "TransformXml:_Transform_Xml": [
+                "Succeeded"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "StatusCode",
+              "value": 200
+            }
+          },
+          "TransformXml:_Check_StatusCode": {
+            "runAfter": {
+              "TransformXml:Failure:_Set_StatusCode_variable": [
+                "Succeeded",
+                "Skipped"
+              ],
+              "TransformXml:Success:_Set_StatusCode_variable": [
+                "Succeeded",
+                "Skipped"
+              ]
+            },
+            "cases": {
+              "Success": {
+                "case": 200,
+                "actions": {
+                  "TransformXml:Success:_Set_TransformedContent_variable": {
+                    "runAfter": {},
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "TransformedContent",
+                      "value": "@body('TransformXml:_Transform_Xml')"
+                    }
+                  },
+                  "TransformXml:Success:_Add_new_Root_Body_Part_to_Envelope": {
+                    "runAfter": {
+                      "TransformXml:Success:_Remove_existing_Root_Body_Part_from_Envelope": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "Compose",
+                    "inputs": "@setProperty(variables('Envelope'), 'body', union(outputs('TransformXml:Success:_Remove_existing_Root_Body_Part_from_Envelope')?['body'], array(outputs('TransformXml:Success:_Create_new_Body_Part'))))"
+                  },
+                  "TransformXml:Success:_Create_new_Body_Part": {
+                    "runAfter": {
+                      "TransformXml:Success:_Set_TransformedContent_variable": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "Compose",
+                    "inputs": {
+                      "$content": "@base64(variables('TransformedContent'))",
+                      "$contentTransferEncoding": "base64",
+                      "$contentType": "application/xml",
+                      "$part": "@variables('Envelope')?['header']?['properties']?['rootPart']",
+                      "$partType": "http://schemas.myorg.com/part@{variables('Envelope')?['header']?['properties']?['rootPart']}#root"
+                    }
+                  },
+                  "TransformXml:Success:_Remove_existing_Root_Body_Part_from_Envelope": {
+                    "runAfter": {
+                      "TransformXml:Success:_Create_new_Body_Part": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "Query",
+                    "inputs": {
+                      "from": "@variables('Envelope')?['body']",
+                      "where": "@not(equals(item()?['$part'], variables('Envelope')?['header']?['properties']?['rootPart']))"
+                    }
+                  },
+                  "TransformXml:Success:_Set_Checkpoint_variable": {
+                    "runAfter": {
+                      "TransformXml:Success:_Update_Envelope_variable": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Checkpoint",
+                      "value": "TransformXml"
+                    }
+                  },
+                  "TransformXml:Success:_Update_Envelope_variable": {
+                    "runAfter": {
+                      "TransformXml:Success:_Add_new_Root_Body_Part_to_Envelope": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "Envelope",
+                      "value": "@outputs('TransformXml:Success:_Add_new_Root_Body_Part_to_Envelope')"
+                    }
+                  }
+                }
+              }
+            },
+            "default": {
+              "actions": {
+                "TransformXml:Failure:_Create_Fault_message": {
+                  "runAfter": {},
+                  "type": "Compose",
+                  "inputs": {
+                    "fault": {
+                      "faultActor": "@concat(workflow()?['name'], '.', actions('TransformXml:_Transform_Xml')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                      "faultCategory": "Error",
+                      "faultCode": "@{coalesce(outputs('TransformXml:_Transform_Xml')?['statusCode'], outputs('TransformXml:_Transform_Xml')?['body']?['statusCode'], actions('TransformXml:_Transform_Xml')?['error']?['code'])}",
+                      "faultMessage": "@{coalesce(outputs('TransformXml:_Transform_Xml')?['error']?['message'], outputs('TransformXml:_Transform_Xml')?['body']?['message'], actions('TransformXml:_Transform_Xml')?['error']?['message'])}",
+                      "faultReason": "@{actions('TransformXml:_Transform_Xml')?['status']}"
+                    }
+                  }
+                },
+                "TransformXml:Failure:_Set_ErrorMessage_variable": {
+                  "runAfter": {
+                    "TransformXml:Failure:_Set_FaultMessage_variable": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "ErrorMessage",
+                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to transform Xml"
+                  }
+                },
+                "TransformXml:Failure:_Set_FaultMessage_variable": {
+                  "runAfter": {
+                    "TransformXml:Failure:_Create_Fault_message": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "FaultMessage",
+                    "value": "@outputs('TransformXml:Failure:_Create_Fault_message')"
+                  }
+                }
+              }
+            },
+            "expression": "@variables('StatusCode')",
+            "type": "Switch"
+          },
+          "TransformXml:_Transform_Xml": {
+            "runAfter": {},
+            "type": "Xslt",
+            "inputs": {
+              "content": "@variables('BodyContent')",
+              "map": {
+                "name": "@{coalesce(variables('MapName'), '')}"
+              },
+              "xsltParameters": {
+                "ApplyXsltOutputAttributes": true
+              }
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Get_BodyContent": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "GetBodyContent"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      },
+      "Step:_Update_MessageType": {
+        "actions": {
+          "UpdateMessageType:_Set_MessageType_variable": {
+            "runAfter": {},
+            "type": "SetVariable",
+            "inputs": {
+              "name": "MessageType",
+              "value": "@{coalesce(xpath(xml(variables('TransformedContent')), 'namespace-uri(/*)'), '')}#@{coalesce(xpath(xml(variables('TransformedContent')), 'local-name(/*)'), '')}"
+            }
+          },
+          "UpdateMessageType:Failure:_Set_ErrorMessage_variable": {
+            "runAfter": {
+              "UpdateMessageType:_Set_MessageType_variable": [
+                "Failed",
+                "TimedOut",
+                "Skipped"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "ErrorMessage",
+              "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to update the MessageType: @{coalesce(outputs('UpdateMessageType:_Set_MessageType_variable')?['error']?['message'], actions('UpdateMessageType:_Set_MessageType_variable')?['error']?['message'], '(unknown error)')}"
+            }
+          },
+          "UpdateMessageType:Success:_Update_Properties": {
+            "runAfter": {
+              "UpdateMessageType:_Set_MessageType_variable": [
+                "Succeeded"
+              ]
+            },
+            "type": "Compose",
+            "inputs": "@setProperty(variables('Envelope'), 'header', setProperty(variables('Envelope')?['header'], 'properties', setProperty(variables('Envelope')?['header']?['properties'], 'btsMessageType', variables('MessageType'))))"
+          },
+          "UpdateMessageType:Success:_Update_Routing": {
+            "runAfter": {
+              "UpdateMessageType:Success:_Update_Properties": [
+                "Succeeded"
+              ]
+            },
+            "type": "Compose",
+            "inputs": "@setProperty(outputs('UpdateMessageType:Success:_Update_Properties'), 'header', setProperty(outputs('UpdateMessageType:Success:_Update_Properties')?['header'], 'routing', setProperty(outputs('UpdateMessageType:Success:_Update_Properties')?['header']?['routing'], 'btsMessageType', variables('MessageType'))))"
+          },
+          "UpdateMessageType:Success:_Set_Envelope_variable": {
+            "runAfter": {
+              "UpdateMessageType:Success:_Update_Routing": [
+                "Succeeded"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "Envelope",
+              "value": "@outputs('UpdateMessageType:Success:_Update_Routing')"
+            }
+          },
+          "UpdateMessageType:Success:_Set_Checkpoint_variable": {
+            "runAfter": {
+              "UpdateMessageType:Success:_Set_Envelope_variable": [
+                "Succeeded"
+              ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+              "name": "Checkpoint",
+              "value": "UpdateMessageType"
+            }
+          }
+        },
+        "runAfter": {
+          "Step:_Transform_Xml": [
+            "Succeeded",
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
+        "expression": {
+          "and": [
+            {
+              "equals": [
+                "@variables('Checkpoint')",
+                "TransformXml"
+              ]
+            }
+          ]
+        },
+        "type": "If"
+      }
+    }
+  },
+  "kind": "Stateful"
+}

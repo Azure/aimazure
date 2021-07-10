@@ -1,0 +1,1198 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of this LogicApp."
+            }
+        },
+        "logicAppLocation": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location (region) or ISE that this LogicApp is to be deployed to. Defaults to the ResourceGroup location."
+            }
+        },
+        "logicApStartupState": {
+            "type": "string",
+            "defaultValue": "Enabled",
+            "allowedValues": [ "Enabled", "Disabled" ],
+            "metadata": {
+                "description": "Initial state of the LogicApp after it is deployed."
+            }
+        },
+        "messageBusResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ResourceGroup that MessageBus artifacts are deployed to (e.g. APIM or RoutingSlipRouter LogicApp)."
+            }
+        },
+        "systemApplicationResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ResourceGroup that SystemApplication artifacts are deployed to (e.g. ServiceBus or MessageConstructor LogicApp)."
+            }
+        },
+        "integrationAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the IntegrationAccount connected to this LogicApp."
+            }
+        },
+        "messageConstructorLogicAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the LogicApp to call to handle FTP Message Construction and Sending."
+            }
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the LogicApp to call to handle suspending of messages."
+            }
+        },
+        "suspendQueueTopicName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ServiceBus Topic that suspended messages are sent to."
+            }
+        },
+        "apimServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the APIM Service used for MessageBus operations."
+            }
+        },
+        "apimSubscriptionKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Subscription Key used to access APIM."
+            }
+        },
+        "apimRetryPolicy": {
+            "type": "object",
+            "defaultValue": {
+                "count": 3,
+                "interval": "PT5S",
+                "type": "fixed"
+            },
+            "metadata": {
+                "description": "Retry Policy to use when calling APIM."
+            }
+        },
+        "sftpReceiveApiConnectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the API Connection used for SFTP Receive operations."
+            }
+        },
+        "sftpReceiveFolder": {
+            "type": "string",
+            "metadata": {
+                "description": "The path where the SFTP connector looks for new/updated files."
+            }
+        },
+        "sftpMaxFileCount": {
+            "defaultValue": 10,
+            "type": "int",
+            "metadata": {
+                "description": "The max number of files the SFTP Connector will retrieve per polling interval."
+            }
+        },
+        "sftpFileMask": {
+            "type": "string",
+            "metadata": {
+                "description": "The mask to use to decide if we're processing a given file e.g. *.* or *.csv"
+            }
+        },
+        "sftpRecurrenceFrequency": {
+            "type": "string",
+            "allowedValues": [ "Second", "Minute", "Hour", "Day", "Month", "Year" ],
+            "metadata": {
+                "description": "The frequency with which to check for new files on the SFTP server."
+            }
+        },
+        "sftpRecurrenceInterval": {
+            "type": "int",
+            "metadata": {
+                "description": "The interval with which to check for new files on the SFTP server."
+            }
+        },
+        "scenario": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Scenario that this LogicApp is running under e.g. ApplicationName + ReceivePort/Location Name."
+            }
+        },
+        "scenarioStep": {
+            "defaultValue": "sftpReceiveAdapter",
+            "type": "string",
+            "metadata": {
+                "description": "The step within a Scenario that this LogicApp is running under e.g. sftpReceiveAdapter."
+            }
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apimServiceResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+        "configurationManagerApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimconfigurationmanager')]",
+        "messageConstructorLogicAppResourceId": "[resourceId(parameters('systemApplicationResourceGroupName'), 'Microsoft.Logic/workflows', parameters('messageConstructorLogicAppName'))]",
+        "messageSuspendProcessorLogicAppResourceId": "[resourceId(parameters('systemApplicationResourceGroupName'), 'Microsoft.Logic/workflows', parameters('messageSuspendProcessorLogicAppName'))]",
+        "sftpApiConnectionResourceId": "[resourceId('Microsoft.Web/connections', parameters('sftpReceiveApiConnectionName'))]",
+        "integrationAccountResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Logic/integrationAccounts', parameters('integrationAccountName'))]",
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('logicAppLocation')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "state": "[parameters('logicApStartupState')]",
+                "integrationAccount": {
+                    "id": "[variables('integrationAccountResourceId')]"
+                },
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        },
+                        "sftpReceiveFolder": {
+                            "type": "String",
+                            "description": "The path where the SFTP connector looks for new/updated files."
+                        },
+                        "sftpMaxFileCount": {
+                            "type": "Int",
+                            "description": "The max number of files the SFTP Connector will retrieve per polling interval."
+                        },
+                        "sftpRecurrenceFrequency": {
+                            "type": "string",
+                            "allowedValues": [ "Second", "Minute", "Hour", "Day", "Month", "Year" ],
+                            "description": "The frequency with which to check for new files on the SFTP server."
+                        },
+                        "sftpRecurrenceInterval": {
+                            "type": "int",
+                            "description": "The interval with which to check for new files on the SFTP server."
+                        },
+                        "fileNameMask": {
+                            "defaultValue": "*.*",
+                            "type": "String",
+                            "description": "The mask to use to decide if we're processing a given file e.g. *.* or *.csv"
+                        },
+                        "apimSubscriptionKey": {
+                            "type": "SecureString",
+                            "description": "Subscription Key used to access APIM."
+                        },
+                        "scenario": {
+                            "type": "String",
+                            "description": "The name of the Scenario that this LogicApp is running under e.g. ApplicationName + ReceivePort/Location Name."
+                        },
+                        "scenarioStep": {
+                            "type": "String",
+                            "description": "The step within a Scenario that this LogicApp is running under e.g. sftpReceiveAdapter."
+                        },
+                        "clearCache": {
+                            "defaultValue": true,
+                            "type": "Bool",
+                            "description": "Indicates if we should clear APIM cache before retrieved config items e.g. configurationEntries or routingSlips."
+                        },
+                        "suspendQueueTopicName": {
+                            "type": "String",
+                            "description": "Name of the ServiceBus Topic that suspended messages are sent to."
+                        }
+                    },
+                    "triggers": {
+                        "When_files_are_added_or_modified_(properties_only)": {
+                            "recurrence": {
+                                "frequency": "@{parameters('ftpRecurrenceFrequency')}",
+                                "interval": "@parameters('ftpRecurrenceInterval')"
+                            },
+                            "splitOn": "@triggerBody()",
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sftpreceive']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "/datasets/default/triggers/batch/onupdatedfile",
+                                "queries": {
+                                    "folderId": "@{parameters('sftpReceiveFolder')}",
+                                    "maxFileCount": "@parameters('sftpMaxFileCount')"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Initialize_StatusCode_variable": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "StatusCode",
+                                        "type": "integer",
+                                        "value": 500
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_FaultMessage_variable": {
+                            "runAfter": {
+                                "Initialize_StatusCode_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "FaultMessage",
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_ErrorMessage_variable": {
+                            "runAfter": {
+                                "Initialize_FaultMessage_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "ErrorMessage",
+                                        "type": "string",
+                                        "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_ResponseMessage_variable": {
+                            "runAfter": {
+                                "Initialize_ErrorMessage_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "ResponseMessage",
+                                        "type": "object",
+                                        "value": null
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_Checkpoint_variable": {
+                            "runAfter": {
+                                "Initialize_ResponseMessage_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "Checkpoint",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_Configuration_variable": {
+                            "runAfter": {
+                                "Initialize_Checkpoint_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "Configuration",
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        },
+                        "Compose_FileNameMask": {
+                            "runAfter": {
+                                "Initialize_Configuration_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "@parameters('fileNameMask')"
+                        },
+                        "Respond:_Were_we_successful": {
+                            "actions": {
+                                "Terminate_with_ACK": {
+                                    "runAfter": {},
+                                    "type": "Terminate",
+                                    "inputs": {
+                                        "runStatus": "Succeeded"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Step:_Construct Message": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                ]
+                            },
+                            "else": {
+                                "actions": {
+                                    "Failure:_Do_we_have_a_NACK": {
+                                        "actions": {},
+                                        "runAfter": {},
+                                        "else": {
+                                            "actions": {
+                                                "Failure:_Build_NACK_message": {
+                                                    "runAfter": {},
+                                                    "type": "Compose",
+                                                    "inputs": {
+                                                        "body": [
+                                                            {
+                                                                "$content": {
+                                                                    "code": "500",
+                                                                    "message": "@variables('ErrorMessage')",
+                                                                    "lastCheckpoint": "@variables('Checkpoint')",
+                                                                    "fault": "@variables('FaultMessage')"
+                                                                },
+                                                                "$contentType": "application/json",
+                                                                "$part": 1,
+                                                                "$partType": "http://schemas.microsoft.com/aim#nack"
+                                                            }
+                                                        ],
+                                                        "header": {
+                                                            "properties": {
+                                                                "createDate": "@utcNow()",
+                                                                "envelopeType": "nack",
+                                                                "messageId": "@guid()",
+                                                                "rootPart": 1,
+                                                                "trackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                                                            },
+                                                            "routing": {
+                                                                "MessageType": "http://schemas.microsoft.com/aim#nack"
+                                                            },
+                                                            "routingSlip": {},
+                                                            "state": {}
+                                                        }
+                                                    }
+                                                },
+                                                "Failure:_Set_ResponseMessage_variable": {
+                                                    "runAfter": {
+                                                        "Failure:_Build_NACK_message": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable",
+                                                    "inputs": {
+                                                        "name": "ResponseMessage",
+                                                        "value": "@outputs('Failure:_Build_NACK_message')"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "equals": [
+                                                        "@{coalesce(variables('ResponseMessage')?['header']?['properties']?['envelopeType'], '(unknown)')}",
+                                                        "nack"
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "type": "If"
+                                    },
+                                    "Failure:_Send_NACK_to_SuspendQueue": {
+                                        "runAfter": {
+                                            "Failure:_Do_we_have_a_NACK": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "Workflow",
+                                        "inputs": {
+                                            "body": {
+                                                "nackMessage": "@variables('ResponseMessage')",
+                                                "originalMessage": "@triggerBody()",
+                                                "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
+                                                "failedMessageRouting": "@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['failedMessageRouting'], false)",
+                                                "scenario": "@{parameters('scenario')}"
+                                            },
+                                            "headers": {
+                                                "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                                                "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+                                            },
+                                            "host": {
+                                                "triggerName": "manual",
+                                                "workflow": {
+                                                    "id": "[variables('messageSuspendProcessorLogicAppResourceId')]"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "Terminate_with_NACK": {
+                                        "runAfter": {
+                                            "Failure:_Send_NACK_to_SuspendQueue": [
+                                                "Succeeded",
+                                                "Failed",
+                                                "Skipped",
+                                                "TimedOut"
+                                            ]
+                                        },
+                                        "type": "Terminate",
+                                        "inputs": {
+                                            "runError": {
+                                                "code": "@{coalesce(variables('ResponseMessage')?['body']?[0]?['$content']?['code'], '500')}",
+                                                "message": "@{coalesce(variables('ResponseMessage')?['body']?[0]?['$content']?['message'], '(unknown error)')}"
+                                            },
+                                            "runStatus": "Failed"
+                                        }
+                                    }
+                                }
+                            },
+                            "expression": {
+                                "or": [
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            "IgnoreFile"
+                                        ]
+                                    },
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            "ConstructMessageACK"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Step:_Get_Configuration": {
+                            "actions": {
+                                "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": {
+                                    "runAfter": {},
+                                    "type": "ApiManagement",
+                                    "inputs": {
+                                        "api": {
+                                            "id": "[variables('configurationManagerApiResourceId')]"
+                                        },
+                                        "method": "get",
+                                        "pathTemplate": {
+                                            "parameters": {
+                                                "scenario": "@{encodeURIComponent(parameters('scenario'))}",
+                                                "step": "@{encodeURIComponent(parameters('scenarioStep'))}"
+                                            },
+                                            "template": "/aimconfigurationmanager/configuration/{scenario}/{step}"
+                                        },
+                                        "queries": {
+                                            "clearCache": "@parameters('clearCache')"
+                                        },
+                                        "retryPolicy": "[parameters('apimRetryPolicy')]",
+                                        "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                                    }
+                                },
+                                "GetConfiguration:_Check_Status_Code": {
+                                    "runAfter": {
+                                        "GetConfiguration:_Set_StatusCode_variable": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "cases": {
+                                        "Success": {
+                                            "case": 200,
+                                            "actions": {
+                                                "GetConfiguration:Success:_Set_Checkpoint_variable": {
+                                                    "runAfter": {
+                                                        "GetConfiguration:Success:_Set_Configuration_variable": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable",
+                                                    "inputs": {
+                                                        "name": "Checkpoint",
+                                                        "value": "GetConfiguration"
+                                                    }
+                                                },
+                                                "GetConfiguration:Success:_Set_Configuration_variable": {
+                                                    "runAfter": {},
+                                                    "type": "SetVariable",
+                                                    "inputs": {
+                                                        "name": "Configuration",
+                                                        "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "default": {
+                                        "actions": {
+                                            "GetConfiguration:Failure:_Do_we_have_a_Fault_Message": {
+                                                "actions": {
+                                                    "GetConfiguration:Fault:_Set_ErrorMessage_variable": {
+                                                        "runAfter": {
+                                                            "GetConfiguration:Fault:_Set_FaultMessage_variable": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "SetVariable",
+                                                        "inputs": {
+                                                            "name": "ErrorMessage",
+                                                            "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                                                        }
+                                                    },
+                                                    "GetConfiguration:Fault:_Set_FaultMessage_variable": {
+                                                        "runAfter": {},
+                                                        "type": "SetVariable",
+                                                        "inputs": {
+                                                            "name": "FaultMessage",
+                                                            "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                                                        }
+                                                    }
+                                                },
+                                                "runAfter": {},
+                                                "else": {
+                                                    "actions": {
+                                                        "GetConfiguration:NoFault:_Create_Fault_Message": {
+                                                            "runAfter": {},
+                                                            "type": "Compose",
+                                                            "inputs": {
+                                                                "fault": {
+                                                                    "faultActor": "@concat(workflow()?['name'], '.', actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                                    "faultCategory": "Error",
+                                                                    "faultCode": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['statusCode'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['code'])}",
+                                                                    "faultMessage": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['message'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'])}",
+                                                                    "faultReason": "@{actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['status']}"
+                                                                }
+                                                            }
+                                                        },
+                                                        "GetConfiguration:NoFault:_Set_ErrorMessage_variable": {
+                                                            "runAfter": {
+                                                                "GetConfiguration:NoFault:_Set_FaultMessage_variable": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "ErrorMessage",
+                                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                                                            }
+                                                        },
+                                                        "GetConfiguration:NoFault:_Set_FaultMessage_variable": {
+                                                            "runAfter": {
+                                                                "GetConfiguration:NoFault:_Create_Fault_Message": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "FaultMessage",
+                                                                "value": "@outputs('GetConfiguration:NoFault:_Create_Fault_Message')"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "expression": {
+                                                    "and": [
+                                                        {
+                                                            "not": {
+                                                                "equals": [
+                                                                    "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['fault']",
+                                                                    null
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                "type": "If"
+                                            }
+                                        }
+                                    },
+                                    "expression": "@variables('StatusCode')",
+                                    "type": "Switch"
+                                },
+                                "GetConfiguration:_Set_StatusCode_variable": {
+                                    "runAfter": {
+                                        "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": [
+                                            "Succeeded",
+                                            "Failed",
+                                            "Skipped",
+                                            "TimedOut"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "StatusCode",
+                                        "value": "@coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], 500)"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Compose_FileNameMask": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            ""
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Step:_Validate_Configuration": {
+                            "actions": {
+                                "ValidateConfiguration:_Have_Valid_Properties": {
+                                    "actions": {
+                                        "ValidateConfiguration:Success:_Set_Checkpoint_variable": {
+                                            "runAfter": {},
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "Checkpoint",
+                                                "value": "ValidateConfiguration"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {},
+                                    "else": {
+                                        "actions": {
+                                            "ValidateConfiguration:Failure:_Set_Checkpoint_variable": {
+                                                "runAfter": {},
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ErrorMessage",
+                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}): property btsReceivePortName is not set in configuration"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "not": {
+                                                    "equals": [
+                                                        "@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['btsReceivePortName'], '')",
+                                                        ""
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "type": "If"
+                                }
+                            },
+                            "runAfter": {
+                                "Step:_Get_Configuration": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            "GetConfiguration"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Step:_Should_we_process_file": {
+                            "actions": {
+                                "ShouldWeProcessFile:_Check_FileMask": {
+                                    "runAfter": {},
+                                    "type": "JavaScriptCode",
+                                    "inputs": {
+                                        "code": "var escapedFileMask = workflowContext.actions.Compose_FileNameMask.outputs;\r\nvar fileMaskRegex = \"^\" + escapedFileMask.replace(\".\", \"[.]\").replace(\"*\", \".*\").replace(\"?\", \".\") + \"$\";\r\nreturn workflowContext.trigger.outputs.body.Name.match(fileMaskRegex) !== null;"
+                                    }
+                                },
+                                "ShouldWeProcessFile:Failure:_Set_StatusCode_variable": {
+                                    "runAfter": {
+                                        "ShouldWeProcessFile:_Check_FileMask": [
+                                            "Failed",
+                                            "Skipped",
+                                            "TimedOut"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "StatusCode",
+                                        "value": 500
+                                    }
+                                },
+                                "ShouldWeProcessFile:Success:_Set_StatusCode_variable": {
+                                    "runAfter": {
+                                        "ShouldWeProcessFile:_Check_FileMask": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "StatusCode",
+                                        "value": 200
+                                    }
+                                },
+                                "ShouldWeProcessFile:_Check_StatusCode": {
+                                    "runAfter": {
+                                        "ShouldWeProcessFile:Failure:_Set_StatusCode_variable": [
+                                            "Succeeded",
+                                            "Skipped"
+                                        ],
+                                        "ShouldWeProcessFile:Success:_Set_StatusCode_variable": [
+                                            "Succeeded",
+                                            "Skipped"
+                                        ]
+                                    },
+                                    "cases": {
+                                        "Success": {
+                                            "case": 200,
+                                            "actions": {
+                                                "ShouldWeProcessFile:Success:_Does_FileMask_match": {
+                                                    "actions": {
+                                                        "ShouldWeProcessFile:Process:_Set_Checkpoint_variable": {
+                                                            "runAfter": {},
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "Checkpoint",
+                                                                "value": "ProcessFile"
+                                                            }
+                                                        }
+                                                    },
+                                                    "runAfter": {},
+                                                    "else": {
+                                                        "actions": {
+                                                            "ShouldWeProcessFile:Ignore:_Set_Checkpoint_variable": {
+                                                                "runAfter": {},
+                                                                "type": "SetVariable",
+                                                                "inputs": {
+                                                                    "name": "Checkpoint",
+                                                                    "value": "IgnoreFile"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "expression": {
+                                                        "and": [
+                                                            {
+                                                                "equals": [
+                                                                    "@outputs('ShouldWeProcessFile:_Check_FileMask')?['body']",
+                                                                    true
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "type": "If"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "default": {
+                                        "actions": {
+                                            "ShouldWeProcessFile:Failure:_Create_Fault_message": {
+                                                "runAfter": {},
+                                                "type": "Compose",
+                                                "inputs": {
+                                                    "fault": {
+                                                        "faultActor": "@concat(workflow()?['name'], '.', actions('ShouldWeProcessFile:_Check_FileMask')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                        "faultCategory": "Error",
+                                                        "faultCode": "@{coalesce(outputs('ShouldWeProcessFile:_Check_FileMask')?['statusCode'], outputs('ShouldWeProcessFile:_Check_FileMask')?['body']?['statusCode'], actions('ShouldWeProcessFile:_Check_FileMask')?['error']?['code'])}",
+                                                        "faultMessage": "@{coalesce(outputs('ShouldWeProcessFile:_Check_FileMask')?['error']?['message'], outputs('ShouldWeProcessFile:_Check_FileMask')?['body']?['message'], actions('ShouldWeProcessFile:_Check_FileMask')?['error']?['message'])}",
+                                                        "faultReason": "@{actions('ShouldWeProcessFile:_Check_FileMask')?['status']}"
+                                                    }
+                                                }
+                                            },
+                                            "ShouldWeProcessFile:Failure:_Set_ErrorMessage_variable": {
+                                                "runAfter": {
+                                                    "ShouldWeProcessFile:Failure:_Set_FaultMessage_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ErrorMessage",
+                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to execute the FileMask Javascript"
+                                                }
+                                            },
+                                            "ShouldWeProcessFile:Failure:_Set_FaultMessage_variable": {
+                                                "runAfter": {
+                                                    "ShouldWeProcessFile:Failure:_Create_Fault_message": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "FaultMessage",
+                                                    "value": "@outputs('ShouldWeProcessFile:Failure:_Create_Fault_message')"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": "@variables('StatusCode')",
+                                    "type": "Switch"
+                                }
+                            },
+                            "runAfter": {
+                                "Step:_Validate_Configuration": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            "ValidateConfiguration"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Step:_Construct Message": {
+                            "actions": {
+                                "ConstructMessage:_Call_MessageConstructor": {
+                                    "runAfter": {
+                                        "ConstructMessage:_Get_file_content": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Workflow",
+                                    "inputs": {
+                                        "body": {
+                                            "$content": "@{body('ConstructMessage:_Get_file_content')}",
+                                            "$contentTransferEncoding": "none",
+                                            "$contentType": "@triggerBody()?['MediaType']",
+                                            "properties": {
+                                                "receivedFileName": "@{triggerBody()?['Name']}",
+                                                "scenario": "@{parameters('scenario')}",
+                                                "btsReceivePortName": "@{coalesce(variables('Configuration')?[parameters('scenarioStep')]?['btsReceivePortName'], '(unknownReceivePortName)')}",
+                                                "btsReceivePortId": "@{coalesce(variables('Configuration')?[parameters('scenarioStep')]?['btsReceivePortId'], '(unknownReceivePortId)')}"
+                                            }
+                                        },
+                                        "headers": {
+                                            "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                                            "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+                                        },
+                                        "host": {
+                                            "triggerName": "manual",
+                                            "workflow": {
+                                                "id": "[variables('messageConstructorLogicAppResourceId')]"
+                                            }
+                                        }
+                                    }
+                                },
+                                "ConstructMessage:_Check_StatusCode": {
+                                    "runAfter": {
+                                        "ConstructMessage:_Set_StatusCode_variable": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "cases": {
+                                        "Success": {
+                                            "case": 200,
+                                            "actions": {
+                                                "ConstructMessage:Success:_Check_EnvelopeType": {
+                                                    "runAfter": {},
+                                                    "cases": {
+                                                        "ACK": {
+                                                            "case": "ack",
+                                                            "actions": {
+                                                                "ACK:_Set_ResponseMessage_variable": {
+                                                                    "runAfter": {},
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "ResponseMessage",
+                                                                        "value": "@body('ConstructMessage:_Call_MessageConstructor')"
+                                                                    }
+                                                                },
+                                                                "ACK:_Set_Checkpoint_variable": {
+                                                                    "runAfter": {
+                                                                        "ACK:_Set_ResponseMessage_variable": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "Checkpoint",
+                                                                        "value": "ConstructMessageACK"
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "NACK": {
+                                                            "case": "nack",
+                                                            "actions": {
+                                                                "NACK:_Set_ResponseMessage_variable": {
+                                                                    "runAfter": {},
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "ResponseMessage",
+                                                                        "value": "@body('ConstructMessage:_Call_MessageConstructor')"
+                                                                    }
+                                                                },
+                                                                "NACK:_Set_Checkpoint_variable": {
+                                                                    "runAfter": {
+                                                                        "NACK:_Set_ResponseMessage_variable": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "Checkpoint",
+                                                                        "value": "ConstructMessageNACK"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "default": {
+                                                        "actions": {
+                                                            "ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": {
+                                                                "runAfter": {},
+                                                                "type": "Compose",
+                                                                "inputs": {
+                                                                    "body": [
+                                                                        {
+                                                                            "$content": {
+                                                                                "code": "500",
+                                                                                "message": "@concat('Body returned by action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' is not an ACK or NACK. Envelope type is: ', coalesce(body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType'], '(unknown)'))"
+                                                                            },
+                                                                            "$contentType": "application/json",
+                                                                            "$part": 1,
+                                                                            "$partType": "http://schemas.microsoft.com/aim#nack"
+                                                                        }
+                                                                    ],
+                                                                    "header": {
+                                                                        "properties": {
+                                                                            "createDate": "@utcNow()",
+                                                                            "envelopeType": "nack",
+                                                                            "messageId": "@guid()",
+                                                                            "rootPart": 1,
+                                                                            "trackingId": ""
+                                                                        },
+                                                                        "routing": {
+                                                                            "MessageType": "http://schemas.microsoft.com/aim#nack"
+                                                                        },
+                                                                        "routingSlip": {},
+                                                                        "state": {}
+                                                                    }
+                                                                }
+                                                            },
+                                                            "ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": {
+                                                                "runAfter": {
+                                                                    "ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                },
+                                                                "type": "SetVariable",
+                                                                "inputs": {
+                                                                    "name": "ResponseMessage",
+                                                                    "value": "@outputs('ConstructMessage:UnknownEnvelope:_Compose_NACK_Message')"
+                                                                }
+                                                            },
+                                                            "ConstructMessage:UnknownEnvelope:_Set_Checkpoint_variable": {
+                                                                "runAfter": {
+                                                                    "ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                },
+                                                                "type": "SetVariable",
+                                                                "inputs": {
+                                                                    "name": "Checkpoint",
+                                                                    "value": "ConstructMessageNACK"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "expression": "@body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType']",
+                                                    "type": "Switch"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "default": {
+                                        "actions": {
+                                            "ConstructMessage:Failure:_Create_NACK_Message": {
+                                                "runAfter": {},
+                                                "type": "Compose",
+                                                "inputs": {
+                                                    "body": [
+                                                        {
+                                                            "$content": {
+                                                                "code": "500",
+                                                                "fault": {
+                                                                    "faultActor": "@concat(workflow()?['name'], '.', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                                    "faultCategory": "Error",
+                                                                    "faultCode": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['statusCode'])}",
+                                                                    "faultMessage": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['error']?['message'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['message'])}",
+                                                                    "faultReason": ""
+                                                                },
+                                                                "message": "@concat('Action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' resulted in an error response.')"
+                                                            },
+                                                            "$contentType": "application/json",
+                                                            "$part": 1,
+                                                            "$partType": "http://schemas.microsoft.com/aim#nack"
+                                                        }
+                                                    ],
+                                                    "header": {
+                                                        "properties": {
+                                                            "createDate": "@utcNow()",
+                                                            "envelopeType": "nack",
+                                                            "messageId": "@guid()",
+                                                            "rootPart": 1,
+                                                            "trackingId": ""
+                                                        },
+                                                        "routing": {
+                                                            "MessageType": "http://schemas.microsoft.com/aim#nack"
+                                                        },
+                                                        "routingSlip": {},
+                                                        "state": {}
+                                                    }
+                                                }
+                                            },
+                                            "ConstructMessage:Failure:_Set_ResponseMessage_variable": {
+                                                "runAfter": {
+                                                    "ConstructMessage:Failure:_Create_NACK_Message": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ResponseMessage",
+                                                    "value": "@outputs('ConstructMessage:Failure:_Create_NACK_Message')"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": "@variables('StatusCode')",
+                                    "type": "Switch"
+                                },
+                                "ConstructMessage:_Get_file_content": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['sftpreceive']['connectionId']"
+                                            }
+                                        },
+                                        "method": "get",
+                                        "path": "/datasets/default/files/@{encodeURIComponent(encodeURIComponent(triggerBody()?['Id']))}/content",
+                                        "queries": {
+                                            "inferContentType": true
+                                        }
+                                    }
+                                },
+                                "ConstructMessage:_Set_StatusCode_variable": {
+                                    "runAfter": {
+                                        "ConstructMessage:_Call_MessageConstructor": [
+                                            "Succeeded",
+                                            "Failed",
+                                            "Skipped",
+                                            "TimedOut"
+                                        ]
+                                    },
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "StatusCode",
+                                        "value": "@coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], 500)"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Step:_Should_we_process_file": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@variables('Checkpoint')",
+                                            "ProcessFile"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "sftpreceive": {
+                                "connectionId": "[variables('sftpApiConnectionResourceId')]",
+                                "connectionName": "[parameters('sftpReceiveApiConnectionName')]",
+                                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sftpwithssh')]"
+                            }
+                        }
+                    },
+                    "sftpReceiveFolder": {
+                        "value": "[parameters('sftpReceiveFolder')]"
+                    },
+                    "sftpMaxFileCount": {
+                        "value": "[parameters('sftpMaxFileCount')]"
+                    },
+                    "sftpRecurrenceFrequency": {
+                        "value": "[parameters('sftpRecurrenceFrequency')]"
+                    },
+                    "sftpRecurrenceInterval": {
+                        "value": "[parameters('sftpRecurrenceInterval')]"
+                    },
+                    "fileNameMask": {
+                        "value": "[parameters('sftpFileMask')]"
+                    },
+                    "apimSubscriptionKey": {
+                        "value": "[parameters('apimSubscriptionKey')]"
+                    },
+                    "scenario": {
+                        "value": "[parameters('scenario')]"
+                    },
+                    "scenarioStep": {
+                        "value": "[parameters('scenarioStep')]"
+                    },
+                    "suspendQueueTopicName": {
+                        "value": "[parameters('suspendQueueTopicName')]"
+                    }
+                }
+            }
+        }
+    ]
+}

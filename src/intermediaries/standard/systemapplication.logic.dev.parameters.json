@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimsystemapplication-dev-xxxxx"
+        },
+        "storageAccountName": {
+            "value": "staimmsgbussvcdevxxxxx001"
+        },
+        "appServicePlanName": {
+            "value": "plan-logicapp-aimmsgbussvc-dev-xxxxx"
+        },
+		"messageBusResourceGroupName": {
+			"value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+		},
+		"serviceBusResourceGroupName": {
+			"value": "rg-aimapp-systemapplication-dev-uksouth-xxxxx"
+		},
+		"serviceBusNamespaceName": {
+			"value": "sb-aimmsgbox-dev-uksouth-xxxxx"
+		},
+		"serviceBusPublishPolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"serviceBusSubscribePolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"appInsightsName": {
+            "value": "appi-aimmsgbusops-dev"
+        },	
+		"apimServiceName": {
+            "value": "apim-aimmsgbussvc-dev"
+        },
+		"serviceBusSubscribeApiConnectionName": {
+			"value": "apic-systemapplicationservicebus-dev-xxxxx"
+		},
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-System",
+                "Environment": "dev"
+            }
+        }
+    }
+}

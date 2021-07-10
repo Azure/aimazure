@@ -1,0 +1,18 @@
+[
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.name",
+		"value": "{{ resource_template.parameters.ftp_api_connector_name }}"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.apiId",
+		"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'ftp')]"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.resourceId",
+		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.ftp_api_connector_name }}')]"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.runtimeUrl",
+		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.ftp_api_connector_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
+	}
+]

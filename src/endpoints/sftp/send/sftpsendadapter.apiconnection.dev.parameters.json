@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "value": "apic-aimsftpsconnector-aim-sftppassthru-sendport-dev-xxxxx"
+        },
+        "apiConnectorLocation": {
+            "value": "UK South"
+        },
+        "serverAddress": {
+            "value": "127.0.0.1"
+        },
+        "serverPort": {
+            "value": 22
+        },
+        "userName": {
+            "value": "btsuser"
+        },
+        "password": {
+            "value": "place-holder"
+        },
+        "acceptAnySshHostKey": {
+            "value": true
+        },
+        "rootFolder": {
+            "value": "/"
+        },
+        "sshHostKeyFingerprint": {
+            "value": ""
+        },
+        "sshPrivateKey": {
+            "value": ""
+        },
+        "sshPrivateKeyPassphrase": {
+            "value": ""
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "Aim-SftpPassthru",
+                "Env": "dev"
+            }
+        }
+    }
+}

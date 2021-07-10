@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectorName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "apiConnectorLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "serverAddress": {
+            "value": "{{ resource_template.parameters.azure_sftp_server_address }}"
+        },
+        "serverPort": {
+            "value": {{ resource_template.parameters.azure_sftp_server_port }}
+        },
+        "userName": {
+            "value": "{{ resource_template.parameters.azure_sftp_user_name }}"
+        },
+        "password": {
+            "value": "{{ resource_template.parameters.azure_sftp_password }}"
+        },
+        "acceptAnySshHostKey": {
+            "value": {{ resource_template.parameters.azure_sftp_acceptanysshhostkey }}
+        },
+        "rootFolder": {
+            "value": "{{ resource_template.parameters.azure_sftp_rootfolder }}"
+        },
+        "sshHostKeyFingerprint": {
+            "value": "{{ resource_template.parameters.azure_sftp_sshhostkeyfingerprint }}"
+        },
+        "sshPrivateKey": {
+            "value": "{{ resource_template.parameters.azure_sftp_sshprivatekey }}"
+        },
+        "sshPrivateKeyPassphrase": {
+            "value": "{{ resource_template.parameters.azure_sftp_sshprivatekeypassphrase }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}
