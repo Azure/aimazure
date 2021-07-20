@@ -21,7 +21,7 @@
 	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpReceiveFolder": {
 		"type": "String",
 		"value": "{{ resource_template.parameters.azure_ftp_target_folder }}",
-		"description": "The path where the File connector looks for new/updated files."
+		"description": "The path where the FTP connector looks for new/updated files."
 	},
 	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.fileNameMask": {
 		"type": "String",
@@ -31,16 +31,16 @@
 	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpMaxFileCount": {
 		"type": "Int",
 		"value": {{ resource_template.parameters.azure_ftp_max_file_count }},
-		"description": "The max number of files the File Connector will retrieve per polling interval."
+		"description": "The max number of files the FTP Connector will retrieve per polling interval."
 	},
 	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpRecurrenceFrequency": {
 		"type": "String",
 		"value": "{{ resource_template.parameters.azure_ftp_frequency }}",
-		"description": "The frequency with which to check for new files on the File server."
+		"description": "The frequency with which to check for new files on the FTP server."
 	},
 	"{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpRecurrenceInterval": {
 		"type": "Int",
 		"value": {{ resource_template.parameters.azure_ftp_recurrence }},
-		"description": "The interval with which to check for new files on the File server."
+		"description": "The interval with which to check for new files on the FTP server."
 	}
 }

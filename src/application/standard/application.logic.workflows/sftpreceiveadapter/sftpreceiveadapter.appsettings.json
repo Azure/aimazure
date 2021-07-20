@@ -1,0 +1,18 @@
+[
+	{
+		"name": "workflowname.sftpReceiveConnection.name",
+		"value": ""
+	},
+	{
+		"name": "workflowname.sftpReceiveConnection.apiId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.sftpReceiveConnection.resourceId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.sftpReceiveConnection.runtimeUrl",
+		"value": ""
+	}
+]

@@ -927,13 +927,12 @@
                     "path": "/datasets/default/triggers/batch/onupdatedfile",
                     "queries": {
                         "folderId": "@{parameters('workflowname.ftpReceiveAdapter.ftpReceiveFolder')}",
-                        "checkBothCreatedAndModifiedDateTime": false,
                         "maxFileCount": "@parameters('workflowname.ftpReceiveAdapter.ftpMaxFileCount')"
                     }
                 },
                 "recurrence": {
-					"frequency": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceFrequency')",
-					"interval": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceInterval')"
+					"frequency": "@parameters('workflowname.sftpReceiveAdapter.sftpRecurrenceFrequency')",
+					"interval": "@parameters('workflowname.sftpReceiveAdapter.sftpRecurrenceInterval')"
                 },
                 "splitOn": "@triggerBody()"
             }

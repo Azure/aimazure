@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"workflowname.fileReceiveConnection": {
+			"api": {
+				"id": "@parameters('workflowname.fileReceiveConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('workflowname.fileReceiveConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('workflowname.fileReceiveConnection.runtimeUrl')",
+			"authentication": "@parameters('workflowname.fileReceiveConnection.apiAuthentication')"
+		}
+	}
+}

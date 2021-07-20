@@ -932,8 +932,8 @@
                     }
                 },
                 "recurrence": {
-					"frequency": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceFrequency')",
-					"interval": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceInterval')"
+                    "frequency": "Second",
+                    "interval": 15
                 },
                 "splitOn": "@triggerBody()"
             }

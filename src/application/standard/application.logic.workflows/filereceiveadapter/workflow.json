@@ -99,7 +99,7 @@
             },
             "Compose_FileNameMask": {
                 "type": "Compose",
-                "inputs": "@parameters('workflowname.ftpReceiveAdapter.fileNameMask')",
+                "inputs": "@parameters('workflowname.fileReceiveAdapter.fileNameMask')",
                 "runAfter": {
                     "Initialize_Configuration_variable": [
                         "Succeeded"
@@ -223,8 +223,8 @@
                                     "nackMessage": "@variables('ResponseMessage')",
                                     "originalMessage": "@triggerBody()",
                                     "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
-                                    "failedMessageRouting": "@coalesce(variables('Configuration')?['ftpReceiveAdapter']?['failedMessageRouting'], false)",
-                                    "scenario": "@parameters('workflowname.ftpReceiveAdapter.scenarioName')"
+                                    "failedMessageRouting": "@coalesce(variables('Configuration')?['fileReceiveAdapter']?['failedMessageRouting'], false)",
+                                    "scenario": "@parameters('workflowname.fileReceiveAdapter.scenarioName')"
                                 }
                             },
                             "runAfter": {
@@ -271,7 +271,7 @@
                         "type": "Http",
                         "inputs": {
                             "method": "GET",
-                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('workflowname.ftpReceiveAdapter.scenarioName'))}/ftpReceiveAdapter",
+                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('workflowname.fileReceiveAdapter.scenarioName'))}/fileReceiveAdapter",
                             "headers": {
                                 "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
                             },
@@ -448,7 +448,7 @@
                                 {
                                     "not": {
                                         "equals": [
-                                            "@coalesce(variables('Configuration')?['ftpReceiveAdapter']?['btsReceivePortName'], '')",
+                                            "@coalesce(variables('Configuration')?['fileReceiveAdapter']?['btsReceivePortName'], '')",
                                             ""
                                         ]
                                     }
@@ -674,9 +674,9 @@
                                 "$contentType": "@triggerBody()?['MediaType']",
                                 "properties": {
                                     "receivedFileName": "@{triggerBody()?['Name']}",
-                                    "scenario": "@parameters('workflowname.ftpReceiveAdapter.scenarioName')",
-                                    "btsReceivePortName": "@{coalesce(variables('Configuration')?['ftpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
-                                    "btsReceivePortId": "@{coalesce(variables('Configuration')?['ftpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
+                                    "scenario": "@parameters('workflowname.fileReceiveAdapter.scenarioName')",
+                                    "btsReceivePortName": "@{coalesce(variables('Configuration')?['fileReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
+                                    "btsReceivePortId": "@{coalesce(variables('Configuration')?['fileReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
                                 }
                             }
                         },
@@ -877,7 +877,7 @@
                         "inputs": {
                             "host": {
                                 "connection": {
-                                    "referenceName": "workflowname.ftpReceiveConnection"
+                                    "referenceName": "workflowname.fileReceiveConnection"
                                 }
                             },
                             "method": "get",
@@ -920,20 +920,19 @@
                 "inputs": {
                     "host": {
                         "connection": {
-                            "referenceName": "workflowname.ftpReceiveConnection"
+                            "referenceName": "workflowname.fileReceiveConnection"
                         }
                     },
                     "method": "get",
                     "path": "/datasets/default/triggers/batch/onupdatedfile",
                     "queries": {
-                        "folderId": "@{parameters('workflowname.ftpReceiveAdapter.ftpReceiveFolder')}",
-                        "checkBothCreatedAndModifiedDateTime": false,
-                        "maxFileCount": "@parameters('workflowname.ftpReceiveAdapter.ftpMaxFileCount')"
+                        "folderId": "@{parameters('workflowname.fileReceiveAdapter.fileReceiveFolder')}",
+                        "maxFileCount": "@parameters('workflowname.fileReceiveAdapter.fileMaxFileCount')"
                     }
                 },
                 "recurrence": {
-					"frequency": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceFrequency')",
-					"interval": "@parameters('workflowname.ftpReceiveAdapter.ftpRecurrenceInterval')"
+					"frequency": "@parameters('workflowname.fileReceiveAdapter.fileRecurrenceFrequency')",
+					"interval": "@parameters('workflowname.fileReceiveAdapter.fileRecurrenceInterval')"
                 },
                 "splitOn": "@triggerBody()"
             }

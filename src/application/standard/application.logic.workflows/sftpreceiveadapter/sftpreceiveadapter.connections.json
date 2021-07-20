@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"workflowname.sftpReceiveConnection": {
+			"api": {
+				"id": "@parameters('workflowname.sftpReceiveConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('workflowname.sftpReceiveConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('workflowname.sftpReceiveConnection.runtimeUrl')",
+			"authentication": "@parameters('workflowname.sftpReceiveConnection.apiAuthentication')"
+		}
+	}
+}

@@ -30,17 +30,17 @@
 	},
 	"workflowname.ftpReceiveAdapter.ftpMaxFileCount": {
 		"value": 10,
-		"description": "The max number of files the File Connector will retrieve per polling interval.",
+		"description": "The max number of files the FTP Connector will retrieve per polling interval.",
 		"type": "Int"
 	},
 	"workflowname.ftpReceiveAdapter.ftpRecurrenceFrequency": {
 		"value": "Second",
-		"description": "The frequency with which to check for new files on the File server.",
+		"description": "The frequency with which to check for new files on the FTP server.",
 		"type": "String"
 	},
 	"workflowname.ftpReceiveAdapter.ftpRecurrenceInterval": {
 		"value": 60,
-		"description": "The interval with which to check for new files on the File server.",
+		"description": "The interval with which to check for new files on the FTP server.",
 		"type": "Int"
 	}
 }

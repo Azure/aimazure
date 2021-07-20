@@ -1,0 +1,7 @@
+{
+	"workflowname.ftpReceiveAdapter.scenarioName": {
+		"value": "",
+		"description": "The name of the scenario for this specific Receive Adapter.",
+		"type": "String"
+	}
+}

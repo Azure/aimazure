@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"workflowname.fileSendConnection": {
+			"api": {
+				"id": "@parameters('workflowname.fileSendConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('workflowname.fileSendConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('workflowname.fileSendConnection.runtimeUrl')",
+			"authentication": "@parameters('workflowname.fileSendConnection.apiAuthentication')"
+		}
+	}
+}
