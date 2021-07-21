@@ -1,26 +1,26 @@
 {
-	"{{ resource_template.parameters.workflow_name }}.sftpSendConnection.apiId": {
+	"workflowname.sftpSendConnection.apiId": {
 		"type": "String",
 		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/sftpwithssh"
 	},
-	"{{ resource_template.parameters.workflow_name }}.sftpSendConnection.resourceId": {
+	"workflowname.sftpSendConnection.resourceId": {
 		"type": "String",
-		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.sftpSendConnection.name')"
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.sftpSendConnection.name')"
 	},
-	"{{ resource_template.parameters.workflow_name }}.sftpSendConnection.apiAuthentication": {
+	"workflowname.sftpSendConnection.apiAuthentication": {
 		"type": "Object",
 		"value": {
 			"type": "ManagedServiceIdentity"
 		}
 	},
-	"{{ resource_template.parameters.workflow_name }}.sftpSendAdapter.sftpSendFileName": {
+	"workflowname.sftpSendAdapter.sftpSendFileName": {
 		"type": "String",
-		"value": "{{ resource_template.parameters.azure_sftp_target_file_name }}",
+		"value": "",
 		"description": "The name of the file to send (can include macro values e.g. %MessageID% or %SourceFileName%)."
 	},
-	"{{ resource_template.parameters.workflow_name }}.sftpSendAdapter.sftpSendFolder": {
+	"workflowname.sftpSendAdapter.sftpSendFolder": {
 		"type": "String",
-		"value": "{{ resource_template.parameters.azure_sftp_target_folder }}",
+		"value": "",
 		"description": "The path where the FTP connector sends files."
 	}
 }

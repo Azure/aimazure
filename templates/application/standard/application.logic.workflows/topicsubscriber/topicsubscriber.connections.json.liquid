@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection": {
+			"api": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.runtimeUrl')",
+			"authentication": "@parameters('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiAuthentication')"
+		}
+	}
+}

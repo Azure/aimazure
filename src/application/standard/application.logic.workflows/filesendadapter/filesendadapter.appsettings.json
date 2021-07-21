@@ -1,6 +1,18 @@
-{
-	"workflowname.fileSendConnection.name": "",
-	"workflowname.fileSendConnection.apiId": "",
-	"workflowname.fileSendConnection.resourceId": "",
-	"workflowname.fileSendConnection.runtimeUrl": ""
-}
+[
+	{
+		"name": "workflowname.fileSendConnection.name",
+		"value": ""
+	},
+	{
+		"name": "workflowname.fileSendConnection.apiId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.fileSendConnection.resourceId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.fileSendConnection.runtimeUrl",
+		"value": ""
+	}
+]

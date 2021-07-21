@@ -195,7 +195,7 @@
                                                             "originalMessage": "@variables('Envelope')",
                                                             "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
                                                             "failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
-                                                            "scenario": "@{parameters('workflowname.topicSubscriber.scenarioName')}"
+                                                            "scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
                                                         }
                                                     },
                                                     "runAfter": {
@@ -360,7 +360,7 @@
                                             "originalMessage": "@variables('Envelope')",
                                             "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
                                             "failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
-                                            "scenario": "@{parameters('workflowname.topicSubscriber.scenarioName')}"
+                                            "scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
                                         }
                                     },
                                     "runAfter": {
@@ -470,7 +470,7 @@
                                     "originalMessage": "@variables('Envelope')",
                                     "suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
                                     "failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
-                                    "scenario": "@{parameters('workflowname.topicSubscriber.scenarioName')}"
+                                    "scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
                                 }
                             },
                             "runAfter": {
@@ -605,7 +605,7 @@
                         "type": "Http",
                         "inputs": {
                             "method": "GET",
-                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('workflowname.topicSubscriber.scenarioName'))}/topicSubscriber",
+                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName'))}/topicSubscriber",
                             "headers": {
                                 "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
                             },
@@ -779,7 +779,7 @@
                         "type": "Http",
                         "inputs": {
                             "method": "POST",
-                            "uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/buildenvelope/@{encodeURIComponent('document')}/@{encodeURIComponent(parameters('workflowname.topicSubscriber.scenarioName'))}",
+                            "uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/buildenvelope/@{encodeURIComponent('document')}/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName'))}",
                             "headers": {
                                 "Content-Transfer-Encoding": "none",
                                 "Content-Type": "application/json",
@@ -962,7 +962,7 @@
                             },
                             "MergeProperties:_Update_Scenario": {
                                 "type": "Compose",
-                                "inputs": "@setProperty(outputs('MergeProperties:_Merge_RoutingSlip'), 'header', setProperty(outputs('MergeProperties:_Merge_RoutingSlip')?['header'], 'properties', setProperty(outputs('MergeProperties:_Merge_RoutingSlip')?['header']?['properties'], 'scenario', parameters('workflowname.topicSubscriber.scenarioName'))))",
+                                "inputs": "@setProperty(outputs('MergeProperties:_Merge_RoutingSlip'), 'header', setProperty(outputs('MergeProperties:_Merge_RoutingSlip')?['header'], 'properties', setProperty(outputs('MergeProperties:_Merge_RoutingSlip')?['header']?['properties'], 'scenario', parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName'))))",
                                 "runAfter": {
                                     "MergeProperties:_Merge_RoutingSlip": [
                                         "Succeeded"
@@ -1068,11 +1068,11 @@
                 "inputs": {
                     "host": {
                         "connection": {
-                            "referenceName": "workflowname.serviceBusSubscribeConnection"
+                            "referenceName": "{{ resource_template.parameters.workflow_name }}.serviceBusSubscribeConnection"
                         }
                     },
                     "method": "get",
-                    "path": "/@{encodeURIComponent(encodeURIComponent(parameters('workflowname.topicSubscriber.topicName')))}/subscriptions/@{encodeURIComponent(parameters('workflowname.topicSubscriber.subscriptionName'))}/messages/head",
+                    "path": "/@{encodeURIComponent(encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.topicName')))}/subscriptions/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.subscriptionName'))}/messages/head",
                     "queries": {
                         "subscriptionType": "Main"
                     }

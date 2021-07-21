@@ -1,18 +1,18 @@
 [
 	{
-		"name": "{{ resource_template.parameters.workflow_name }}.sftpSendConnection.name",
-		"value": "{{ resource_template.parameters.sftp_api_connector_name }}"
+		"name": "workflowname.sftpSendConnection.name",
+		"value": ""
 	},
 	{
-		"name": "{{ resource_template.parameters.workflow_name }}.sftpSendConnection.apiId",
-		"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'sftp')]"
+		"name": "workflowname.sftpSendConnection.apiId",
+		"value": ""
 	},
 	{
-		"name": "{{ resource_template.parameters.workflow_name }}.sftpSendConnection.resourceId",
-		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.sftp_api_connector_name }}')]"
+		"name": "workflowname.sftpSendConnection.resourceId",
+		"value": ""
 	},
 	{
-		"name": "{{ resource_template.parameters.workflow_name }}.sftpSendConnection.runtimeUrl",
-		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.sftp_api_connector_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
+		"name": "workflowname.sftpSendConnection.runtimeUrl",
+		"value": ""
 	}
 ]
