@@ -930,7 +930,7 @@
                         "inputs": {
                             "host": {
                                 "connection": {
-                                    "referenceName": "workflowname.fileSendConnection"
+                                    "referenceName": "{{ resource_template.parameters.workflow_name }}.fileSendConnection"
                                 }
                             },
                             "method": "@{if(equals(variables('CopyMode'), 'Create'), 'post', if(equals(variables('CopyMode'), 'Append'), 'patch', if(equals(variables('CopyMode'), 'Update'), 'put', 'undefined')))}",

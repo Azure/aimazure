@@ -3,149 +3,132 @@
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
             "Initialize_StatusCode_variable": {
-                            "runAfter": {},
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "StatusCode",
-                                        "type": "integer",
-                                        "value": 500
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_FaultMessage_variable": {
-                            "runAfter": {
-                                "Initialize_StatusCode_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "FaultMessage",
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_ErrorMessage_variable": {
-                            "runAfter": {
-                                "Initialize_FaultMessage_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "ErrorMessage",
-                                        "type": "string",
-                                        "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_Checkpoint_variable": {
-                            "runAfter": {
-                                "Initialize_ErrorMessage_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "Checkpoint",
-                                        "type": "string"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_Envelope_variable": {
-                            "runAfter": {
-                                "Initialize_Checkpoint_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "Envelope",
-                                        "type": "object",
-                                        "value": "@triggerBody()"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_Configuration_variable": {
-                            "runAfter": {
-                                "Initialize_Envelope_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "Configuration",
-                                        "type": "object"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_BodyContent_variable": {
-                            "runAfter": {
-                                "Initialize_Configuration_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "BodyContent",
-                                        "type": "string"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_SendFileName_variable": {
-                            "runAfter": {
-                                "Initialize_BodyContent_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "SendFileName",
-                                        "type": "string"
-                                    }
-                                ]
-                            }
-                        },
-                        "Initialize_CopyMode_variable": {
-                            "runAfter": {
-                                "Initialize_SendFileName_variable": [
-                                    "Succeeded"
-                                ]
-                            },
-                            "type": "InitializeVariable",
-                            "inputs": {
-                                "variables": [
-                                    {
-                                        "name": "CopyMode",
-                                        "type": "string",
-                                        "value": "Create"
-                                    }
-                                ]
-                            }
-                        },
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "StatusCode",
+                            "type": "integer",
+                            "value": 500
+                        }
+                    ]
+                },
+                "runAfter": {}
+            },
+            "Initialize_FaultMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "FaultMessage",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_StatusCode_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ErrorMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ErrorMessage",
+                            "type": "string",
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_FaultMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Checkpoint_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Checkpoint",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ErrorMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Envelope_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Envelope",
+                            "type": "object",
+                            "value": "@triggerBody()"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Checkpoint_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Configuration_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Configuration",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Envelope_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_BodyContent_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "BodyContent",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Configuration_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_SendFileName_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "SendFileName",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_BodyContent_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
             "MessageSender:_Were_we_Successful": {
                 "type": "If",
                 "expression": {
@@ -153,7 +136,7 @@
                         {
                             "equals": [
                                 "@variables('Checkpoint')",
-                                "SendToFile"
+                                "SendToFTP"
                             ]
                         }
                     ]
@@ -367,7 +350,7 @@
                     }
                 },
                 "runAfter": {
-                    "Step:_SendToFile": [
+                    "Step:_SendToFTP": [
                         "Succeeded",
                         "Failed",
                         "Skipped",
@@ -448,7 +431,7 @@
                         "type": "Http",
                         "inputs": {
                             "method": "GET",
-                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/fileSendAdapter",
+                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/ftpSendAdapter",
                             "headers": {
                                 "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
                             },
@@ -597,7 +580,7 @@
                     }
                 },
                 "runAfter": {
-                    "Initialize_CopyMode_variable": [
+                    "Initialize_SendFileName_variable": [
                         "Succeeded",
                         "Failed",
                         "Skipped",
@@ -873,16 +856,16 @@
                     ]
                 },
                 "actions": {
-					"GetSendFileName:_Set_SendFileName_variable": {
-						"description": "A full list of supported FileName macros can be found here: https://social.technet.microsoft.com/wiki/contents/articles/8823.biztalk-server-list-of-macros.aspx. At this time we are not supporting the Party macros.",
-						"type": "SetVariable",
-						"runAfter": {},
-						"inputs": {
-							"name": "SendFileName",
-							"value": "@{replace(replace(replace(replace(replace(replace(replace(coalesce(variables('Configuration')?['fileSendAdapter']?['fileName'], '%MessageID%.xml'), '%MessageID%', coalesce(triggerBody()?['header']?['properties']?['messageId'], guid())), '%SourceFileName%', coalesce(triggerBody()?['header']?['properties']?['receivedFileName'], 'myfile.txt')), '%datetime%', utcNow('yyyy-MM-ddThhmmss')), '%datetime_bts2000%', utcNow('yyyyMMddhhmmsss')), '%datetime.tz%', utcNow('yyyy-MM-ddThhmmssK')), '%time%', utcNow('hhmmss')), '%time.tz%', utcNow('hhmmssK'))}"
-						}
-					},
-                    "SendToFile:_Set_Checkpoint_variable": {
+                    "GetSendFileName:_Set_SendFileName_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "SendFileName",
+                            "value": "@{replace(replace(replace(replace(replace(replace(replace(parameters('{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFileName'), '%MessageID%', coalesce(triggerBody()?['header']?['properties']?['messageId'], guid())), '%SourceFileName%', coalesce(triggerBody()?['header']?['properties']?['receivedFileName'], 'myfile.txt')), '%datetime%', utcNow('yyyy-MM-ddThhmmss')), '%datetime_bts2000%', utcNow('yyyyMMddhhmmsss')), '%datetime.tz%', utcNow('yyyy-MM-ddThhmmssK')), '%time%', utcNow('hhmmss')), '%time.tz%', utcNow('hhmmssK'))}"
+                        },
+                        "runAfter": {},
+                        "description": "A full list of supported FileName macros can be found here: https://social.technet.microsoft.com/wiki/contents/articles/8823.biztalk-server-list-of-macros.aspx. At this time we are not supporting the Party macros."
+                    },
+                    "SendToFTP:_Set_Checkpoint_variable": {
                         "type": "SetVariable",
                         "inputs": {
                             "name": "Checkpoint",
@@ -904,7 +887,7 @@
                     ]
                 }
             },
-            "Step:_SendToFile": {
+            "Step:_SendToFTP": {
                 "type": "If",
                 "expression": {
                     "and": [
@@ -917,69 +900,18 @@
                     ]
                 },
                 "actions": {
-					"SendToFile:_Set_CopyMode_variable": {
-                                    "runAfter": {},
-                                    "type": "SetVariable",
-                                    "inputs": {
-                                        "name": "CopyMode",
-                                        "value": "@{coalesce(variables('Configuration')?['fileSendAdapter']?['copyMode'], 'Create')}"
-                                    }
-                                },
-                    "SendToFile:_Create_File": {
-                        "type": "ApiConnection",
-                        "inputs": {
-                            "host": {
-                                "connection": {
-                                    "referenceName": "workflowname.fileSendConnection"
-                                }
-                            },
-                            "method": "@{if(equals(variables('CopyMode'), 'Create'), 'post', if(equals(variables('CopyMode'), 'Append'), 'patch', if(equals(variables('CopyMode'), 'Update'), 'put', 'undefined')))}",
-                            "body": "@variables('BodyContent')",
-                            "path": "/datasets/default/files@{if(contains(createArray('Append', 'Update'), variables('CopyMode')), concat(coalesce(variables('Configuration')?['fileSendAdapter']?['destinationFolder'], '(undefined)'), '\\', variables('SendFileName')), '')}",
-                            "queries": {
-                                "folderPath": "@coalesce(variables('Configuration')?['fileSendAdapter']?['destinationFolder'], '(undefined)')",
-								"name": "@variables('SendFileName')",
-								"queryParametersSingleEncoded": true
-                            }
-                        },
-                        "runAfter": {
-							"SendToFile:_Set_CopyMode_variable": [
-								"Succeeded"
-							]
-                        },
-                        "runtimeConfiguration": {
-                            "contentTransfer": {
-                                "transferMode": "Chunked"
-                            }
-                        }
-                    },
-                    "SendToFile:_Set_StatusCode_variable": {
-                        "type": "SetVariable",
-                        "inputs": {
-                            "name": "StatusCode",
-                            "value": "@coalesce(outputs('SendToFile:_Create_File')?['statusCode'], 500)"
-                        },
-                        "runAfter": {
-                            "SendToFile:_Create_File": [
-                                "Succeeded",
-                                "Failed",
-                                "Skipped",
-                                "TimedOut"
-                            ]
-                        }
-                    },
-					"SendToFile:_Check_Status_Code": {
+                    "SendToFTP:_Check_Status_Code": {
                         "type": "Switch",
                         "expression": "@variables('StatusCode')",
                         "cases": {
                             "Success": {
                                 "case": 200,
                                 "actions": {
-                                    "SendToFile:Success:_Set_Checkpoint_variable": {
+                                    "SendToFTP:Success:_Set_Checkpoint_variable": {
                                         "type": "SetVariable",
                                         "inputs": {
                                             "name": "Checkpoint",
-                                            "value": "SendToFile"
+                                            "value": "SendToFTP"
                                         },
                                         "runAfter": {}
                                     }
@@ -988,14 +920,14 @@
                         },
                         "default": {
                             "actions": {
-                                "SendToFile:Failure:_Do_we_have_a_Fault_Message": {
+                                "SendToFTP:Failure:_Do_we_have_a_Fault_Message": {
                                     "type": "If",
                                     "expression": {
                                         "and": [
                                             {
                                                 "not": {
                                                     "equals": [
-                                                        "@body('SendToFile:_Create_File')?['fault']",
+                                                        "@body('SendToFTP:_Create_File')?['fault']",
                                                         null
                                                     ]
                                                 }
@@ -1003,39 +935,39 @@
                                         ]
                                     },
                                     "actions": {
-                                        "SendToFile:Fault:_Set_ErrorMessage_variable": {
+                                        "SendToFTP:Fault:_Set_ErrorMessage_variable": {
                                             "type": "SetVariable",
                                             "inputs": {
                                                 "name": "ErrorMessage",
-                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to send a file using the File connector"
+                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to send a file using the FTP connector"
                                             },
                                             "runAfter": {
-                                                "SendToFile:Fault:_Set_FaultMessage_variable": [
+                                                "SendToFTP:Fault:_Set_FaultMessage_variable": [
                                                     "Succeeded"
                                                 ]
                                             }
                                         },
-                                        "SendToFile:Fault:_Create_Fault_Message": {
+                                        "SendToFTP:Fault:_Create_Fault_Message": {
                                             "type": "Compose",
                                             "inputs": {
                                                 "fault": {
-                                                    "faultActor": "@concat(workflow()?['name'], '.', actions('SendToFile:_Create_File')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                    "faultActor": "@concat(workflow()?['name'], '.', actions('SendToFTP:_Create_File')?['name'], ' (', workflow()?['run']?['name'], ')')",
                                                     "faultCategory": "Error",
-                                                    "faultCode": "@{coalesce(outputs('SendToFile:_Create_File')?['statusCode'], outputs('SendToFile:_Create_File')?['body']?['statusCode'], actions('SendToFile:_Create_File')?['error']?['code'])}",
-                                                    "faultMessage": "@{coalesce(outputs('SendToFile:_Create_File')?['error']?['message'], outputs('SendToFile:_Create_File')?['body']?['message'], actions('SendToFile:_Create_File')?['error']?['message'])}",
-                                                    "faultReason": "@{actions('SendToFile:_Create_File')?['status']}"
+                                                    "faultCode": "@{coalesce(outputs('SendToFTP:_Create_File')?['statusCode'], outputs('SendToFTP:_Create_File')?['body']?['statusCode'], actions('SendToFTP:_Create_File')?['error']?['code'])}",
+                                                    "faultMessage": "@{coalesce(outputs('SendToFTP:_Create_File')?['error']?['message'], outputs('SendToFTP:_Create_File')?['body']?['message'], actions('SendToFTP:_Create_File')?['error']?['message'])}",
+                                                    "faultReason": "@{actions('SendToFTP:_Create_File')?['status']}"
                                                 }
                                             },
                                             "runAfter": {}
                                         },
-                                        "SendToFile:Fault:_Set_FaultMessage_variable": {
+                                        "SendToFTP:Fault:_Set_FaultMessage_variable": {
                                             "type": "SetVariable",
                                             "inputs": {
                                                 "name": "FaultMessage",
-                                                "value": "@body('SendToFile:Fault:_Create_Fault_Message')"
+                                                "value": "@body('SendToFTP:Fault:_Create_Fault_Message')"
                                             },
                                             "runAfter": {
-                                                "SendToFile:Fault:_Create_Fault_Message": [
+                                                "SendToFTP:Fault:_Create_Fault_Message": [
                                                     "Succeeded"
                                                 ]
                                             }
@@ -1044,39 +976,39 @@
                                     "runAfter": {},
                                     "else": {
                                         "actions": {
-                                            "SendToFile:NoFault:_Create_Fault_Message": {
+                                            "SendToFTP:NoFault:_Create_Fault_Message": {
                                                 "type": "Compose",
                                                 "inputs": {
                                                     "fault": {
-                                                        "faultActor": "@concat(workflow()?['name'], '.', actions('SendToFile:_Create_File')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                        "faultActor": "@concat(workflow()?['name'], '.', actions('SendToFTP:_Create_File')?['name'], ' (', workflow()?['run']?['name'], ')')",
                                                         "faultCategory": "Error",
-                                                        "faultCode": "@{coalesce(outputs('SendToFile:_Create_File')?['statusCode'], outputs('SendToFile:_Create_File')?['body']?['statusCode'])}",
-                                                        "faultMessage": "@{coalesce(outputs('SendToFile:_Create_File')?['error']?['message'], outputs('SendToFile:_Create_File')?['body']?['message'])}",
-                                                        "faultReason": "@actions('SendToFile:_Create_File')?['inputs']?['path']"
+                                                        "faultCode": "@{coalesce(outputs('SendToFTP:_Create_File')?['statusCode'], outputs('SendToFTP:_Create_File')?['body']?['statusCode'])}",
+                                                        "faultMessage": "@{coalesce(outputs('SendToFTP:_Create_File')?['error']?['message'], outputs('SendToFTP:_Create_File')?['body']?['message'])}",
+                                                        "faultReason": "@actions('SendToFTP:_Create_File')?['inputs']?['path']"
                                                     }
                                                 },
                                                 "runAfter": {}
                                             },
-                                            "SendToFile:NoFault:_Set_ErrorMessage_variable": {
+                                            "SendToFTP:NoFault:_Set_ErrorMessage_variable": {
                                                 "type": "SetVariable",
                                                 "inputs": {
                                                     "name": "ErrorMessage",
-                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to send a file using the File connector"
+                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to send a file using the FTP connector"
                                                 },
                                                 "runAfter": {
-                                                    "SendToFile:NoFault:_Set_FaultMessage_variable": [
+                                                    "SendToFTP:NoFault:_Set_FaultMessage_variable": [
                                                         "Succeeded"
                                                     ]
                                                 }
                                             },
-                                            "SendToFile:NoFault:_Set_FaultMessage_variable": {
+                                            "SendToFTP:NoFault:_Set_FaultMessage_variable": {
                                                 "type": "SetVariable",
                                                 "inputs": {
                                                     "name": "FaultMessage",
-                                                    "value": "@outputs('SendToFile:NoFault:_Create_Fault_Message')"
+                                                    "value": "@outputs('SendToFTP:NoFault:_Create_Fault_Message')"
                                                 },
                                                 "runAfter": {
-                                                    "SendToFile:NoFault:_Create_Fault_Message": [
+                                                    "SendToFTP:NoFault:_Create_Fault_Message": [
                                                         "Succeeded"
                                                     ]
                                                 }
@@ -1087,8 +1019,50 @@
                             }
                         },
                         "runAfter": {
-                            "SendToFile:_Set_StatusCode_variable": [
+                            "SendToFTP:_Set_StatusCode_variable": [
                                 "Succeeded"
+                            ]
+                        }
+                    },
+                    "SendToFTP:_Create_File": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "{{ resource_template.parameters.workflow_name }}.ftpSendConnection"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@variables('BodyContent')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/datasets/default/files",
+                            "queries": {
+                                "folderPath": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFolder')",
+                                "name": "@variables('SendFileName')",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runAfter": {},
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "SendToFTP:_Set_StatusCode_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "StatusCode",
+                            "value": "@coalesce(outputs('SendToFTP:_Create_File')?['statusCode'], 500)"
+                        },
+                        "runAfter": {
+                            "SendToFTP:_Create_File": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
                             ]
                         }
                     }

@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"{{ resource_template.parameters.workflow_name }}.fileSendConnection": {
+			"api": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.fileSendConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.fileSendConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('{{ resource_template.parameters.workflow_name }}.fileSendConnection.runtimeUrl')",
+			"authentication": "@parameters('{{ resource_template.parameters.workflow_name }}.fileSendConnection.apiAuthentication')"
+		}
+	}
+}

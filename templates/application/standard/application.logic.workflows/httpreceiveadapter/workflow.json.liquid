@@ -247,7 +247,7 @@
 									"originalMessage": "@triggerBody()",
 									"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 									"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
-									"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')"
+									"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.scenarioName')"
 								}
 							},
 							"runAfter": {
@@ -294,7 +294,7 @@
 						"type": "Http",
 						"inputs": {
 							"method": "GET",
-							"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('workflowname.httpReceiveAdapter.scenarioName'))}/httpReceiveAdapter",
+							"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.scenarioName'))}/httpReceiveAdapter",
 							"headers": {
 								"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 							},
@@ -542,7 +542,7 @@
 								"$contentTransferEncoding": "none",
 								"$contentType": "@triggerOutputs()?['headers']?['Content-Type']",
 								"properties": {
-									"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')",
+									"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.scenarioName')",
 									"btsReceivePortName": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
 									"btsReceivePortId": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
 								}

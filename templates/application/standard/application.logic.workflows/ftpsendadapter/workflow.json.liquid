@@ -860,7 +860,7 @@
                         "type": "SetVariable",
                         "inputs": {
                             "name": "SendFileName",
-                            "value": "@{replace(replace(replace(replace(replace(replace(replace(parameters('workflowname.ftpSendAdapter.ftpSendFileName'), '%MessageID%', coalesce(triggerBody()?['header']?['properties']?['messageId'], guid())), '%SourceFileName%', coalesce(triggerBody()?['header']?['properties']?['receivedFileName'], 'myfile.txt')), '%datetime%', utcNow('yyyy-MM-ddThhmmss')), '%datetime_bts2000%', utcNow('yyyyMMddhhmmsss')), '%datetime.tz%', utcNow('yyyy-MM-ddThhmmssK')), '%time%', utcNow('hhmmss')), '%time.tz%', utcNow('hhmmssK'))}"
+                            "value": "@{replace(replace(replace(replace(replace(replace(replace(parameters('{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFileName'), '%MessageID%', coalesce(triggerBody()?['header']?['properties']?['messageId'], guid())), '%SourceFileName%', coalesce(triggerBody()?['header']?['properties']?['receivedFileName'], 'myfile.txt')), '%datetime%', utcNow('yyyy-MM-ddThhmmss')), '%datetime_bts2000%', utcNow('yyyyMMddhhmmsss')), '%datetime.tz%', utcNow('yyyy-MM-ddThhmmssK')), '%time%', utcNow('hhmmss')), '%time.tz%', utcNow('hhmmssK'))}"
                         },
                         "runAfter": {},
                         "description": "A full list of supported FileName macros can be found here: https://social.technet.microsoft.com/wiki/contents/articles/8823.biztalk-server-list-of-macros.aspx. At this time we are not supporting the Party macros."
@@ -1029,7 +1029,7 @@
                         "inputs": {
                             "host": {
                                 "connection": {
-                                    "referenceName": "workflowname.ftpSendConnection"
+                                    "referenceName": "{{ resource_template.parameters.workflow_name }}.ftpSendConnection"
                                 }
                             },
                             "method": "post",
@@ -1039,7 +1039,7 @@
                             },
                             "path": "/datasets/default/files",
                             "queries": {
-                                "folderPath": "@parameters('workflowname.ftpSendAdapter.ftpSendFolder')",
+                                "folderPath": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFolder')",
                                 "name": "@variables('SendFileName')",
                                 "queryParametersSingleEncoded": true
                             }
