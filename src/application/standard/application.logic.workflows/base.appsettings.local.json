@@ -6,6 +6,8 @@
 	"WORKFLOWS_RESOURCE_GROUP_NAME": "",
 	"WORKFLOWS_LOCATION_NAME": "",
 	"WORKFLOWS_MANAGEMENT_BASE_URI": "https://management.azure.com/",
+	"systemApplicationResourceGroupName": "",
+	"systemApplicationName": "",
 	"apiConnectionSubscriptionId": "",
 	"apiConnectionResourceGroupName": "",
 	"apiConnectionLocation": "",

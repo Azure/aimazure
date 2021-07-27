@@ -33,6 +33,18 @@
 				"description": "The name of the Resource group that the Message Bus resources are deployed to."
 			}
 		},
+        "systemApplicationResourceGroupName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Resource group that the System Application resources are deployed to."
+			}
+		},
+		"systemApplicationLogicAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the System Application Logic App resource."
+			}
+		},
 		"serviceBusResourceGroupName": {
 			"type": "string",
 			"metadata": {
@@ -172,6 +184,14 @@
 						{
 							"name": "WEBSITE_NODE_DEFAULT_VERSION",
 							"value": "~12"
+						},
+						{
+							"name": "systemApplicationResourceGroupName",
+							"value": "[parameters('systemApplicationResourceGroupName')]"
+						},
+						{
+							"name": "systemApplicationLogicAppName",
+							"value": "[parameters('systemApplicationLogicAppName')]"
 						},
 						{
 							"name": "apiConnectionSubscriptionId",

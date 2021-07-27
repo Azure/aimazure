@@ -17,9 +17,12 @@ The maximum number of retries per script.
 .PARAMETER retryPauseInSeconds
 The pause in seconds between retries.
 
+.PARAMETER runUnattended
+If 1, then the user is not prompted for input and no verification checks are made, any other value, the user is prompted for input and verification checks are made before the scripts are executed.
+
 .EXAMPLE
 .\Deploy-All.ps1
-.\Deploy-All.ps1 -minDeploymentPriority 10 -maxDeploymentPriority 200 -maxRetriesPerScript 2 -retryPauseInSeconds 5
+.\Deploy-All.ps1 -minDeploymentPriority 10 -maxDeploymentPriority 200 -maxRetriesPerScript 2 -retryPauseInSeconds 5 -runUnattended 1
 #>
 
 [CmdletBinding()]
@@ -31,7 +34,9 @@ Param(
     [parameter(Mandatory = $false)]
     [int] $maxRetriesPerScript = 2,
     [parameter(Mandatory = $false)]
-    [int]$retryPauseInSeconds = 5
+    [int]$retryPauseInSeconds = 5,
+	[parameter(Mandatory = $false)]
+    [int]$runUnattended = 0
 )
 
 class Template {
@@ -98,269 +103,285 @@ if ( $defaultForegroundColour -eq -1 )
 
 $haveErrors = 'false'
 $haveWarnings = 'false'
-Write-Host "Welcome to the Microsoft BTS Migrator tool Deployment Script v$version."
-Write-Host ""
-Write-Host "This script will attempt to deploy all migrated resources, using the Logic App Consumption offering."
-Write-Host ""
-Write-Host "Before deploying resources, this script will check the following:"
-Write-Host "   1) Is the Azure CLI installed?"
-Write-Host "   2) Can you login to the Azure CLI?"
-Write-Host "   3) Have you selected a subscription?"
-Write-Host "   4) Is the Azure App Configuration resource provider registered?"
-Write-Host "   5) Is there a Free SKU App Configuration instance deployed?"
-Write-Host "   6) Are there any Free SKU Integration Account instances deployed?"
-Write-Host ""
-Write-Host "After completing these steps, the tool will check if you wish to proceed with deployment."
-Write-Host ""
-Write-Host "NOTE: If this is your first deployment, or your first deployment with a new unique id, "
-Write-Host "please be aware that deployment will take *at least* 45 minutes"
-Write-Host "and that the script will appear to 'pause' for a long while."
-Write-Host "This is due to deployment of Azure API Management, which takes over 25 minutes to provision."
-Write-Host ""
-Read-Host "Press any key to continue..."
-# Step 1: Is the Azure CLI installed
-Write-Host "Step 1: Is the Azure CLI installed?"
-try
-{
-    $null = Invoke-Expression -Command "az version" -ErrorVariable cliError -ErrorAction SilentlyContinue
-}
-catch {}
 
-if ($cliError[0])
+if ($runUnattended -ne 1)
 {
-    Write-Host "Step 1: Failure: The Azure CLI is not installed." -ForegroundColor Red
-    Write-Host "You will need to install it by following the instructions here:" -ForegroundColor $defaultForegroundColour
-    Write-Host "https://docs.microsoft.com/en-us/cli/azure/install-azure-cli" -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "This script will now terminate, as the rest of the script relies on the Azure CLI being installed." -ForegroundColor $defaultForegroundColour
-    Write-Host "Please try running this script again after you have installed the CLI." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    return
-}
-else 
-{
-    $cliVersion = az version --query '\"azure-cli\"' --output tsv
-    Write-Host "Step 1: Success: v$cliVersion of the Azure CLI is installed." -ForegroundColor Green
-    Write-Host ""
-}
-
-# Step 2: Can you login to the Azure CLI
-Write-Host "Step 2: Can you login to the Azure CLI?" -ForegroundColor $defaultForegroundColour
-Write-Host "Starting Login Process." -ForegroundColor $defaultForegroundColour
-Write-Host "Note: A browser window should open, prompting you for the account to use with the Azure CLI." -ForegroundColor $defaultForegroundColour
-Write-Host "If this does not happen, manually browse to https://aka.ms/devicelogin and enter the code shown in this window." -ForegroundColor $defaultForegroundColour
-Write-Host "If you are unable to perform this step, follow the instructions here:" -ForegroundColor $defaultForegroundColour
-Write-Host "https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli" -ForegroundColor $defaultForegroundColour
-
-$loginResult = az login --only-show-errors
-if (!$loginResult)
-{
-    Write-Host "Step 2: Failure: Unable to login to the Azure CLI." -ForegroundColor Red
-    Write-Host "This script will now terminate, as the rest of the script relies on having logged in." -ForegroundColor $defaultForegroundColour
-    Write-Host "Please try running this script again after you have fixed the issue." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    return
-}
-else
-{
-    $accountName = az account show --query "user.name" --output tsv
-    Write-Host "Step 2: Success: Login to the Azure CLI succeeded." -ForegroundColor Green
-    Write-Host "Logged in as: $accountName." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-}
-
-# Step 3: Can you select a default subscription
-Write-Host "Step 3: Can you select a default subscription?" -ForegroundColor $defaultForegroundColour
-Write-Host "Note: You may have trouble selecting a subscription if Multi-Factor Authentication is enabled for that subscription." -ForegroundColor $defaultForegroundColour
-Write-Host "If that is the case, you may need to edit this PowerShell script, and add --tenant <tenant id> to the az login command." -ForegroundColor $defaultForegroundColour
-Write-Host ""
-$subscriptionsCount = az account list --query "length([?contains(user.name, '$accountName')])" --output tsv
-$subscriptionsTable = az account list --query "[?contains(user.name, '$accountName')].{Name:name, SubscriptionId:id, IsDefault:isDefault, State:state, TenantId:tenantId}" --output table
-if ( $subscriptionsCount -gt 1 )
-{
-    Write-Host "You have access to more than one subscription." -ForegroundColor $defaultForegroundColour
-    Write-Host "Please choose the subscription you wish to use" -ForegroundColor $defaultForegroundColour
-    Write-Host "(or press ENTER to use the default subscription)" -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    $subscriptionsTable | Format-Table | Out-String | Write-Host
-    $subscriptionId = Read-Host "Enter the SubscriptionId or name (with quotes if contains spaces) of the subscription to use (or ENTER for default)"
-    if ( $subscriptionId -ne '' )
-    {
-        Write-Host "Setting subscription to use..."
-        az account set --subscription $subscriptionId
-        $currentSubscription = az account show --query "name" --output tsv
-        Write-Host "Using subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
-    }
-    else
-    {
-        $currentSubscription = az account show --query "name" --output tsv
-		$subscriptionId = az account show --query "id" --output tsv
-        Write-Host "Using default subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
-    }
-}
-else
-{
-    $currentSubscription = az account show --query "name" --output tsv
-    Write-Host "Using subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
-}
-
-Write-Host "Step 3: Success: Selected a subscription." -ForegroundColor Green
-Write-Host ""
-
-# Step 4: Is the App Configuration resource provider registered
-Write-Host "Step 4: Is the App Configuration resource provider registered?" -ForegroundColor $defaultForegroundColour
-# Get the registration status of the App Config resource provider
-$AppConfigState = az provider show --namespace Microsoft.AppConfiguration --query 'registrationState' --output tsv
-if (!$AppConfigState) {
-    Write-Host "Step 4: Error: Unable to check if the Azure App Configuration resource provider is registered." -ForegroundColor Red
-    Write-Host "Check if the account you're logged in with has the appropriate permissions to check resource provider registration." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    return
-}
-
-if ( $AppConfigState -eq "Registered" )
-{
-    Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
-    Write-Host ""
-}
-else
-{
-    Write-Host "Step 4: Failure: App Configuration resource provider is not registered." -ForegroundColor Red
-    Write-Host "Would you like to try and register it?" -ForegroundColor $defaultForegroundColour
-    Write-Host "If your account does not have the permissions necessary to do this," -ForegroundColor $defaultForegroundColour
-    Write-Host "then this step will fail and you will need to ask an admin to do it for you," -ForegroundColor $defaultForegroundColour
-    Write-Host "following the steps here: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    $registerAppConfig = Read-Host "Would you like to register the Microsoft.AppConfiguration resource provider (Y or N) - default is N"
-    if ( $registerAppConfig -eq "Y" )
-    {
-        # Attempt to register the Microsoft.AppConfiguration resource provider
-        Write-Host "Attempting to register the Microsoft.AppConfiguration resource provider (this may take 2-3 minutes)..." -ForegroundColor $defaultForegroundColour
-        $registerResult = az provider register --namespace 'Microsoft.AppConfiguration' --wait
-
-        if ( !$? )
-        {
-            Write-Host "Step 4: Failure: Unable to register the Microsoft.AppConfiguration resource provider due to an error." -ForegroundColor Red
-            Write-Host ""
-            $haveErrors = 'true'
-        }
-        else
-        {
-            Write-Host "Successfully registered the Microsoft.AppConfiguration resource provider." -ForegroundColor $defaultForegroundColour
-            Write-Host ""
-            Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
-            Write-Host ""
-        }
-    }
-    else
-    {
-        Write-Host "Step 4: Failure: User chose to not register the App Configuration resource provider." -ForegroundColor Red
-        Write-Host ""
-        $haveErrors = 'true'
-    }
-}
-
-# Step 5: Is there a Free SKU App Configuration instance deployed
-Write-Host "Step 5: Is there a Free SKU App Configuration instance deployed?" -ForegroundColor $defaultForegroundColour
-# If there is an existing Free SKU App Configuration resource deployed, get its name
-$ExistingFreeAppConfigName = az resource list --resource-type 'Microsoft.AppConfiguration/configurationStores' --query "[?contains(sku.name, 'free')].[name]" --output tsv
-# Test if we have a Free SKU App Config instance that don't appear to be part of the tool
-if ( $ExistingFreeAppConfigName -ne '' -and $ExistingFreeAppConfigName -notlike 'appcfg-aimrstore-*')
-{
-    $haveErrors = 'true'
-    Write-Host "Step 5: Failure: There is a Free SKU App Configuration instance deployed." -ForegroundColor Red
-    Write-Host "There is an instance of Azure App Configuration" -ForegroundColor $defaultForegroundColour
-    Write-Host "using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
-    Write-Host "which doesn't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-    Write-Host "The name of this instance is: $ExistingFreeAppConfigName." -ForegroundColor $defaultForegroundColour
-    Write-Host "The deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
-    Write-Host "a single Free SKU Azure App Configuration instance per subscription." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-}
-elseif ( $ExistingFreeAppConfigName -like 'appcfg-aimrstore-*')
-{
-	$ExistingFreeAppConfigNameIndexOfLastDash = $ExistingFreeAppConfigName.LastIndexOfAny('-')
-	if ( $ExistingFreeAppConfigNameIndexOfLastDash -gt 0 )
+	Write-Host ""
+	Write-Host "Welcome to the Microsoft BTS Migrator tool Deployment Script v$version, Logic Apps Consumption edition." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Write-Host "This script will attempt to deploy all migrated resources, using the Logic Apps Consumption offering." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Write-Host "Before deploying resources, this script will check the following:" -ForegroundColor $defaultForegroundColour
+	Write-Host "   1) Is the Azure CLI installed?" -ForegroundColor $defaultForegroundColour
+	Write-Host "   2) Can you login to the Azure CLI?" -ForegroundColor $defaultForegroundColour
+	Write-Host "   3) Have you selected a subscription?" -ForegroundColor $defaultForegroundColour
+	Write-Host "   4) Is the Azure App Configuration resource provider registered?" -ForegroundColor $defaultForegroundColour
+	Write-Host "   5) Is there a Free SKU App Configuration instance deployed?" -ForegroundColor $defaultForegroundColour
+	Write-Host "   6) Are there any Free SKU Integration Account instances deployed?" -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Write-Host "After completing these steps, the tool will check if you wish to proceed with deployment." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Write-Host "NOTE: If this is your first deployment, or your first deployment with a new unique id, " -ForegroundColor $defaultForegroundColour
+	Write-Host "please be aware that deployment will take *at least* 45 minutes" -ForegroundColor $defaultForegroundColour
+	Write-Host "and that the script will appear to 'pause' for a long while." -ForegroundColor $defaultForegroundColour
+	Write-Host "This is due to deployment of Azure API Management, which takes over 25 minutes to provision." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Read-Host "Press any key to continue..."
+	# Step 1: Is the Azure CLI installed
+	Write-Host "Step 1: Is the Azure CLI installed?" -ForegroundColor $defaultForegroundColour
+	try
 	{
-		$UniqueDeploymentId = $ExistingFreeAppConfigName.Substring($ExistingFreeAppConfigNameIndexOfLastDash + 1)
-		Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that has been deployed by the tool." -ForegroundColor Yellow
-		Write-Host "You must use the same Unique Deployment ID ($UniqueDeploymentId) if you run the tool again." -ForegroundColor Yellow
+		$null = Invoke-Expression -Command "az version" -ErrorVariable cliError -ErrorAction SilentlyContinue
+	}
+	catch {}
+
+	if ($cliError[0])
+	{
+		Write-Host "Step 1: Failure: The Azure CLI is not installed." -ForegroundColor Red
+		Write-Host "You will need to install it by following the instructions here:" -ForegroundColor $defaultForegroundColour
+		Write-Host "https://docs.microsoft.com/en-us/cli/azure/install-azure-cli" -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "This script will now terminate, as the rest of the script relies on the Azure CLI being installed." -ForegroundColor $defaultForegroundColour
+		Write-Host "Please try running this script again after you have installed the CLI." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		return
+	}
+	else 
+	{
+		$cliVersion = az version --query '\"azure-cli\"' --output tsv
+		Write-Host "Step 1: Success: v$cliVersion of the Azure CLI is installed." -ForegroundColor Green
+		Write-Host ""
+	}
+
+	# Step 2: Can you login to the Azure CLI
+	Write-Host "Step 2: Can you login to the Azure CLI?" -ForegroundColor $defaultForegroundColour
+	Write-Host "Starting Login Process." -ForegroundColor $defaultForegroundColour
+	Write-Host "Note: A browser window should open, prompting you for the account to use with the Azure CLI." -ForegroundColor $defaultForegroundColour
+	Write-Host "If this does not happen, manually browse to https://aka.ms/devicelogin and enter the code shown in this window." -ForegroundColor $defaultForegroundColour
+	Write-Host "If you are unable to perform this step, follow the instructions here:" -ForegroundColor $defaultForegroundColour
+	Write-Host "https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli" -ForegroundColor $defaultForegroundColour
+
+	$loginResult = az login --only-show-errors
+	if (!$loginResult)
+	{
+		Write-Host "Step 2: Failure: Unable to login to the Azure CLI." -ForegroundColor Red
+		Write-Host "This script will now terminate, as the rest of the script relies on having logged in." -ForegroundColor $defaultForegroundColour
+		Write-Host "Please try running this script again after you have fixed the issue." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		return
+	}
+	else
+	{
+		$accountName = az account show --query "user.name" --output tsv
+		Write-Host "Step 2: Success: Login to the Azure CLI succeeded." -ForegroundColor Green
+		Write-Host "Logged in as: $accountName." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+	}
+
+	# Step 3: Can you select a default subscription
+	Write-Host "Step 3: Can you select a default subscription?" -ForegroundColor $defaultForegroundColour
+	Write-Host "Note: You may have trouble selecting a subscription if Multi-Factor Authentication is enabled for that subscription." -ForegroundColor $defaultForegroundColour
+	Write-Host "If that is the case, you may need to edit this PowerShell script, and add --tenant <tenant id> to the az login command." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	$subscriptionsCount = az account list --query "length([?contains(user.name, '$accountName')])" --output tsv
+	$subscriptionsTable = az account list --query "[?contains(user.name, '$accountName')].{Name:name, SubscriptionId:id, IsDefault:isDefault, State:state, TenantId:tenantId}" --output table
+	if ( $subscriptionsCount -gt 1 )
+	{
+		Write-Host "You have access to more than one subscription." -ForegroundColor $defaultForegroundColour
+		Write-Host "Please choose the subscription you wish to use" -ForegroundColor $defaultForegroundColour
+		Write-Host "(or press ENTER to use the default subscription)" -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		$subscriptionsTable | Format-Table | Out-String | Write-Host
+		$subscriptionId = Read-Host "Enter the SubscriptionId or name (with quotes if contains spaces) of the subscription to use (or ENTER for default)"
+		if ( $subscriptionId -ne '' )
+		{
+			Write-Host "Setting subscription to use..."
+			az account set --subscription $subscriptionId
+			$currentSubscription = az account show --query "name" --output tsv
+			Write-Host "Using subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
+		}
+		else
+		{
+			$currentSubscription = az account show --query "name" --output tsv
+			$subscriptionId = az account show --query "id" --output tsv
+			Write-Host "Using default subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
+		}
+	}
+	else
+	{
+		$currentSubscription = az account show --query "name" --output tsv
+		Write-Host "Using subscription: $currentSubscription." -ForegroundColor $defaultForegroundColour
+	}
+
+	Write-Host "Step 3: Success: Selected a subscription." -ForegroundColor Green
+	Write-Host ""
+
+	# Step 4: Is the App Configuration resource provider registered
+	Write-Host "Step 4: Is the App Configuration resource provider registered?" -ForegroundColor $defaultForegroundColour
+	# Get the registration status of the App Config resource provider
+	$AppConfigState = az provider show --namespace Microsoft.AppConfiguration --query 'registrationState' --output tsv
+	if (!$AppConfigState) {
+		Write-Host "Step 4: Error: Unable to check if the Azure App Configuration resource provider is registered." -ForegroundColor Red
+		Write-Host "Check if the account you're logged in with has the appropriate permissions to check resource provider registration." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		return
+	}
+
+	if ( $AppConfigState -eq "Registered" )
+	{
+		Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
 		Write-Host ""
 	}
 	else
 	{
-		Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that appears to have been deployed by the tool," -ForegroundColor Yellow
-		Write-Host "but the name is non standard." -ForegroundColor Yellow
+		Write-Host "Step 4: Failure: App Configuration resource provider is not registered." -ForegroundColor Red
+		Write-Host "Would you like to try and register it?" -ForegroundColor $defaultForegroundColour
+		Write-Host "If your account does not have the permissions necessary to do this," -ForegroundColor $defaultForegroundColour
+		Write-Host "then this step will fail and you will need to ask an admin to do it for you," -ForegroundColor $defaultForegroundColour
+		Write-Host "following the steps here: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		$registerAppConfig = Read-Host "Would you like to register the Microsoft.AppConfiguration resource provider (Y or N) - default is N"
+		if ( $registerAppConfig -eq "Y" )
+		{
+			# Attempt to register the Microsoft.AppConfiguration resource provider
+			Write-Host "Attempting to register the Microsoft.AppConfiguration resource provider (this may take 2-3 minutes)..." -ForegroundColor $defaultForegroundColour
+			$registerResult = az provider register --namespace 'Microsoft.AppConfiguration' --wait
+
+			if ( !$? )
+			{
+				Write-Host "Step 4: Failure: Unable to register the Microsoft.AppConfiguration resource provider due to an error." -ForegroundColor Red
+				Write-Host ""
+				$haveErrors = 'true'
+			}
+			else
+			{
+				Write-Host "Successfully registered the Microsoft.AppConfiguration resource provider." -ForegroundColor $defaultForegroundColour
+				Write-Host ""
+				Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
+				Write-Host ""
+			}
+		}
+		else
+		{
+			Write-Host "Step 4: Failure: User chose to not register the App Configuration resource provider." -ForegroundColor Red
+			Write-Host ""
+			$haveErrors = 'true'
+		}
+	}
+
+	# Step 5: Is there a Free SKU App Configuration instance deployed
+	Write-Host "Step 5: Is there a Free SKU App Configuration instance deployed?" -ForegroundColor $defaultForegroundColour
+	# If there is an existing Free SKU App Configuration resource deployed, get its name
+	$ExistingFreeAppConfigName = az resource list --resource-type 'Microsoft.AppConfiguration/configurationStores' --query "[?contains(sku.name, 'free')].[name]" --output tsv
+	# Test if we have a Free SKU App Config instance that don't appear to be part of the tool
+	if ( $ExistingFreeAppConfigName -ne '' -and $ExistingFreeAppConfigName -notlike 'appcfg-aimrstore-*')
+	{
+		$haveErrors = 'true'
+		Write-Host "Step 5: Failure: There is a Free SKU App Configuration instance deployed." -ForegroundColor Red
+		Write-Host "There is an instance of Azure App Configuration" -ForegroundColor $defaultForegroundColour
+		Write-Host "using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
+		Write-Host "which doesn't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
+		Write-Host "The name of this instance is: $ExistingFreeAppConfigName." -ForegroundColor $defaultForegroundColour
+		Write-Host "The deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
+		Write-Host "a single Free SKU Azure App Configuration instance per subscription." -ForegroundColor $defaultForegroundColour
 		Write-Host ""
 	}
+	elseif ( $ExistingFreeAppConfigName -like 'appcfg-aimrstore-*')
+	{
+		$ExistingFreeAppConfigNameIndexOfLastDash = $ExistingFreeAppConfigName.LastIndexOfAny('-')
+		if ( $ExistingFreeAppConfigNameIndexOfLastDash -gt 0 )
+		{
+			$UniqueDeploymentId = $ExistingFreeAppConfigName.Substring($ExistingFreeAppConfigNameIndexOfLastDash + 1)
+			Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that has been deployed by the tool." -ForegroundColor Yellow
+			Write-Host "You must use the same Unique Deployment ID ($UniqueDeploymentId) if you run the tool again." -ForegroundColor Yellow
+			Write-Host ""
+		}
+		else
+		{
+			Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that appears to have been deployed by the tool," -ForegroundColor Yellow
+			Write-Host "but the name is non standard." -ForegroundColor Yellow
+			Write-Host ""
+		}
+	}
+	else
+	{
+		Write-Host "Step 5: Success: There is no conflicting Free SKU App Configuration instance deployed." -ForegroundColor Green
+		Write-Host ""
+	}
+
+	#Step 6: Are there any Free SKU Integration Account instances deployed
+	Write-Host "Step 6: Are there any Free SKU Integration Account instances deployed?" -ForegroundColor $defaultForegroundColour
+	# Get the name of any Free SKU Integration Accounts which don't look like they were deployed by the tool
+	$ExistingFreeIntAccounts = az resource list --resource-type 'Microsoft.Logic/integrationAccounts' --query "[?sku.name == 'Free' && !starts_with(name, 'intacc-aimartifactstore-')].{Name:name, Location:location}" --output table
+
+	# Test if we have any Free SKU Integration Account instances that don't appear to be part of the tool
+	if ( $ExistingFreeIntAccounts -ne '' -and $ExistingFreeIntAccounts -notlike '*intacc-aimartifactstore-*')
+	{
+		$haveWarnings = 'true'
+		Write-Host "Step 6: Warning: There are Free SKU App Integration Account instances deployed." -ForegroundColor Yellow
+		Write-Host "There are Integration Accounts using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
+		Write-Host "which don't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "If you run the tool using the same region as used by one of these Integration Accounts, " -ForegroundColor $defaultForegroundColour
+		Write-Host "then the deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
+		Write-Host "one Free SKU Integration Account instance per region per subscription." -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		Write-Host "Existing Free SKU Integration accounts:" -ForegroundColor $defaultForegroundColour
+		Write-Host ""
+		$ExistingFreeIntAccounts | Format-Table | Out-String | Write-Host -ForegroundColor $defaultForegroundColour
+	}
+	else
+	{    
+		Write-Host "Step 6: Success: There are no conflicting Free SKU Integration Account instances deployed." -ForegroundColor Green
+		Write-Host ""
+	}
+
+	# Test if we were successful
+	if ( $haveErrors -eq 'true' )
+	{
+		Write-Host "The deployment scripts will probably fail with errors (see errors and warnings above)." -ForegroundColor Red
+		Write-Host ""
+		exit
+	}
+	elseif ( $haveWarnings -eq 'true' )
+	{
+		Write-Host "The deployment scripts will probably succeed (see warnings above)." -ForegroundColor Yellow
+		Write-Host ""
+	}
+	else
+	{
+		Write-Host "Excellent news, the deployment scripts should run with no errors." -ForegroundColor Green
+		Write-Host ""
+	}
+
+	$continue = Read-Host "Would you like to continue with deployment? (Y or N)"
+	if ( $continue -ne "Y" )
+	{
+		Write-Host "Exiting deployment script at user request." -ForegroundColor Red
+		Write-Host ""
+		exit
+	}
+
+	Write-Host "Starting deployment of Azure Resources to subscription '$currentSubscription' ($subscriptionId)" -ForegroundColor $defaultForegroundColour
 }
 else
 {
-    Write-Host "Step 5: Success: There is no conflicting Free SKU App Configuration instance deployed." -ForegroundColor Green
-    Write-Host ""
+	Write-Host "Starting deployment of Azure Resources to current subscription, in unattended mode" -ForegroundColor $defaultForegroundColour
 }
-
-#Step 6: Are there any Free SKU Integration Account instances deployed
-Write-Host "Step 6: Are there any Free SKU Integration Account instances deployed?" -ForegroundColor $defaultForegroundColour
-# Get the name of any Free SKU Integration Accounts which don't look like they were deployed by the tool
-$ExistingFreeIntAccounts = az resource list --resource-type 'Microsoft.Logic/integrationAccounts' --query "[?sku.name == 'Free' && !starts_with(name, 'intacc-aimartifactstore-')].{Name:name, Location:location}" --output table
-
-# Test if we have any Free SKU Integration Account instances that don't appear to be part of the tool
-if ( $ExistingFreeIntAccounts -ne '' -and $ExistingFreeIntAccounts -notlike '*intacc-aimartifactstore-*')
-{
-    $haveWarnings = 'true'
-    Write-Host "Step 6: Warning: There are Free SKU App Integration Account instances deployed." -ForegroundColor Yellow
-    Write-Host "There are Integration Accounts using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
-    Write-Host "which don't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "If you run the tool using the same region as used by one of these Integration Accounts, " -ForegroundColor $defaultForegroundColour
-    Write-Host "then the deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
-    Write-Host "one Free SKU Integration Account instance per region per subscription." -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    Write-Host "Existing Free SKU Integration accounts:" -ForegroundColor $defaultForegroundColour
-    Write-Host ""
-    $ExistingFreeIntAccounts | Format-Table | Out-String | Write-Host -ForegroundColor $defaultForegroundColour
-}
-else
-{    
-    Write-Host "Step 6: Success: There are no conflicting Free SKU Integration Account instances deployed." -ForegroundColor Green
-    Write-Host ""
-}
-
-# Test if we were successful
-if ( $haveErrors -eq 'true' )
-{
-    Write-Host "The deployment scripts will probably fail with errors (see errors and warnings above)." -ForegroundColor Red
-    Write-Host ""
-	exit
-}
-elseif ( $haveWarnings -eq 'true' )
-{
-    Write-Host "The deployment scripts will probably succeed (see warnings above)." -ForegroundColor Yellow
-    Write-Host ""
-}
-else
-{
-    Write-Host "Excellent news, the deployment scripts should run with no errors." -ForegroundColor Green
-    Write-Host ""
-}
-
-$continue = Read-Host "Would you like to continue with deployment? (Y or N)"
-if ( $continue -ne "Y" )
-{
-	Write-Host "Exiting deployment script at user request." -ForegroundColor Red
-	Write-Host ""
-	exit
-}
-
-Write-Host "Starting deployment of Azure Resources to subscription '$currentSubscription' ($subscriptionId)"
 Write-Host ""
+
+# If we're in UI mode, assign a stopwatch so we can output the elapsed runtime
+if ($runUnattended -ne 1)
+{
+	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+}
+
 
 # Read in the resources.
 $filePaths = @(
@@ -387,4 +408,11 @@ $filePaths | ForEach-Object {
 # Filter based on the min and max priority.
 $templates | Where-Object { $_.Priority -ge $minDeploymentPriority } | Where-Object { $_.Priority -le $maxDeploymentPriority } | Sort-Object { $_.Priority } | Select-Object -ExpandProperty FullPath -Unique | ForEach-Object {
     New-DeploymentWithRetry $_
+}
+
+# If we're in UI mode, output the elapsed time
+if ($runUnattended -ne 1)
+{
+	$stopwatch.Stop()
+	Write-Host ("Deployment elapsed time: {0:d2}:{1:d2}:{2:d2} (hh:mm:ss)" -f $stopwatch.Elapsed.Hours, $stopwatch.Elapsed.Minutes, $stopwatch.Elapsed.Seconds) -ForegroundColor $defaultForegroundColour
 }

@@ -14,6 +14,12 @@
 		"messageBusResourceGroupName": {
 			"value": "rg-aimmsgbus-dev-uksouth-xxxxx"
 		},
+		"systemApplicationResourceGroupName": {
+			"value": "rg-aimapp-systemapplication-dev-uksouth-xxxxx"
+		},
+		"systemApplicationLogicAppName": {
+			"value": "logic-aimsystemapplication-dev-xxxxx"
+		},
 		"serviceBusResourceGroupName": {
 			"value": "rg-aimapp-systemapplication-dev-uksouth-xxxxx"
 		},

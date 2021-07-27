@@ -66,7 +66,7 @@ $mergedAppSettings = @()
 
 Get-ChildItem "$workflowFolder\*.appsettings.json" -Recurse | 
 Foreach-Object {
-    $appSettingsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashTable
+    $appSettingsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashtable
 	
 	# Union the two arrays together
 	$mergedAppSettings += $appSettingsFile;

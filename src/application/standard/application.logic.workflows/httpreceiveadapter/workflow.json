@@ -38,7 +38,7 @@
 						{
 							"name": "ErrorMessage",
 							"type": "string",
-							"value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+							"value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow"
 						}
 					]
 				},
@@ -230,14 +230,32 @@
 								}
 							}
 						},
-						"Failure:_Send_NACK_to_SuspendQueue": {
-							"type": "Workflow",
+						"Failure:_Get_TopicPublisher_EndpointUrl": {
+							"type": "Http",
 							"inputs": {
-								"host": {
-									"workflow": {
-										"id": "topicpublisher"
-									}
+								"method": "GET",
+								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+								"headers": {
+									"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 								},
+								"queries": {
+									"clearCache": "@parameters('clearCache')"
+								},
+								"retryPolicy": {
+									"type": "none"
+								}
+							},
+							"runAfter": {
+								"Failure:_Do_we_have_a_NACK": [
+									"Succeeded"
+								]
+							}
+						},
+						"Failure:_Send_NACK_to_SuspendQueue": {
+							"type": "Http",
+							"inputs": {
+								"method": "POST",
+								"uri": "@{outputs('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -248,10 +266,13 @@
 									"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 									"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
 									"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')"
+								},
+								"retryPolicy": {
+									"type": "none"
 								}
 							},
 							"runAfter": {
-								"Failure:_Do_we_have_a_NACK": [
+								"Failure:_Get_TopicPublisher_EndpointUrl": [
 									"Succeeded"
 								]
 							}
@@ -519,236 +540,308 @@
 						{
 							"equals": [
 								"@variables('Checkpoint')",
-								"ProcessFile"
+								"ValidateConfiguration"
 							]
 						}
 					]
 				},
 				"actions": {
-					"ConstructMessage:_Call_MessageConstructor": {
-						"type": "Workflow",
+					"ConstructMessage:_Get_MessageConstructor_EndpointUrl": {
+						"type": "Http",
 						"inputs": {
-							"host": {
-								"workflow": {
-									"id": "messageconstructor"
-								}
-							},
+							"method": "GET",
+							"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messageconstructor",
 							"headers": {
-								"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
-								"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+								"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 							},
-							"body": {
-								"$content": "@triggerBody()",
-								"$contentTransferEncoding": "none",
-								"$contentType": "@triggerOutputs()?['headers']?['Content-Type']",
-								"properties": {
-									"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')",
-									"btsReceivePortName": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
-									"btsReceivePortId": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
-								}
+							"queries": {
+								"clearCache": "@parameters('clearCache')"
+							},
+							"retryPolicy": {
+								"type": "none"
 							}
 						},
 						"runAfter": {}
 					},
-					"ConstructMessage:_Check_StatusCode": {
-						"type": "Switch",
-						"expression": "@variables('StatusCode')",
-						"cases": {
-							"Success": {
-								"case": 200,
-								"actions": {
-									"ConstructMessage:Success:_Check_EnvelopeType": {
-										"type": "Switch",
-										"expression": "@body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType']",
-										"cases": {
-											"ACK": {
-												"case": "ack",
-												"actions": {
-													"ACK:_Set_ResponseMessage_variable": {
-														"type": "SetVariable",
-														"inputs": {
-															"name": "ResponseMessage",
-															"value": "@body('ConstructMessage:_Call_MessageConstructor')"
-														},
-														"runAfter": {}
-													},
-													"ACK:_Set_Checkpoint_variable": {
-														"type": "SetVariable",
-														"inputs": {
-															"name": "Checkpoint",
-															"value": "ConstructMessageACK"
-														},
-														"runAfter": {
-															"ACK:_Set_ResponseMessage_variable": [
-																"Succeeded"
-															]
-														}
-													}
-												}
-											},
-											"NACK": {
-												"case": "nack",
-												"actions": {
-													"NACK:_Set_ResponseMessage_variable": {
-														"type": "SetVariable",
-														"inputs": {
-															"name": "ResponseMessage",
-															"value": "@body('ConstructMessage:_Call_MessageConstructor')"
-														},
-														"runAfter": {}
-													},
-													"NACK:_Set_Checkpoint_variable": {
-														"type": "SetVariable",
-														"inputs": {
-															"name": "Checkpoint",
-															"value": "ConstructMessageNACK"
-														},
-														"runAfter": {
-															"NACK:_Set_ResponseMessage_variable": [
-																"Succeeded"
-															]
-														}
-													}
-												}
-											}
-										},
-										"default": {
-											"actions": {
-												"ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": {
-													"type": "Compose",
-													"inputs": {
-														"body": [
-															{
-																"$content": {
-																	"code": "500",
-																	"message": "@concat('Body returned by action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' is not an ACK or NACK. Envelope type is: ', coalesce(body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType'], '(unknown)'))"
-																},
-																"$contentType": "application/json",
-																"$part": 1,
-																"$partType": "http://schemas.microsoft.com/aim#nack"
-															}
-														],
-														"header": {
-															"properties": {
-																"createDate": "@utcNow()",
-																"envelopeType": "nack",
-																"messageId": "@guid()",
-																"rootPart": 1,
-																"trackingId": ""
-															},
-															"routing": {
-																"MessageType": "http://schemas.microsoft.com/aim#nack"
-															},
-															"routingSlip": {},
-															"state": {}
-														}
-													},
-													"runAfter": {}
-												},
-												"ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": {
-													"type": "SetVariable",
-													"inputs": {
-														"name": "ResponseMessage",
-														"value": "@outputs('ConstructMessage:UnknownEnvelope:_Compose_NACK_Message')"
-													},
-													"runAfter": {
-														"ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": [
-															"Succeeded"
-														]
-													}
-												},
-												"ConstructMessage:UnknownEnvelope:_Set_Checkpoint_variable": {
-													"type": "SetVariable",
-													"inputs": {
-														"name": "Checkpoint",
-														"value": "ConstructMessageNACK"
-													},
-													"runAfter": {
-														"ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": [
-															"Succeeded"
-														]
-													}
-												}
-											}
-										},
-										"runAfter": {}
-									}
+					"ConstructMessage:GetUrl:_Did_we_Succeed": {
+						"type": "If",
+						"expression": {
+							"and": [
+								{
+									"equals": [
+										"@coalesce(outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['statusCode'], 500)",
+										200
+									]
 								}
-							}
+							]
 						},
-						"default": {
+						"runAfter": {
+							"ConstructMessage:_Get_MessageConstructor_EndpointUrl": [
+								"Succeeded",
+								"Failed",
+								"Skipped",
+								"TimedOut"
+							]
+						},
+						"else": {
 							"actions": {
-								"ConstructMessage:Failure:_Create_NACK_Message": {
-									"type": "Compose",
+								"ConstructMessage:GetUrl:Failure:_Set_ErrorMessage_variable": {
+									"type": "SetVariable",
 									"inputs": {
-										"body": [
-											{
-												"$content": {
-													"code": "500",
-													"fault": {
-														"faultActor": "@concat(workflow()?['name'], '.', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' (', workflow()?['run']?['name'], ')')",
-														"faultCategory": "Error",
-														"faultCode": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['statusCode'])}",
-														"faultMessage": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['error']?['message'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['message'])}",
-														"faultReason": ""
-													},
-													"message": "@concat('Action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' resulted in an error response.')"
-												},
-												"$contentType": "application/json",
-												"$part": 1,
-												"$partType": "http://schemas.microsoft.com/aim#nack"
-											}
-										],
-										"header": {
-											"properties": {
-												"createDate": "@utcNow()",
-												"envelopeType": "nack",
-												"messageId": "@guid()",
-												"rootPart": 1,
-												"trackingId": ""
-											},
-											"routing": {
-												"MessageType": "http://schemas.microsoft.com/aim#nack"
-											},
-											"routingSlip": {},
-											"state": {}
-										}
+										"name": "ErrorMessage",
+										"value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow: @{coalesce(outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['error']?['message'], outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['body']?['message'])}"
 									},
 									"runAfter": {}
 								},
-								"ConstructMessage:Failure:_Set_ResponseMessage_variable": {
+								"ConstructMessage:GetUrl:Failure:_Set_FaultMessage_variable": {
 									"type": "SetVariable",
 									"inputs": {
-										"name": "ResponseMessage",
-										"value": "@outputs('ConstructMessage:Failure:_Create_NACK_Message')"
+										"name": "FaultMessage",
+										"value": {
+											"fault": {
+												"faultActor": "@concat(workflow()?['name'], '.', actions('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['name'], ' (', workflow()?['run']?['name'], ')')",
+												"faultCategory": "Error",
+												"faultCode": "@{coalesce(outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['statusCode'], outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['body']?['statusCode'])}",
+												"faultMessage": "@{coalesce(outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['error']?['message'], outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['body']?['message'])}",
+												"faultReason": ""
+											}
+										}
 									},
 									"runAfter": {
-										"ConstructMessage:Failure:_Create_NACK_Message": [
+										"ConstructMessage:GetUrl:Failure:_Set_ErrorMessage_variable": [
 											"Succeeded"
 										]
 									}
 								}
 							}
 						},
-						"runAfter": {
-							"ConstructMessage:_Set_StatusCode_variable": [
-								"Succeeded"
-							]
-						}
-					},
-					"ConstructMessage:_Set_StatusCode_variable": {
-						"type": "SetVariable",
-						"inputs": {
-							"name": "StatusCode",
-							"value": "@coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], 500)"
-						},
-						"runAfter": {
-							"ConstructMessage:_Call_MessageConstructor": [
-								"Succeeded",
-								"Failed",
-								"Skipped",
-								"TimedOut"
-							]
+						"actions": {
+							"ConstructMessage:_Call_MessageConstructor": {
+								"type": "Http",
+								"inputs": {
+									"method": "POST",
+									"uri": "@{outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
+									"headers": {
+										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+										"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+									},
+									"body": {
+										"$content": "@triggerBody()",
+										"$contentTransferEncoding": "none",
+										"$contentType": "@triggerOutputs()?['headers']?['Content-Type']",
+										"properties": {
+											"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')",
+											"btsReceivePortName": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
+											"btsReceivePortId": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
+										}
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								},
+								"runAfter": {}
+							},
+							"ConstructMessage:_Set_StatusCode_variable": {
+								"type": "SetVariable",
+								"inputs": {
+									"name": "StatusCode",
+									"value": "@coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], 500)"
+								},
+								"runAfter": {
+									"ConstructMessage:_Call_MessageConstructor": [
+										"Succeeded",
+										"Failed",
+										"Skipped",
+										"TimedOut"
+									]
+								}
+							},
+							"ConstructMessage:_Check_StatusCode": {
+								"type": "Switch",
+								"expression": "@variables('StatusCode')",
+								"cases": {
+									"Success": {
+										"case": 200,
+										"actions": {
+											"ConstructMessage:Success:_Check_EnvelopeType": {
+												"type": "Switch",
+												"expression": "@body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType']",
+												"cases": {
+													"ACK": {
+														"case": "ack",
+														"actions": {
+															"ACK:_Set_ResponseMessage_variable": {
+																"type": "SetVariable",
+																"inputs": {
+																	"name": "ResponseMessage",
+																	"value": "@body('ConstructMessage:_Call_MessageConstructor')"
+																},
+																"runAfter": {}
+															},
+															"ACK:_Set_Checkpoint_variable": {
+																"type": "SetVariable",
+																"inputs": {
+																	"name": "Checkpoint",
+																	"value": "ConstructMessageACK"
+																},
+																"runAfter": {
+																	"ACK:_Set_ResponseMessage_variable": [
+																		"Succeeded"
+																	]
+																}
+															}
+														}
+													},
+													"NACK": {
+														"case": "nack",
+														"actions": {
+															"NACK:_Set_ResponseMessage_variable": {
+																"type": "SetVariable",
+																"inputs": {
+																	"name": "ResponseMessage",
+																	"value": "@body('ConstructMessage:_Call_MessageConstructor')"
+																},
+																"runAfter": {}
+															},
+															"NACK:_Set_Checkpoint_variable": {
+																"type": "SetVariable",
+																"inputs": {
+																	"name": "Checkpoint",
+																	"value": "ConstructMessageNACK"
+																},
+																"runAfter": {
+																	"NACK:_Set_ResponseMessage_variable": [
+																		"Succeeded"
+																	]
+																}
+															}
+														}
+													}
+												},
+												"default": {
+													"actions": {
+														"ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": {
+															"type": "Compose",
+															"inputs": {
+																"body": [
+																	{
+																		"$content": {
+																			"code": "500",
+																			"message": "@concat('Body returned by action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' is not an ACK or NACK. Envelope type is: ', coalesce(body('ConstructMessage:_Call_MessageConstructor')?['header']?['properties']?['envelopeType'], '(unknown)'))"
+																		},
+																		"$contentType": "application/json",
+																		"$part": 1,
+																		"$partType": "http://schemas.microsoft.com/aim#nack"
+																	}
+																],
+																"header": {
+																	"properties": {
+																		"createDate": "@utcNow()",
+																		"envelopeType": "nack",
+																		"messageId": "@guid()",
+																		"rootPart": 1,
+																		"trackingId": ""
+																	},
+																	"routing": {
+																		"MessageType": "http://schemas.microsoft.com/aim#nack"
+																	},
+																	"routingSlip": {},
+																	"state": {}
+																}
+															},
+															"runAfter": {}
+														},
+														"ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": {
+															"type": "SetVariable",
+															"inputs": {
+																"name": "ResponseMessage",
+																"value": "@outputs('ConstructMessage:UnknownEnvelope:_Compose_NACK_Message')"
+															},
+															"runAfter": {
+																"ConstructMessage:UnknownEnvelope:_Compose_NACK_Message": [
+																	"Succeeded"
+																]
+															}
+														},
+														"ConstructMessage:UnknownEnvelope:_Set_Checkpoint_variable": {
+															"type": "SetVariable",
+															"inputs": {
+																"name": "Checkpoint",
+																"value": "ConstructMessageNACK"
+															},
+															"runAfter": {
+																"ConstructMessage:UnknownEnvelope:_Set_ResponseMessage_variable": [
+																	"Succeeded"
+																]
+															}
+														}
+													}
+												},
+												"runAfter": {}
+											}
+										}
+									}
+								},
+								"default": {
+									"actions": {
+										"ConstructMessage:Failure:_Create_NACK_Message": {
+											"type": "Compose",
+											"inputs": {
+												"body": [
+													{
+														"$content": {
+															"code": "500",
+															"fault": {
+																"faultActor": "@concat(workflow()?['name'], '.', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' (', workflow()?['run']?['name'], ')')",
+																"faultCategory": "Error",
+																"faultCode": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['statusCode'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['statusCode'])}",
+																"faultMessage": "@{coalesce(outputs('ConstructMessage:_Call_MessageConstructor')?['error']?['message'], outputs('ConstructMessage:_Call_MessageConstructor')?['body']?['message'])}",
+																"faultReason": ""
+															},
+															"message": "@concat('Action ', actions('ConstructMessage:_Call_MessageConstructor')?['name'], ' resulted in an error response.')"
+														},
+														"$contentType": "application/json",
+														"$part": 1,
+														"$partType": "http://schemas.microsoft.com/aim#nack"
+													}
+												],
+												"header": {
+													"properties": {
+														"createDate": "@utcNow()",
+														"envelopeType": "nack",
+														"messageId": "@guid()",
+														"rootPart": 1,
+														"trackingId": ""
+													},
+													"routing": {
+														"MessageType": "http://schemas.microsoft.com/aim#nack"
+													},
+													"routingSlip": {},
+													"state": {}
+												}
+											},
+											"runAfter": {}
+										},
+										"ConstructMessage:Failure:_Set_ResponseMessage_variable": {
+											"type": "SetVariable",
+											"inputs": {
+												"name": "ResponseMessage",
+												"value": "@outputs('ConstructMessage:Failure:_Create_NACK_Message')"
+											},
+											"runAfter": {
+												"ConstructMessage:Failure:_Create_NACK_Message": [
+													"Succeeded"
+												]
+											}
+										}
+									}
+								},
+								"runAfter": {
+									"ConstructMessage:_Set_StatusCode_variable": [
+										"Succeeded"
+									]
+								}
+							}
 						}
 					}
 				},

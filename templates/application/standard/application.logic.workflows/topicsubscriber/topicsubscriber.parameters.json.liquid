@@ -7,7 +7,7 @@
 		"type": "String",
 		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.name')"
 	},
-	"{{ resource_template.parameters.workflow_name }}.sservicebusSubscribeConnection.apiAuthentication": {
+	"{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiAuthentication": {
 		"type": "Object",
 		"value": {
 			"type": "ManagedServiceIdentity"

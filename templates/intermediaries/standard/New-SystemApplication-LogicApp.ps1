@@ -78,6 +78,6 @@ if (!(Test-Path $zipFile)) {
     throw "Zip file $zipFile doesn't exist, unable to upload"
 }
 
-az logicapp deployment source config-zip --resource-group $resourceGroupName --name $resourceName --src $zipFile
+az logicapp deployment source config-zip --resource-group $resourceGroupName --name $resourceName --src "$zipFile"
 
 Write-Host "Upload complete"

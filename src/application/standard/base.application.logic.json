@@ -33,6 +33,18 @@
 				"description": "The name of the Resource group that the Message Bus resources are deployed to."
 			}
 		},
+		"systemApplicationResourceGroupName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Resource group that the System Application resources are deployed to."
+			}
+		},
+		"systemApplicationLogicAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the System Application Logic App resource."
+			}
+		},
 		"serviceBusResourceGroupName": {
 			"type": "string",
 			"metadata": {
@@ -164,6 +176,14 @@
 							"value": "~12"
 						},
 						{
+							"name": "systemApplicationResourceGroupName",
+							"value": "[parameters('systemApplicationResourceGroupName')]"
+						},
+						{
+							"name": "systemApplicationLogicAppName",
+							"value": "[parameters('systemApplicationLogicAppName')]"
+						},
+						{
 							"name": "apiConnectionSubscriptionId",
 							"value": "[subscription().subscriptionId]"
 						},
@@ -190,54 +210,6 @@
 						{
 							"name": "servicebusSubscribeConnectionString",
 							"value": "[listKeys(resourceId(parameters('serviceBusResourceGroupName'), 'Microsoft.ServiceBus/namespaces/AuthorizationRules', parameters('serviceBusNamespaceName'), parameters('serviceBusSubscribePolicyName')), '2017-04-01').primaryConnectionString]"
-						},
-						{
-							"name": "ftpReceiveConnectionName",
-							"value": "[parameters('ftpReceiveApiConnectionName')]"
-						},
-						{
-							"name": "ftpReceiveConnectionApiId",
-							"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'ftp')]"
-						},
-						{
-							"name": "ftpReceiveConnectionResourceId",
-							"value": "[resourceId('Microsoft.Web/connections', parameters('ftpReceiveApiConnectionName'))]"
-						},
-						{
-							"name": "ftpReceiveConnectionRuntimeUrl",
-							"value": "[reference(resourceId('Microsoft.Web/connections', parameters('ftpReceiveApiConnectionName')),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
-						},
-						{
-							"name": "ftpSendConnectionName",
-							"value": "[parameters('ftpSendApiConnectionName')]"
-						},
-						{
-							"name": "ftpSendConnectionApiId",
-							"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'ftp')]"
-						},
-						{
-							"name": "ftpSendConnectionResourceId",
-							"value": "[resourceId('Microsoft.Web/connections', parameters('ftpSendApiConnectionName'))]"
-						},
-						{
-							"name": "ftpSendConnectionRuntimeUrl",
-							"value": "[reference(resourceId('Microsoft.Web/connections', parameters('ftpSendApiConnectionName')),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
-						},
-						{
-							"name": "servicebusSubscribeConnectionName",
-							"value": "[parameters('servicebusSubscribeApiConnectionName')]"
-						},
-						{
-							"name": "servicebusSubscribeConnectionApiId",
-							"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'servicebus')]"
-						},
-						{
-							"name": "servicebusSubscribeConnectionResourceId",
-							"value": "[resourceId('Microsoft.Web/connections', parameters('serviceBusSubscribeApiConnectionName'))]"
-						},
-						{
-							"name": "servicebusSubscribeConnectionRuntimeUrl",
-							"value": "[reference(resourceId('Microsoft.Web/connections', parameters('serviceBusSubscribeApiConnectionName')),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
 						}
 					]
 				},

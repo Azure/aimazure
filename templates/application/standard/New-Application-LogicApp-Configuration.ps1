@@ -38,7 +38,7 @@ $mergedParameters = [ordered]@{}
 
 Get-ChildItem "$workflowFolder\*.parameters.json" -Recurse | 
 Foreach-Object {
-    $parameterFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashTable
+    $parameterFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashtable
 	
 	# Remove any duplicate property names - have to do this or the merge will fail
 	# as we'll be generating invalid Json
@@ -69,7 +69,7 @@ $mergedLocalParameters = [ordered]@{}
 
 Get-ChildItem "$workflowFolder\*.parameters.local.json" -Recurse | 
 Foreach-Object {
-    $localParameterFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashTable
+    $localParameterFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashtable
 	
 	# Remove any duplicate property names - have to do this or the merge will fail
 	# as we'll be generating invalid Json
@@ -101,7 +101,7 @@ $managedApiConnections = [ordered]@{}
 
 Get-ChildItem "$PSScriptRoot\*.connections.json" -Recurse | 
 Foreach-Object {
-    $connectionsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashTable
+    $connectionsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashtable
 	
 	if ($connectionsFile.Contains("serviceProviderConnections"))
 	{
@@ -146,7 +146,7 @@ $mergedLocalAppSettings = [ordered]@{}
 
 Get-ChildItem "$workflowFolder\*.appsettings.local.json" -Recurse | 
 Foreach-Object {
-    $localAppSettingsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashTable
+    $localAppSettingsFile = Get-Content $_.FullName -Raw | ConvertFrom-Json -AsHashtable
 	
 	# Remove any duplicate property names - have to do this or the merge will fail
 	# as we'll be generating invalid Json
@@ -169,6 +169,6 @@ $localAppSettings["IsEncrypted"] = $false
 $localAppSettings["Values"] = $mergedLocalAppSettings
 
 # Output a new merged local appsettings file
-ConvertTo-Json $localAppSettings -Depth 10 | Set-Content "$workflowFolder\appsettings.local.json"
+ConvertTo-Json $localAppSettings -Depth 10 | Set-Content "$workflowFolder\local.settings.json"
 
 Write-Host "Local AppSetting File Merging Complete"
