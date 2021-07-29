@@ -232,7 +232,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{outputs('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -767,7 +767,7 @@
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 										"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -1019,13 +1019,13 @@
 					"method": "get",
 					"path": "/datasets/default/triggers/batch/onupdatedfile",
 					"queries": {
-						"folderId": "@{parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveAdapter.sftpReceiveFolder')}",
+						"folderId": "{{ resource_template.parameters.azure_sftp_target_folder }}",
 						"maxFileCount": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveAdapter.ftpMaxFileCount')"
 					}
 				},
 				"recurrence": {
-					"frequency": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveAdapter.sftpRecurrenceFrequency')",
-					"interval": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveAdapter.sftpRecurrenceInterval')"
+					"frequency": "{{ resource_template.parameters.azure_sftp_frequency }}",
+					"interval": {{ resource_template.parameters.azure_sftp_recurrence }}
 				},
 				"splitOn": "@triggerBody()"
 			}

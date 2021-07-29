@@ -1,7 +1,7 @@
 [
 	{
 		"name": "{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.name",
-		"value": "{{ resource_template.parameters.file_api_connector_name }}"
+		"value": "{{ resource_template.parameters.filesystem_api_connector_name }}"
 	},
 	{
 		"name": "{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.apiId",
@@ -9,10 +9,10 @@
 	},
 	{
 		"name": "{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.resourceId",
-		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.file_api_connector_name }}')]"
+		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.filesystem_api_connector_name }}')]"
 	},
 	{
 		"name": "{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.runtimeUrl",
-		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.file_api_connector_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
+		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.filesystem_api_connector_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
 	}
 ]

@@ -200,7 +200,7 @@
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{outputs('MessageSender:_Get_RoutingSlipRouter_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('MessageSender:_Get_RoutingSlipRouter_EndpointUrl')?['logicAppUrl']}",
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], false)",
 										"Aim-Enable-Trace": "@coalesce(triggerOutputs()?['headers']?['Aim-Enable-Trace'], false)",
@@ -285,7 +285,7 @@
 															"type": "Http",
 															"inputs": {
 																"method": "POST",
-																"uri": "@{outputs('Routing:Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+																"uri": "@{body('Routing:Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 																"headers": {
 																	"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 																	"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -471,7 +471,7 @@
 											"type": "Http",
 											"inputs": {
 												"method": "POST",
-												"uri": "@{outputs('Routing:Error:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+												"uri": "@{body('Routing:Error:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 												"headers": {
 													"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 													"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -590,7 +590,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{outputs('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"

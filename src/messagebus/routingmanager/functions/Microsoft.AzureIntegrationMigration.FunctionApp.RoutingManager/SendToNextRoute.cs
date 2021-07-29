@@ -178,12 +178,12 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
             // Switch by messageReceiverType
             switch (messageReceiverType.ToLower())
             {
-                case "microsoft.workflows.azurelogicapp":
+                case "microsoft.workflows.azurelogicapp.consumption":
                     {
                         log.LogDebug($"{logPrefix}Calling the next route Consumption LogicApp");
                         return await RouteToConsumptionLogicApp(envelope, routeParameters, requestDetails, logPrefix, log);
                     }
-                case "microsoft.workflows.standardlogicapp":
+                case "microsoft.workflows.azurelogicapp.standard":
                     {
                         log.LogDebug($"{logPrefix}Calling the next route Standard LogicApp");
                         return await RouteToStandardLogicApp(envelope, routeParameters, requestDetails, logPrefix, log);

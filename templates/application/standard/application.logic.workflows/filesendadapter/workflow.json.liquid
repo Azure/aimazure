@@ -233,7 +233,7 @@
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{outputs('MessageSender:_Get_RoutingSlipRouter_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('MessageSender:_Get_RoutingSlipRouter_EndpointUrl')?['logicAppUrl']}",
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], false)",
 										"Aim-Enable-Trace": "@coalesce(triggerOutputs()?['headers']?['Aim-Enable-Trace'], false)",

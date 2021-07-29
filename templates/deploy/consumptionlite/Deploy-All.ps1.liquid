@@ -103,28 +103,23 @@ if ( $defaultForegroundColour -eq -1 )
 
 $haveErrors = 'false'
 $haveWarnings = 'false'
-
 if ($runUnattended -ne 1)
 {
 	Write-Host ""
 	Write-Host "Welcome to the Microsoft BTS Migrator tool Deployment Script v$version, Logic Apps Consumption edition." -ForegroundColor $defaultForegroundColour
 	Write-Host ""
-	Write-Host "This script will attempt to deploy all migrated resources, using the Logic Apps Consumption offering." -ForegroundColor $defaultForegroundColour
+	Write-Host "This script will attempt to deploy only application-related migrated resources, using the Logic Apps Consumption offering." -ForegroundColor $defaultForegroundColour
+	Write-Host ""
+	Write-Host "NOTE: The is the LITE version of the deployment: it assumes that you have already run the full installation," -ForegroundColor Yellow
+	Write-Host "and that this installation is using the same unique deployment id ({{ resource_template.parameters.aim_unique_suffix }})." -ForegroundColor Yellow
+	Write-Host "If neither of these are true, then this installation will fail." -ForegroundColor Yellow
 	Write-Host ""
 	Write-Host "Before deploying resources, this script will check the following:" -ForegroundColor $defaultForegroundColour
 	Write-Host "   1) Is the Azure CLI installed?" -ForegroundColor $defaultForegroundColour
 	Write-Host "   2) Can you login to the Azure CLI?" -ForegroundColor $defaultForegroundColour
 	Write-Host "   3) Have you selected a subscription?" -ForegroundColor $defaultForegroundColour
-	Write-Host "   4) Is the Azure App Configuration resource provider registered?" -ForegroundColor $defaultForegroundColour
-	Write-Host "   5) Is there a Free SKU App Configuration instance deployed?" -ForegroundColor $defaultForegroundColour
-	Write-Host "   6) Are there any Free SKU Integration Account instances deployed?" -ForegroundColor $defaultForegroundColour
 	Write-Host ""
 	Write-Host "After completing these steps, the tool will check if you wish to proceed with deployment." -ForegroundColor $defaultForegroundColour
-	Write-Host ""
-	Write-Host "NOTE: If this is your first deployment, or your first deployment with a new unique id, " -ForegroundColor $defaultForegroundColour
-	Write-Host "please be aware that deployment will take *at least* 45 minutes" -ForegroundColor $defaultForegroundColour
-	Write-Host "and that the script will appear to 'pause' for a long while." -ForegroundColor $defaultForegroundColour
-	Write-Host "This is due to deployment of Azure API Management, which takes over 25 minutes to provision." -ForegroundColor $defaultForegroundColour
 	Write-Host ""
 	Read-Host "Press any key to continue..."
 	# Step 1: Is the Azure CLI installed
@@ -220,128 +215,6 @@ if ($runUnattended -ne 1)
 	Write-Host "Step 3: Success: Selected a subscription." -ForegroundColor Green
 	Write-Host ""
 
-	# Step 4: Is the App Configuration resource provider registered
-	Write-Host "Step 4: Is the App Configuration resource provider registered?" -ForegroundColor $defaultForegroundColour
-	# Get the registration status of the App Config resource provider
-	$AppConfigState = az provider show --namespace Microsoft.AppConfiguration --query 'registrationState' --output tsv
-	if (!$AppConfigState) {
-		Write-Host "Step 4: Error: Unable to check if the Azure App Configuration resource provider is registered." -ForegroundColor Red
-		Write-Host "Check if the account you're logged in with has the appropriate permissions to check resource provider registration." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		Write-Host "Completed checking pre-requisites for the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		return
-	}
-
-	if ( $AppConfigState -eq "Registered" )
-	{
-		Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
-		Write-Host ""
-	}
-	else
-	{
-		Write-Host "Step 4: Failure: App Configuration resource provider is not registered." -ForegroundColor Red
-		Write-Host "Would you like to try and register it?" -ForegroundColor $defaultForegroundColour
-		Write-Host "If your account does not have the permissions necessary to do this," -ForegroundColor $defaultForegroundColour
-		Write-Host "then this step will fail and you will need to ask an admin to do it for you," -ForegroundColor $defaultForegroundColour
-		Write-Host "following the steps here: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		$registerAppConfig = Read-Host "Would you like to register the Microsoft.AppConfiguration resource provider (Y or N) - default is N"
-		if ( $registerAppConfig -eq "Y" )
-		{
-			# Attempt to register the Microsoft.AppConfiguration resource provider
-			Write-Host "Attempting to register the Microsoft.AppConfiguration resource provider (this may take 2-3 minutes)..." -ForegroundColor $defaultForegroundColour
-			$registerResult = az provider register --namespace 'Microsoft.AppConfiguration' --wait
-
-			if ( !$? )
-			{
-				Write-Host "Step 4: Failure: Unable to register the Microsoft.AppConfiguration resource provider due to an error." -ForegroundColor Red
-				Write-Host ""
-				$haveErrors = 'true'
-			}
-			else
-			{
-				Write-Host "Successfully registered the Microsoft.AppConfiguration resource provider." -ForegroundColor $defaultForegroundColour
-				Write-Host ""
-				Write-Host "Step 4: Success: App Configuration resource provider is registered." -ForegroundColor Green
-				Write-Host ""
-			}
-		}
-		else
-		{
-			Write-Host "Step 4: Failure: User chose to not register the App Configuration resource provider." -ForegroundColor Red
-			Write-Host ""
-			$haveErrors = 'true'
-		}
-	}
-
-	# Step 5: Is there a Free SKU App Configuration instance deployed
-	Write-Host "Step 5: Is there a Free SKU App Configuration instance deployed?" -ForegroundColor $defaultForegroundColour
-	# If there is an existing Free SKU App Configuration resource deployed, get its name
-	$ExistingFreeAppConfigName = az resource list --resource-type 'Microsoft.AppConfiguration/configurationStores' --query "[?contains(sku.name, 'free')].[name]" --output tsv
-	# Test if we have a Free SKU App Config instance that don't appear to be part of the tool
-	if ( $ExistingFreeAppConfigName -ne '' -and $ExistingFreeAppConfigName -notlike 'appcfg-aimrstore-*')
-	{
-		$haveErrors = 'true'
-		Write-Host "Step 5: Failure: There is a Free SKU App Configuration instance deployed." -ForegroundColor Red
-		Write-Host "There is an instance of Azure App Configuration" -ForegroundColor $defaultForegroundColour
-		Write-Host "using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
-		Write-Host "which doesn't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-		Write-Host "The name of this instance is: $ExistingFreeAppConfigName." -ForegroundColor $defaultForegroundColour
-		Write-Host "The deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
-		Write-Host "a single Free SKU Azure App Configuration instance per subscription." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-	}
-	elseif ( $ExistingFreeAppConfigName -like 'appcfg-aimrstore-*')
-	{
-		$ExistingFreeAppConfigNameIndexOfLastDash = $ExistingFreeAppConfigName.LastIndexOfAny('-')
-		if ( $ExistingFreeAppConfigNameIndexOfLastDash -gt 0 )
-		{
-			$UniqueDeploymentId = $ExistingFreeAppConfigName.Substring($ExistingFreeAppConfigNameIndexOfLastDash + 1)
-			Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that has been deployed by the tool." -ForegroundColor Yellow
-			Write-Host "You must use the same Unique Deployment ID ($UniqueDeploymentId) if you run the tool again." -ForegroundColor Yellow
-			Write-Host ""
-		}
-		else
-		{
-			Write-Host "Step 5: Warning: There is an existing Free SKU App Configuration that appears to have been deployed by the tool," -ForegroundColor Yellow
-			Write-Host "but the name is non standard." -ForegroundColor Yellow
-			Write-Host ""
-		}
-	}
-	else
-	{
-		Write-Host "Step 5: Success: There is no conflicting Free SKU App Configuration instance deployed." -ForegroundColor Green
-		Write-Host ""
-	}
-
-	#Step 6: Are there any Free SKU Integration Account instances deployed
-	Write-Host "Step 6: Are there any Free SKU Integration Account instances deployed?" -ForegroundColor $defaultForegroundColour
-	# Get the name of any Free SKU Integration Accounts which don't look like they were deployed by the tool
-	$ExistingFreeIntAccounts = az resource list --resource-type 'Microsoft.Logic/integrationAccounts' --query "[?sku.name == 'Free' && !starts_with(name, 'intacc-aimartifactstore-')].{Name:name, Location:location}" --output table
-
-	# Test if we have any Free SKU Integration Account instances that don't appear to be part of the tool
-	if ( $ExistingFreeIntAccounts -ne '' -and $ExistingFreeIntAccounts -notlike '*intacc-aimartifactstore-*')
-	{
-		$haveWarnings = 'true'
-		Write-Host "Step 6: Warning: There are Free SKU App Integration Account instances deployed." -ForegroundColor Yellow
-		Write-Host "There are Integration Accounts using the Free SKU deployed to this subscription" -ForegroundColor $defaultForegroundColour
-		Write-Host "which don't appear to have been deployed by the BTS Migrator tool." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		Write-Host "If you run the tool using the same region as used by one of these Integration Accounts, " -ForegroundColor $defaultForegroundColour
-		Write-Host "then the deployment scripts will likely fail as you can only have " -ForegroundColor $defaultForegroundColour
-		Write-Host "one Free SKU Integration Account instance per region per subscription." -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		Write-Host "Existing Free SKU Integration accounts:" -ForegroundColor $defaultForegroundColour
-		Write-Host ""
-		$ExistingFreeIntAccounts | Format-Table | Out-String | Write-Host -ForegroundColor $defaultForegroundColour
-	}
-	else
-	{    
-		Write-Host "Step 6: Success: There are no conflicting Free SKU Integration Account instances deployed." -ForegroundColor Green
-		Write-Host ""
-	}
-
 	# Test if we were successful
 	if ( $haveErrors -eq 'true' )
 	{
@@ -382,13 +255,29 @@ if ($runUnattended -ne 1)
 	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 }
 
+
+{%- assign array_separator = "||" %}
+{%- assign resource_templates = find_all_resource_templates(model) -%}
+{%- assign powershell_scripts = '' -%}
+{%- for resource_template in resource_templates -%}
+    {%- if resource_template.template_type == "microsoft.template.powershell" -%}
+        {%- for resource_template_file in resource_template.resource_template_files -%}
+            {%- assign powershell_script_file = resource_template_file | remove: ".liquid" | split: "/" | last -%}
+            {%- assign powershell_script_cmd = "$PSScriptRoot/" | append: resource_template.output_path | append: "/" | append: powershell_script_file | append: array_separator -%}
+            {%- assign powershell_scripts = powershell_scripts | append: powershell_script_cmd -%}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor -%}
+
+
 # Read in the resources.
-$filePaths = @(
-    "$PSScriptRoot\..\src\messagebus\messagebusgroup\Deploy-10-MessageBusGroup.ps1",
-    "$PSScriptRoot\..\src\application\applicationgroup\Deploy-10-ApplicationGroup.ps1",
-    "$PSScriptRoot\..\src\messagebus\artifactstore\Deploy-20-ArtifactStore.ps1",
-    "$PSScriptRoot\..\src\messagebus\artifactstore\Deploy-20-ArtifactStore.ps1",
-    "$PSScriptRoot\..\src\application\schemas\Deploy-100-Schema.ps1"    
+$filePaths = @(        
+{%- for powershell_script in powershell_scripts | split: array_separator -%}
+    "{{ powershell_script }}"
+    {%- if forloop.last == false -%}
+        ,{% capture newline %}{% endcapture %}
+    {% endif -%}            
+{%- endfor -%}
 )
 
 $templates = @()
@@ -398,10 +287,16 @@ $filePaths | ForEach-Object {
     $fileName = Split-Path $_ -leaf
 
     if ($fileName -match 'Deploy-([0-9]*?)-(?:.*.ps1)' ) {
-        $priority = $Matches.1        
+        $priority = $Matches.1
         $templates += [Template]::new($fileName, $_, $priority)
     }
 }
+
+{%- assign subscription_id = resource_template.parameters.azure_subscription_id -%}
+{%- unless subscription_id == "" -%}
+# Set the subscription.
+az account set --subscription "{{ subscription_id }}"
+{%- endunless -%}
 
 # Run the scripts in ascending order.
 # Filter based on the min and max priority.

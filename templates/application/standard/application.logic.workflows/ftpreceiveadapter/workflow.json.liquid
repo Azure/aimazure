@@ -232,7 +232,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{outputs('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -767,7 +767,7 @@
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 										"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -778,7 +778,7 @@
 										"$contentType": "@triggerBody()?['MediaType']",
 										"properties": {
 											"receivedFileName": "@{triggerBody()?['Name']}",
-											"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpReceiveConnection.scenarioName')",
+											"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.scenarioName')",
 											"btsReceivePortName": "@{coalesce(variables('Configuration')?['ftpReceiveConnection']?['btsReceivePortName'], '(unknownReceivePortName)')}",
 											"btsReceivePortId": "@{coalesce(variables('Configuration')?['ftpReceiveConnection']?['btsReceivePortId'], '(unknownReceivePortId)')}"
 										}
@@ -1019,14 +1019,14 @@
 					"method": "get",
 					"path": "/datasets/default/triggers/batch/onupdatedfile",
 					"queries": {
-						"folderId": "@{parameters('{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpReceiveFolder')}",
+						"folderId": "{{ resource_template.parameters.azure_ftp_target_folder }}",
 						"checkBothCreatedAndModifiedDateTime": false,
 						"maxFileCount": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpReceiveAdapter.ftpMaxFileCount')"
 					}
 				},
 				"recurrence": {
-					"frequency": "Second",
-					"interval": 15
+					"frequency": "{{ resource_template.parameters.azure_ftp_frequency }}",
+					"interval": {{ resource_template.parameters.azure_ftp_recurrence }}
 				},
 				"splitOn": "@triggerBody()"
 			}

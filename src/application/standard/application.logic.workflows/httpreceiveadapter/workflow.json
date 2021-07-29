@@ -255,7 +255,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{outputs('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -620,7 +620,7 @@
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{outputs('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('ConstructMessage:_Get_MessageConstructor_EndpointUrl')?['logicAppUrl']}",
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 										"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
