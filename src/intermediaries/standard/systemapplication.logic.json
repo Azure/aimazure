@@ -95,7 +95,7 @@
 	"resources": [
 		{
 			"type": "Microsoft.Web/sites",
-			"apiVersion": "2018-11-01",
+			"apiVersion": "2021-01-15",
 			"name": "[parameters('logicAppName')]",
 			"location": "[parameters('logicAppLocation')]",
 			"kind": "functionapp,workflowapp",
@@ -122,13 +122,25 @@
 				"reserved": false,
 				"isXenon": false,
 				"hyperV": false,
+				"siteConfig": {
+					"numberOfWorkers": 1,
+					"acrUseManagedIdentityCreds": false,
+					"alwaysOn": false,
+					"http20Enabled": false,
+					"functionAppScaleLimit": 0,
+					"minimumElasticInstanceCount": 1
+				},
 				"scmSiteAlsoStopped": false,
-				"clientAffinityEnabled": true,
+				"clientAffinityEnabled": false,
 				"clientCertEnabled": false,
+				"clientCertMode": "Required",
 				"hostNamesDisabled": false,
 				"containerSize": 1536,
 				"dailyMemoryTimeQuota": 0,
-				"httpsOnly": true,
+				"keyVaultReferenceIdentity": "SystemAssigned",
+				"httpsOnly": false,
+				"redundancyMode": "None",
+				"storageAccountRequired": false,
 				"siteConfig": {
 					"appSettings": [
 						{
@@ -254,6 +266,7 @@
 				"requestTracingEnabled": false,
 				"remoteDebuggingEnabled": false,
 				"httpLoggingEnabled": false,
+				"acrUseManagedIdentityCreds": false,
 				"logsDirectorySizeLimit": 35,
 				"detailedErrorLoggingEnabled": false,
 				"publishingUsername": "[concat('$', parameters('logicAppName'))]",
@@ -275,20 +288,6 @@
 					"rampUpRules": []
 				},
 				"autoHealEnabled": false,
-				"cors": {
-					"allowedOrigins": [
-						"https://functions.azure.com",
-						"https://functions-staging.azure.com",
-						"https://functions-next.azure.com",
-						"https://afd.hosting.portal.azure.net",
-						"https://afd.hosting-ms.portal.azure.net",
-						"https://hosting.portal.azure.net",
-						"https://ms.hosting.portal.azure.net",
-						"https://ema-ms.hosting.portal.azure.net",
-						"https://ema.hosting.portal.azure.net"
-					],
-					"supportCredentials": false
-				},
 				"localMySqlEnabled": false,
 				"ipSecurityRestrictions": [
 					{
@@ -311,8 +310,12 @@
 				"scmIpSecurityRestrictionsUseMain": false,
 				"http20Enabled": false,
 				"minTlsVersion": "1.2",
+				"scmMinTlsVersion": "1.0",
 				"ftpsState": "AllAllowed",
-				"reservedInstanceCount": 1
+				"preWarmedInstanceCount": 1,
+				"functionAppScaleLimit": 0,
+				"functionsRuntimeScaleMonitoringEnabled": false,
+				"minimumElasticInstanceCount": 1
 			}
 		},
 		{
