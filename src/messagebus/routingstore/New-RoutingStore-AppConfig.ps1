@@ -80,7 +80,7 @@ else {
     throw "Unable to get managed identity principal ID for $appConfigName"
 }
 
-$role = "Key Vault Secrets User (preview)"
+$role = "Key Vault Secrets User"
 
 Write-Host "Adding role assignment for $principalId to role $role for Key Vault resource $keyVaultName"
 

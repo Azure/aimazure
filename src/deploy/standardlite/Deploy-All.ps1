@@ -111,9 +111,9 @@ if ($runUnattended -ne 1)
 	Write-Host ""
 	Write-Host "This script will attempt to deploy only application-related migrated resources, using the Logic Apps Standard offering." -ForegroundColor $defaultForegroundColour
 	Write-Host ""
-	Write-Host "NOTE: The is the LITE version of the deployment: it assumes that you have already run the full installation," -ForegroundColor Yellow
+	Write-Host "NOTE: This is the LITE version of the deployment: it assumes that you have already run the full installation," -ForegroundColor Yellow
 	Write-Host "and that this installation is using the same unique deployment id (xxxxx)." -ForegroundColor Yellow
-	Write-Host "If neither of these are true, then this installation will fail." -ForegroundColor Yellow
+	Write-Host "If neither of these conditions are true, then this installation will fail." -ForegroundColor Yellow
 	Write-Host ""
 	Write-Host "Before deploying resources, this script will check the following:" -ForegroundColor $defaultForegroundColour
 	Write-Host "   1) Is the Azure CLI installed?" -ForegroundColor $defaultForegroundColour

@@ -95,7 +95,7 @@
 	"resources": [
 		{
 			"type": "Microsoft.Web/sites",
-			"apiVersion": "2018-11-01",
+			"apiVersion": "2021-01-15",
 			"name": "[parameters('logicAppName')]",
 			"location": "[parameters('logicAppLocation')]",
 			"kind": "functionapp,workflowapp",
@@ -218,7 +218,7 @@
 		},
 		{
 			"type": "Microsoft.Web/sites/config",
-			"apiVersion": "2018-11-01",
+			"apiVersion": "2021-01-15",
 			"name": "[concat(parameters('logicAppName'), '/web')]",
 			"location": "[parameters('logicAppLocation')]",
 			"tags": "[parameters('tags')]",
@@ -305,7 +305,7 @@
 		},
 		{
 			"type": "Microsoft.Web/sites/hostNameBindings",
-			"apiVersion": "2018-11-01",
+			"apiVersion": "2021-01-15",
 			"name": "[concat(parameters('logicAppName'), '/', parameters('logicAppName'), '.azurewebsites.net')]",
 			"location": "[parameters('logicAppLocation')]",
 			"tags": "[parameters('tags')]",

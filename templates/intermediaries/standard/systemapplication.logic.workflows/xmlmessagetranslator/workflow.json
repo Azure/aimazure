@@ -1211,7 +1211,7 @@
             "inputs": {
               "content": "@variables('BodyContent')",
               "map": {
-                "name": "@{coalesce(variables('MapName'), '')}"
+                "name": "@{coalesce(variables('MapName'), '')}.xslt"
               },
               "xsltParameters": {
                 "ApplyXsltOutputAttributes": true
