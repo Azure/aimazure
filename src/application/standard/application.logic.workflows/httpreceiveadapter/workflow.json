@@ -130,30 +130,553 @@
 				}
 			},
 			"Respond:_Were_we_successful": {
-				"type": "If",
-				"expression": {
-					"or": [
-						{
-							"equals": [
-								"@variables('Checkpoint')",
-								"IgnoreFile"
-							]
-						},
-						{
-							"equals": [
-								"@variables('Checkpoint')",
-								"ConstructMessageACK"
-							]
-						}
-					]
-				},
 				"actions": {
-					"Terminate_with_ACK": {
-						"type": "Terminate",
-						"inputs": {
-							"runStatus": "Succeeded"
+					"Respond:_Is_this_a_TwoWay_adapter": {
+						"actions": {
+							"Respond:TwoWay:_Get_MessageResponseHandler_EndpointUrl": {
+								"type": "Http",
+								"inputs": {
+									"method": "GET",
+									"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messageresponsehandler",
+									"headers": {
+										"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+									},
+									"queries": {
+										"clearCache": "@parameters('clearCache')"
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								},
+								"runAfter": {}
+							},
+							"Respond:TwoWay:_Call_Response_Handler": {
+								"runAfter": {
+									"Respond:_Is_this_a_TwoWay_adapter": [
+										"Succeeded"
+									]
+								},
+								"type": "Http",
+								"inputs": {
+									"method": "POST",
+									"uri": "@{body('Respond:TwoWay:_Get_MessageResponseHandler_EndpointUrl')?['logicAppUrl']}",
+									"body": {
+										"responseTopicName": "@{parameters('workflowname.httpReceiveAdapter.responseTopicName')}",
+										"responseSubscriptionName": "@{parameters('workflowname.httpReceiveAdapter.responseSubscriptionName')}",
+										"correlationId": "@variables('ResponseMessage')?['header']?['properties']?['correlationId']",
+										"responseTimeoutInMinutes": "@coalesce(variables('Configuration')?[httpReceiveAdapter]?['responseTimeoutInMinutes'], 3)"
+									},
+									"headers": {
+										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+										"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								}
+							},
+							"Respond:TwoWay:_Check_StatusCode": {
+								"runAfter": {
+									"Respond:TwoWay:_Set_StatusCode_variable": [
+										"Succeeded"
+									]
+								},
+								"cases": {
+									"Success": {
+										"case": 200,
+										"actions": {
+											"Respond:TwoWay:Success:_Set_TwoWayResponseMessage_variable": {
+												"runAfter": {},
+												"type": "SetVariable",
+												"inputs": {
+													"name": "TwoWayResponseMessage",
+													"value": "@body('Respond:TwoWay:_Call_Response_Handler')"
+												}
+											},
+											"Respond:TwoWay:Success:_Check_TwoWayResponse_ContentType": {
+												"runAfter": {
+													"Respond:TwoWay:Success:_Set_TwoWayResponseMessage_variable": [
+														"Succeeded"
+													]
+												},
+												"type": "If",
+												"actions": {
+													"Respond:TwoWay:Success:_Get_Response_BodyContent": {
+														"runAfter": {},
+														"type": "Http",
+														"inputs": {
+															"method": "POST",
+															"uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/getbodycontent",
+															"headers": {
+																"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')",
+																"Aim-Tracking-Id": "@{variables('ResponseMessage')?['header']?['properties']?['trackingId']}",
+																"Content-Type": "application/json"
+															},
+															"body": "@if(equals(variables('TwoWayResponseMessage')?['$content-encoding'], 'Base64'), json(decodeBase64(variables('TwoWayResponseMessage')?['$content'])), variables('TwoWayResponseMessage')?['$content'])",
+															"queries": {
+																"clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+																"enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+															},
+															"retryPolicy": {
+																"type": "none"
+															}
+														}
+													},
+													"Respond:TwoWay:Success:GetBodyContent:_Check_Status_Code": {
+														"runAfter": {
+															"Respond:TwoWay:Success:GetBodyContent:_Set_StatusCode_variable": [
+																"Succeeded"
+															]
+														},
+														"cases": {
+															"Success": {
+																"case": 200,
+																"actions": {
+																	"Respond:TwoWay:Success:GetBodyContent:_Set_TwoWayResponseContent_variable": {
+																		"runAfter": {},
+																		"type": "SetVariable",
+																		"inputs": {
+																			"name": "TwoWayResponseContent",
+																			"value": "@decodeBase64(body('Respond:TwoWay:Success:_Get_Response_BodyContent')?['$content'])"
+																		}
+																	},
+																	"Respond:TwoWay:Success:GetBodyContent:Success:_Send_Response": {
+																		"inputs": {
+																			"body": "@variables('TwoWayResponseContent')",
+																			"statusCode": 200,
+																			"headers": {
+																				"Content-Type": "@body('Respond:TwoWay:Success:_Get_Response_BodyContent')?['$contentType']"
+																			}
+																		},
+																		"kind": "Http",
+																		"runAfter": {
+																			"Respond:TwoWay:Success:GetBodyContent:_Set_TwoWayResponseContent_variable": [
+																				"Succeeded"
+																			]
+																		},
+																		"type": "Response"
+																	}
+																}
+															}
+														},
+														"default": {
+															"actions": {
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Do_we_have_a_Fault_Message": {
+																	"actions": {
+																		"Respond:TwoWay:Success:GetBodyContent:Fault:_Set_ErrorMessage_variable": {
+																			"runAfter": {
+																				"Respond:TwoWay:Success:GetBodyContent:Fault:_Set_FaultMessage_variable": [
+																					"Succeeded"
+																				]
+																			},
+																			"type": "SetVariable",
+																			"inputs": {
+																				"name": "ErrorMessage",
+																				"value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager GetBodyContent operation"
+																			}
+																		},
+																		"Respond:TwoWay:Success:GetBodyContent:Fault:_Set_FaultMessage_variable": {
+																			"runAfter": {},
+																			"type": "SetVariable",
+																			"inputs": {
+																				"name": "FaultMessage",
+																				"value": "@body('Respond:TwoWay:Success:_Get_Response_BodyContent')"
+																			}
+																		}
+																	},
+																	"runAfter": {},
+																	"else": {
+																		"actions": {
+																			"Respond:TwoWay:Success:GetBodyContent:NoFault:_Create_Fault_Message": {
+																				"runAfter": {},
+																				"type": "Compose",
+																				"inputs": {
+																					"fault": {
+																						"faultActor": "@concat(workflow()?['name'], '.', actions('Respond:TwoWay:Success:_Get_Response_BodyContent')?['name'], ' (', workflow()?['run']?['name'], ')')",
+																						"faultCategory": "Error",
+																						"faultCode": "@{coalesce(outputs('Respond:TwoWay:Success:_Get_Response_BodyContent')?['statusCode'], outputs('Respond:TwoWay:Success:_Get_Response_BodyContent')?['body']?['statusCode'], actions('Respond:TwoWay:Success:_Get_Response_BodyContent')?['error']?['code'])}",
+																						"faultMessage": "@{coalesce(outputs('Respond:TwoWay:Success:_Get_Response_BodyContent')?['error']?['message'], outputs('Respond:TwoWay:Success:_Get_Response_BodyContent')?['body']?['message'], actions('Respond:TwoWay:Success:_Get_Response_BodyContent')?['error']?['message'])}",
+																						"faultReason": "@{actions('Respond:TwoWay:Success:_Get_Response_BodyContent')?['status']}"
+																					}
+																				}
+																			},
+																			"Respond:TwoWay:Success:GetBodyContent:NoFault:_Set_ErrorMessage_variable": {
+																				"runAfter": {
+																					"Respond:TwoWay:Success:GetBodyContent:NoFault:_Set_FaultMessage_variable": [
+																						"Succeeded"
+																					]
+																				},
+																				"type": "SetVariable",
+																				"inputs": {
+																					"name": "ErrorMessage",
+																					"value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager GetBodyContent operation"
+																				}
+																			},
+																			"Respond:TwoWay:Success:GetBodyContent:NoFault:_Set_FaultMessage_variable": {
+																				"runAfter": {
+																					"Respond:TwoWay:Success:GetBodyContent:NoFault:_Create_Fault_Message": [
+																						"Succeeded"
+																					]
+																				},
+																				"type": "SetVariable",
+																				"inputs": {
+																					"name": "FaultMessage",
+																					"value": "@outputs('Respond:TwoWay:Success:GetBodyContent:NoFault:_Create_Fault_Message')"
+																				}
+																			}
+																		}
+																	},
+																	"expression": {
+																		"and": [
+																			{
+																				"not": {
+																					"equals": [
+																						"@body('Respond:TwoWay:Success:_Get_Response_BodyContent')?['fault']",
+																						null
+																					]
+																				}
+																			}
+																		]
+																	},
+																	"type": "If"
+																},
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Build_NACK_message": {
+																	"runAfter": {
+																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Do_we_have_a_Fault_Message": [
+																			"Succeeded"
+																		]
+																	},
+																	"type": "Compose",
+																	"inputs": {
+																		"body": [
+																			{
+																				"$content": {
+																					"code": "500",
+																					"message": "@variables('ErrorMessage')",
+																					"lastCheckpoint": "@variables('Checkpoint')",
+																					"fault": "@variables('FaultMessage')"
+																				},
+																				"$contentType": "application/json",
+																				"$part": 1,
+																				"$partType": "http://schemas.microsoft.com/aim#nack"
+																			}
+																		],
+																		"header": {
+																			"properties": {
+																				"createDate": "@utcNow()",
+																				"envelopeType": "nack",
+																				"messageId": "@guid()",
+																				"rootPart": 1,
+																				"trackingId": "@body('Respond:TwoWay:_Call_Response_Handler')?['header']?['properties']?['trackingId']"
+																			},
+																			"routing": {
+																				"MessageType": "http://schemas.microsoft.com/aim#nack"
+																			},
+																			"routingSlip": {},
+																			"state": {}
+																		}
+																	}
+																},
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+																	"type": "Http",
+																	"inputs": {
+																		"method": "GET",
+																		"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
+																		"headers": {
+																			"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+																		},
+																		"queries": {
+																			"clearCache": "@parameters('clearCache')"
+																		},
+																		"retryPolicy": {
+																			"type": "none"
+																		}
+																	},
+																	"runAfter": {
+																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Build_NACK_message": [
+																			"Succeeded",
+																			"Failed",
+																			"TimedOut"
+																		]
+																	}
+																},
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Send_to_SuspendQueue": {
+																	"runAfter": {
+																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+																			"Succeeded"
+																		]
+																	},
+																	"type": "Http",
+																	"inputs": {
+																		"method": "POST",
+																		"uri": "@{body('Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+																		"body": {
+																			"nackMessage": "@outputs('Respond:TwoWay:Success:GetBodyContent:Failure:_Build_NACK_message')",
+																			"originalMessage": "@body('Respond:TwoWay:_Call_Response_Handler')",
+																			"suspendQueueTopicName": "@{parameters('workflowname.httpReceiveAdapter.suspendQueueTopicName')}",
+																			"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
+																			"scenario": "@{parameters('scenario')}"
+																		},
+																		"headers": {
+																			"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+																			"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+																		},
+																		"retryPolicy": {
+																			"type": "none"
+																		}
+																	}
+																},
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Send_Response": {
+																	"inputs": {
+																		"body": "@variables('FaultMessage')",
+																		"statusCode": 500,
+																		"headers": {
+																			"Content-Type": "application/json"
+																		}
+																	},
+																	"kind": "Http",
+																	"runAfter": {
+																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Send_to_SuspendQueue": [
+																			"Succeeded",
+																			"Failed",
+																			"TimedOut"
+																		]
+																	},
+																	"type": "Response"
+																}
+															}
+														},
+														"expression": "@variables('StatusCode')",
+														"type": "Switch"
+													},
+													"Respond:TwoWay:Success:GetBodyContent:_Set_StatusCode_variable": {
+														"runAfter": {
+															"Respond:TwoWay:Success:_Get_Response_BodyContent": [
+																"Succeeded",
+																"Failed",
+																"Skipped",
+																"TimedOut"
+															]
+														},
+														"type": "SetVariable",
+														"inputs": {
+															"name": "StatusCode",
+															"value": "@coalesce(outputs('Respond:TwoWay:Success:_Get_Response_BodyContent')['statusCode'], 500)"
+														}
+													}
+												},
+												"else": {
+													"actions": {
+														"Respond:TwoWay:Success:UnknownContentType:_Send_Response": {
+															"inputs": {
+																"body": "@if(equals(variables('TwoWayResponseMessage')?['$content-encoding'], 'Base64'), json(decodeBase64(variables('TwoWayResponseMessage')?['$content'])), variables('TwoWayResponseMessage')?['$content'])",
+																"statusCode": 200,
+																"headers": {
+																	"Content-Type": "@variables('TwoWayResponseMessage')?['$content-type']"
+																}
+															},
+															"kind": "Http",
+															"runAfter": {},
+															"type": "Response"
+														}
+													}
+												},
+												"expression": {
+													"or": [
+														{
+															"equals": [
+																"@variables('TwoWayResponseMessage')?['$content-type']",
+																"text/json"
+															]
+														},
+														{
+															"equals": [
+																"@variables('TwoWayResponseMessage')?['$content-type']",
+																"application/json"
+															]
+														}
+													]
+												}
+											}
+										}
+									}
+								},
+								"default": {
+									"actions": {
+										"Respond:TwoWay:Failure:_Create_Fault": {
+											"runAfter": {},
+											"type": "Compose",
+											"inputs": {
+												"fault": {
+													"faultActor": "@concat(workflow()?['name'], '.', actions('Respond:TwoWay:_Call_Response_Handler')?['name'], ' (', workflow()?['run']?['name'], ')')",
+													"faultCategory": "Error",
+													"faultCode": "@{outputs('Respond:TwoWay:_Call_Response_Handler')?['statusCode']}",
+													"faultMessage": "An error occurred whilst trying to get the response message for a two-way scenario.",
+													"faultReason": "@{coalesce(body('Respond:TwoWay:_Call_Response_Handler')?['fault']?['faultMessage'], body('Respond:TwoWay:_Call_Response_Handler')?['error']?['message'])}"
+												}
+											}
+										},
+										"Respond:TwoWay:Failure:_Set_FaultMessage_variable": {
+											"runAfter": {
+												"Respond:TwoWay:Failure:_Create_Fault": [
+													"Succeeded"
+												]
+											},
+											"type": "SetVariable",
+											"inputs": {
+												"name": "FaultMessage",
+												"value": "@outputs('Respond:TwoWay:Failure:_Create_Fault')"
+											}
+										},
+										"Respond:TwoWay:Failure:_Create_NACK_Message": {
+											"runAfter": {
+												"Respond:TwoWay:Failure:_Set_FaultMessage_variable": [
+													"Succeeded"
+												]
+											},
+											"type": "Compose",
+											"inputs": {
+												"body": [
+													{
+														"$content": {
+															"code": "500",
+															"fault": "@variables('FaultMessage')",
+															"message": "Action @{actions('Respond:TwoWay:_Call_Response_Handler')?['name']} resulted in an error response."
+														},
+														"$contentType": "application/json",
+														"$part": 1,
+														"$partType": "http://schemas.microsoft.com/aim#nack"
+													}
+												],
+												"header": {
+													"properties": {
+														"createDate": "@utcNow()",
+														"envelopeType": "nack",
+														"messageId": "@guid()",
+														"rootPart": 1,
+														"trackingId": "@body('Respond:TwoWay:_Call_Response_Handler')?['header']?['properties']?['trackingId']"
+													},
+													"routing": {
+														"MessageType": "http://schemas.microsoft.com/aim#nack"
+													},
+													"routingSlip": {},
+													"state": {}
+												}
+											}
+										},
+										"Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+											"type": "Http",
+											"inputs": {
+												"method": "GET",
+												"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
+												"headers": {
+													"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+												},
+												"queries": {
+													"clearCache": "@parameters('clearCache')"
+												},
+												"retryPolicy": {
+													"type": "none"
+												}
+											},
+											"runAfter": {
+												"Respond:TwoWay:Failure:_Create_NACK_Message": [
+													"Succeeded",
+													"Failed",
+													"TimedOut"
+												]
+											}
+										},
+										"Respond:TwoWay:Failure:_Send_to_SuspendQueue": {
+											"runAfter": {
+												"Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+													"Succeeded"
+												]
+											},
+											"type": "Http",
+											"inputs": {
+												"method": "POST",
+												"uri": "@{body('Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+												"body": {
+													"nackMessage": "@outputs('Respond:TwoWay:Failure:_Create_NACK_Message')",
+													"originalMessage": "@variables('ResponseMessage')",
+													"suspendQueueTopicName": "@{parameters('workflowname.httpReceiveAdapter.suspendQueueTopicName')}",
+													"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
+													"scenario": "@{parameters('scenario')}"
+												},
+												"headers": {
+													"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+													"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+												},
+												"retryPolicy": {
+													"type": "none"
+												}
+											}
+										},
+										"Respond:TwoWay:Failure:_Send_Fault_Response": {
+											"inputs": {
+												"body": "@variables('FaultMessage')",
+												"statusCode": "@coalesce(outputs('Respond:TwoWay:_Call_Response_Handler')?['statusCode'], 500)",
+												"headers": {
+													"Content-Type": "application/json"
+												}
+											},
+											"kind": "Http",
+											"runAfter": {
+												"Respond:TwoWay:Failure:_Send_to_SuspendQueue": [
+													"Succeeded"
+												]
+											},
+											"type": "Response"
+										}
+									}
+								},
+								"expression": "@variables('StatusCode')",
+								"type": "Switch"
+							},
+							"Respond:TwoWay:_Set_StatusCode_variable": {
+								"runAfter": {
+									"Respond:TwoWay:_Call_Response_Handler": [
+										"Succeeded",
+										"Failed",
+										"Skipped",
+										"TimedOut"
+									]
+								},
+								"type": "SetVariable",
+								"inputs": {
+									"name": "StatusCode",
+									"value": "@coalesce(outputs('Respond:TwoWay:_Call_Response_Handler')?['statusCode'], 500)"
+								}
+							}
 						},
-						"runAfter": {}
+						"runAfter": {},
+						"else": {
+							"actions": {
+								"Respond:OneWay:_Send_Accepted_Response": {
+									"inputs": {
+										"statusCode": 202,
+										"headers": {
+											"Content-Type": "application/json"
+										}
+									},
+									"kind": "Http",
+									"runAfter": {},
+									"type": "Response"
+								}
+							}
+						},
+						"expression": {
+							"and": [
+								{
+									"equals": [
+										"@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['isTwoWay'], false)",
+										true
+									]
+								}
+							]
+						},
+						"type": "if"
 					}
 				},
 				"runAfter": {
@@ -167,22 +690,12 @@
 				"else": {
 					"actions": {
 						"Failure:_Do_we_have_a_NACK": {
-							"type": "If",
-							"expression": {
-								"and": [
-									{
-										"equals": [
-											"@{coalesce(variables('ResponseMessage')?['header']?['properties']?['envelopeType'], '(unknown)')}",
-											"nack"
-										]
-									}
-								]
-							},
 							"actions": {},
 							"runAfter": {},
 							"else": {
 								"actions": {
 									"Failure:_Build_NACK_message": {
+										"runAfter": {},
 										"type": "Compose",
 										"inputs": {
 											"body": [
@@ -212,29 +725,39 @@
 												"routingSlip": {},
 												"state": {}
 											}
-										},
-										"runAfter": {}
+										}
 									},
 									"Failure:_Set_ResponseMessage_variable": {
-										"type": "SetVariable",
-										"inputs": {
-											"name": "ResponseMessage",
-											"value": "@outputs('Failure:_Build_NACK_message')"
-										},
 										"runAfter": {
 											"Failure:_Build_NACK_message": [
 												"Succeeded"
 											]
+										},
+										"type": "SetVariable",
+										"inputs": {
+											"name": "ResponseMessage",
+											"value": "@outputs('Failure:_Build_NACK_message')"
 										}
 									}
 								}
-							}
+							},
+							"expression": {
+								"and": [
+									{
+										"equals": [
+											"@{coalesce(variables('ResponseMessage')?['header']?['properties']?['envelopeType'], '(unknown)')}",
+											"nack"
+										]
+									}
+								]
+							},
+							"type": "If"
 						},
-						"Failure:_Get_TopicPublisher_EndpointUrl": {
+						"Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
 							"type": "Http",
 							"inputs": {
 								"method": "GET",
-								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
 								"headers": {
 									"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 								},
@@ -255,7 +778,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -272,20 +795,28 @@
 								}
 							},
 							"runAfter": {
-								"Failure:_Get_TopicPublisher_EndpointUrl": [
+								"Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
 									"Succeeded"
 								]
 							}
 						},
-						"Terminate_with_NACK": {
-							"type": "Terminate",
+						"Failure:_Send_Fault_Response": {
 							"inputs": {
-								"runStatus": "Failed",
-								"runError": {
-									"code": "@{coalesce(variables('ResponseMessage')?['body']?[0]?['$content']?['code'], '500')}",
-									"message": "@{coalesce(variables('ResponseMessage')?['body']?[0]?['$content']?['message'], '(unknown error)')}"
-								}
+								"body": {
+									"fault": {
+										"faultActor": "@{workflow()['name']} (@{workflow()?['run']?['name']})",
+										"faultCategory": "Error",
+										"faultCode": "500",
+										"faultMessage": "@variables('ErrorMessage')",
+										"faultReason": ""
+									}
+								},
+								"headers": {
+									"Content-Type": "application/json"
+								},
+								"statusCode": 500
 							},
+							"kind": "Http",
 							"runAfter": {
 								"Failure:_Send_NACK_to_SuspendQueue": [
 									"Succeeded",
@@ -293,10 +824,22 @@
 									"Skipped",
 									"TimedOut"
 								]
-							}
+							},
+							"type": "Response"
 						}
 					}
-				}
+				},
+				"expression": {
+					"and": [
+						{
+							"equals": [
+								"@variables('Checkpoint')",
+								"ConstructMessageACK"
+							]
+						}
+					]
+				},
+				"type": "If"
 			},
 			"Step:_Get_Configuration": {
 				"type": "If",
@@ -632,7 +1175,9 @@
 										"properties": {
 											"scenario": "@parameters('workflowname.httpReceiveAdapter.scenarioName')",
 											"btsReceivePortName": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
-											"btsReceivePortId": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
+											"btsReceivePortId": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}",
+											"btsInboundTransportType": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsInboundTransportType'], '(unknownTransportType)')}",
+											"btsInboundTransportLocation": "@{coalesce(variables('Configuration')?['httpReceiveAdapter']?['btsInboundTransportLocation'], '(unknownTransportLocation)')}"
 										}
 									},
 									"retryPolicy": {

@@ -125,10 +125,10 @@
             }
         },
         "scenarioStep": {
-            "defaultValue": "template",
+            "defaultValue": "messageSubscriber",
             "type": "string",
             "metadata": {
-                "description": "The step within a Scenario that this LogicApp is running under e.g. template."
+                "description": "The step within a Scenario that this LogicApp is running under e.g. messageSubscriber."
             }
         },
         "tags": {

@@ -1,0 +1,16 @@
+{
+    "workflowDefinitionVariable": {
+        "Initialize_MessageType_variable": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "MessageType",
+                        "type": "string"
+                    }
+                ]
+            }
+        }
+    }
+}

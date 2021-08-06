@@ -1,0 +1,26 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "Workflow",
+            "description": "{{ workflow_object.type }}",
+            "inputs": {
+                "body": "@variables('Envelope')",
+                "headers": {
+                    "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                    "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+                    "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                    "Content-Type": "application/json"
+                },
+                "host": {
+                    "triggerName": "manual",
+                    "workflow": {
+                        "id": "[variables('routingSlipRouterLogicAppResourceId')]"
+                    }
+                },
+                "retryPolicy": "[parameters('routerRetryPolicy')]"
+            }
+        }
+    }
+}

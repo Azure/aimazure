@@ -1,0 +1,12 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "Scope",
+            "description": "{{ workflow_object.type }}",
+            "actions": {}
+        }
+    },
+    "workflowDefinitionActionPath": "$.['{{ workflow_object.type }}:_{{ workflow_object_name }}'].actions"
+}

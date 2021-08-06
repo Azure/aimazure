@@ -1,0 +1,20 @@
+{
+    "armParameter": {
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    },
+    "armTemplateParameter": {
+        "tags": {
+            "type": "object"
+        }
+    }
+}

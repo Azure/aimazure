@@ -1,0 +1,28 @@
+{
+    "armParameter": {
+        "serviceBusRecurrenceFrequency": {
+            "value": "{{ resource_template.parameters.azure_service_bus_recurrence_frequency }}"
+        }
+    },
+    "armTemplateParameter": {
+        "serviceBusRecurrenceFrequency": {
+            "type": "string",
+            "allowedValues": [ "Second", "Minute", "Hour", "Day", "Month", "Year" ],
+            "metadata": {
+                "description": "The frequency with which to check for new messages on the ServiceBus Topic Subscription."
+            }
+        }
+    },
+    "workflowParameter": {
+        "serviceBusRecurrenceFrequency": {
+            "value": "[parameters('serviceBusRecurrenceFrequency')]"
+        }
+    },
+    "workflowDefinitionParameter": {
+        "serviceBusRecurrenceFrequency": {
+            "type": "string",
+            "allowedValues": [ "Second", "Minute", "Hour", "Day", "Month", "Year" ],
+            "description": "The frequency with which to check for new messages on the ServiceBus Topic Subscription."
+        }
+    }
+}

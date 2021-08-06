@@ -1,0 +1,15 @@
+{
+    "armParameter": {
+        "messageSuspendProcessorLogicAppName": {
+            "value": "{{ resource_template.parameters.azure_message_suspend_processor_logic_app_name }}"
+        }
+    },
+    "armTemplateParameter": {
+        "messageSuspendProcessorLogicAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the LogicApp to call to handle failed messages."
+            }
+        }
+    }
+}

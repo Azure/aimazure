@@ -1,0 +1,19 @@
+{
+	"workflowTrigger": {
+		"When_messages_are_available_in_Service_Bus_topic": {
+			"type": "ServiceProvider",
+			"inputs": {
+				"parameters": {
+					"topicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.processManager.topicName')}",
+					"subscriptionName": "@{parameters('{{ resource_template.parameters.workflow_name }}.processManager.subscriptionName')}"
+				},
+				"serviceProviderConfiguration": {
+					"connectionName": "serviceBusSubscribe",
+					"operationId": "receiveTopicMessages",
+					"serviceProviderId": "/serviceProviders/serviceBus"
+				}
+			},
+			"splitOn": "@triggerOutputs()?['body']"
+		}
+	}
+}

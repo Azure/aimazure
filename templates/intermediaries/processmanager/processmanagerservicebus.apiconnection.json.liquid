@@ -48,6 +48,7 @@
             "apiVersion": "2016-06-01",
             "name": "[parameters('apiConnectionName')]",
             "location": "[parameters('apiConnectionLocation')]",
+			"kind": "{{ resource_template.parameters.azure_api_connection_version }}",
             "tags": "[parameters('tags')]",
             "properties": {
                 "api": {

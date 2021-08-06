@@ -20,8 +20,8 @@ The name of the key vault store.
 .PARAMETER keyVaultApimSubscriptionSecretName
 The name of secret in key vault which stores the apim subscription.
 
-.PARAMETER zipFile
-Name of the zip file containing the Logic App Workflows.
+.PARAMETER workflowFolder
+Name of the folder containing the Logic App Workflows.
 
 .PARAMETER deploymentName
 The name used to identify this instance of the deployment.

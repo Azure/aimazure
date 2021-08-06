@@ -1,0 +1,5 @@
+{
+    "armTemplateVariable": {
+        "apimServiceResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+    }
+}

@@ -1,0 +1,180 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "Scope",
+            "description": "{{ workflow_object.type }}",
+            "actions": {}
+        },
+        "{{ workflow_object_name }}:Success:Complete_the_Message": {
+            "runAfter": {
+                "{{ workflow_object.type }}:_{{ workflow_object_name }}": [
+                    "Succeeded"
+                ]
+            },
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                        "name": "@parameters('$connections')['servicebuspublish']['connectionId']"
+                    }
+                },
+                "method": "delete",
+                "path": "/@{encodeURIComponent(encodeURIComponent(parameters('serviceBusTopicName')))}/subscriptions/@{encodeURIComponent(parameters('serviceBusTopicSubscriptionName'))}/messages/complete",
+                "queries": {
+                    "lockToken": "@triggerBody()?['LockToken']",
+                    "sessionId": "",
+                    "subscriptionType": "Main"
+                }
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Get_Failed_Actions": {
+            "runAfter": {
+                "{{ workflow_object.type }}:_{{ workflow_object_name }}": [
+                    "Failed",
+                    "TimedOut",
+                    "Skipped"
+                ]
+            },
+            "type": "Query",
+            "inputs": {
+                "from": "@results('ProcessChannel:_Exception_Scope')",
+                "where": "@or(equals(item()['status'], 'Failed'), equals(item()['status'], 'TimedOut'))"
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Create_Fault_Message": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Get_Failed_Actions": [
+                    "Succeeded"
+                ]
+            },
+            "type": "Compose",
+            "inputs": {
+                "fault": {
+                    "faultActor": "@concat(workflow()?['name'], '.', body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['name'], ' (', workflow()?['run']?['name'], ')')",
+                    "faultCategory": "Error",
+                    "faultCode": "@{coalesce(body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['statusCode'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['body']?['statusCode'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['code'])}",
+                    "faultMessage": "@{variables('ErrorMessage')}: @{coalesce(body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['body']?['message'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'])}",
+                    "faultReason": "@{body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['status']}"
+                }
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Set_FaultMessage": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Create_Fault_Message": [
+                    "Succeeded"
+                ]
+            },
+            "type": "SetVariable",
+            "inputs": {
+                "name": "FaultMessage",
+                "value": "@outputs('{{ workflow_object_name }}:Failure:Create_Fault_Message')"
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Build_NACK_Message": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Set_FaultMessage": [
+                    "Succeeded"
+                ]
+            },
+            "type": "Compose",
+            "inputs": {
+                "header": {
+                    "properties": {
+                        "createDate": "@utcNow()",
+                        "envelopeType": "nack",
+                        "messageId": "@guid()",
+                        "rootPart": 1,
+                        "trackingId": "@{triggerBody()?['properties']?['trackingId']}"
+                    },
+                    "routing": {},
+                    "routingSlip": {},
+                    "state": {}
+                },
+                "body": [
+                    {
+                        "$content": {
+                            "code": "500",
+                            "fault": "@variables('FaultMessage')",
+                            "message": "@variables('ErrorMessage')"
+                        },
+                        "$contentType": "application/json",
+                        "$part": 1,
+                        "$partType": "http://schemas.microsoft.com/aim#nack"
+                    }
+                ]
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Deadletter_the_Message": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Build_NACK_Message": [
+                    "Succeeded"
+                ]
+            },
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                        "name": "@parameters('$connections')['servicebuspublish']['connectionId']"
+                    }
+                },
+                "method": "delete",
+                "path": "/@{encodeURIComponent(encodeURIComponent(parameters('serviceBusTopicName')))}/subscriptions/@{encodeURIComponent(parameters('serviceBusTopicSubscriptionName'))}/messages/deadletter",
+                "queries": {
+                    "lockToken": "@triggerBody()?['LockToken']",
+                    "deadLetterReason": "@{variables('ErrorMessage')}",
+                    "deadLetterErrorDescription": "@{outputs('{{ workflow_object_name }}:Failure:Build_NACK_Message')}",
+                    "sessionId": ""
+                }
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Send_to_SuspendQueue": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Deadletter_the_Message": [
+                    "Succeeded",
+                    "Failed",
+                    "TimedOut"
+                ]
+            },
+            "type": "Workflow",
+            "inputs": {
+                "body": {
+                    "failedMessageRouting": "@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['failedMessageRouting'], 'false')",
+                    "nackMessage": "@outputs('{{ workflow_object_name }}:Failure:Build_NACK_Message')",
+                    "originalMessage": "@if(equals(triggerBody()?['ContentTransferEncoding'], 'Base64'), json(base64Decode(triggerBody()?['ContentData'])), triggerBody()?['ContentData'])",
+                    "scenario": "@{parameters('scenario')}",
+                    "suspendQueueTopicName": "@parameters('suspendQueueTopicName')"
+                },
+                "headers": {
+                    "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                    "Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+                },
+                "host": {
+                    "triggerName": "manual",
+                    "workflow": {
+                        "id": "[variables('messageSuspendProcessorLogicAppResourceId')]"
+                    }
+                }
+            }
+        },
+        "{{ workflow_object_name }}:Failure:Terminate": {
+            "runAfter": {
+                "{{ workflow_object_name }}:Failure:Send_to_SuspendQueue": [
+                    "Succeeded",
+                    "Failed",
+                    "TimedOut"
+                ]
+            },
+            "type": "Terminate",
+            "inputs": {
+                "runError": {
+                    "code": "500",
+                    "message": "@variables('ErrorMessage')"
+                },
+                "runStatus": "Failed"
+            }
+        }
+    },
+    "workflowDefinitionActionPath": "$.['{{ workflow_object.type }}:_{{ workflow_object_name }}'].actions"
+}

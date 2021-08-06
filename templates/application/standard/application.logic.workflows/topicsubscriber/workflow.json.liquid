@@ -207,7 +207,7 @@
 										"Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
 										"Content-Type": "application/json"
 									},
-									"body": "@variables('Envelope')",
+									"body": "@variables('NewEnvelope')",
 									"retryPolicy": {
 										"type": "none"
 									}
@@ -260,11 +260,11 @@
 															},
 															"runAfter": {}
 														},
-														"Routing:Failure:_Get_TopicPublisher_EndpointUrl": {
+														"Routing:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
 															"type": "Http",
 															"inputs": {
 																"method": "GET",
-																"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+																"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
 																"headers": {
 																	"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 																},
@@ -285,16 +285,16 @@
 															"type": "Http",
 															"inputs": {
 																"method": "POST",
-																"uri": "@{body('Routing:Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+																"uri": "@{body('Routing:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
 																"headers": {
 																	"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 																	"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
 																},
 																"body": {
 																	"nackMessage": "@body('Routing:_Call_RoutingSlipRouter')",
-                                                                    "originalMessage": "@variables('Envelope')",
-																	"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
-																	"failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
+																	"originalMessage": "@variables('Envelope')",
+																	"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+																	"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 																	"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')"
 																},
 																"retryPolicy": {
@@ -302,7 +302,7 @@
 																}
 															},
 															"runAfter": {
-																"Routing:Failure:_Get_TopicPublisher_EndpointUrl": [
+																"Routing:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
 																	"Succeeded"
 																]
 															}
@@ -449,11 +449,11 @@
 												}
 											}
 										},
-										"Routing:Error:_Get_TopicPublisher_EndpointUrl": {
+										"Routing:Error:_Get_MessageSuspendProcessor_EndpointUrl": {
 											"type": "Http",
 											"inputs": {
 												"method": "GET",
-												"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+												"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
 												"headers": {
 													"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 												},
@@ -474,7 +474,7 @@
 											"type": "Http",
 											"inputs": {
 												"method": "POST",
-												"uri": "@{body('Routing:Error:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+												"uri": "@{body('Routing:Error:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
 												"headers": {
 													"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 													"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -482,8 +482,8 @@
 												"body": {
 													"nackMessage": "@outputs('Routing:Error:_Build_NACK_message')",
 													"originalMessage": "@variables('Envelope')",
-													"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
-													"failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
+													"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+													"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 													"scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
 												},
 												"retryPolicy": {
@@ -491,7 +491,7 @@
 												}
 											},
 											"runAfter": {
-												"Routing:Error:_Get_TopicPublisher_EndpointUrl": [
+												"Routing:Error:_Get_MessageSuspendProcessor_EndpointUrl": [
 													"Succeeded"
 												]
 											}
@@ -567,11 +567,11 @@
 							},
 							"runAfter": {}
 						},
-						"Failure:_Get_TopicPublisher_EndpointUrl": {
+						"Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
 							"type": "Http",
 							"inputs": {
 								"method": "GET",
-								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
 								"headers": {
 									"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 								},
@@ -592,7 +592,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -600,8 +600,8 @@
 								"body": {
 									"nackMessage": "@outputs('Failure:_Build_NACK_message')",
 									"originalMessage": "@variables('Envelope')",
-									"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
-									"failedMessageRouting": "@coalesce(variables('Configuration')?['topicSubscriber']?['failedMessageRouting'], false)",
+									"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+									"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 									"scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
 								},
 								"retryPolicy": {
@@ -609,7 +609,7 @@
 								}
 							},
 							"runAfter": {
-								"Failure:_Get_TopicPublisher_EndpointUrl": [
+								"Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
 									"Succeeded"
 								]
 							}
@@ -741,7 +741,7 @@
 						"type": "Http",
 						"inputs": {
 							"method": "GET",
-							"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName'))}/topicSubscriber",
+							"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName'))}/messageSubscriber",
 							"headers": {
 								"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 							},
@@ -1199,24 +1199,20 @@
 			}
 		},
 		"triggers": {
-			"When_a_message_is_received_in_a_topic_subscription_(auto-complete)": {
-				"type": "ApiConnection",
+			"When_messages_are_available_in_Service_Bus_topic": {
+				"type": "ServiceProvider",
 				"inputs": {
-					"host": {
-						"connection": {
-							"referenceName": "{{ resource_template.parameters.workflow_name }}.serviceBusSubscribeConnection"
-						}
+					"parameters": {
+						"topicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.topicName')}",
+						"subscriptionName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.subscriptionName')}"
 					},
-					"method": "get",
-					"path": "/@{encodeURIComponent(encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.topicName')))}/subscriptions/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.subscriptionName'))}/messages/head",
-					"queries": {
-						"subscriptionType": "Main"
+					"serviceProviderConfiguration": {
+						"connectionName": "serviceBusSubscribe",
+						"operationId": "receiveTopicMessages",
+						"serviceProviderId": "/serviceProviders/serviceBus"
 					}
 				},
-				"recurrence": {
-					"frequency": "Second",
-					"interval": 15
-				}
+				"splitOn": "@triggerOutputs()?['body']"
 			}
 		},
 		"contentVersion": "1.0.0.0"

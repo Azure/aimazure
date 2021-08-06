@@ -1,0 +1,5 @@
+{
+    "armTemplateVariable": {
+        "routingSlipRouterLogicAppResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Logic/workflows', parameters('routingSlipRouterLogicAppName'))]"
+    }
+}

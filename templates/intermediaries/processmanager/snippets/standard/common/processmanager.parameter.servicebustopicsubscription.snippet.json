@@ -1,0 +1,26 @@
+{
+    "armParameter": {
+        "serviceBusTopicSubscriptionName": {
+            "value": "{{ resource_template.parameters.azure_service_bus_subscription_name }}"
+        }
+    },
+    "armTemplateParameter": {
+        "serviceBusTopicSubscriptionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the ServiceBus Topic Subscription used to subscribe to messages."
+            }
+        }
+    },
+    "workflowParameter": {
+        "serviceBusTopicSubscriptionName": {
+            "value": "[parameters('serviceBusTopicSubscriptionName')]"
+        }
+    },
+    "workflowDefinitionParameter": {
+        "serviceBusTopicSubscriptionName": {
+            "type": "String",
+            "description": "Name of the ServiceBus Topic Subscription used to subscribe to messages."
+        }        
+    }
+}

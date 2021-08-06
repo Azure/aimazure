@@ -34,7 +34,7 @@ Add-Type -assembly "system.io.compression.filesystem"
 
 Write-Host "Zip File creation complete"
 
-Write-Host "Uploading the Aim-FtpPassthru logic app zip package $zipFile"
+Write-Host "Uploading the application logic app zip package $zipFile"
 
 if (!(Test-Path $zipFile)) {
     throw "Zip file $zipFile doesn't exist, unable to upload"

@@ -1,0 +1,9 @@
+{%- capture workflow_object_name_unique -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}{%- endcapture -%}
+{
+	"{{ workflow_object_name }}.processManager.scenarioName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.scenario_name }}",
+		"description": "The name of the scenario for this specific Process Manager."
+	}
+}

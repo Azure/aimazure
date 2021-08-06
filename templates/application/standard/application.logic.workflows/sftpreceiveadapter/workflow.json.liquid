@@ -207,11 +207,11 @@
 								}
 							}
 						},
-						"Failure:_Get_TopicPublisher_EndpointUrl": {
+						"Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
 							"type": "Http",
 							"inputs": {
 								"method": "GET",
-								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/topicpublisher",
+								"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/messagesuspendprocessor",
 								"headers": {
 									"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
 								},
@@ -232,7 +232,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{body('Failure:_Get_TopicPublisher_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -249,7 +249,7 @@
 								}
 							},
 							"runAfter": {
-								"Failure:_Get_TopicPublisher_EndpointUrl": [
+								"Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
 									"Succeeded"
 								]
 							}
@@ -780,7 +780,9 @@
 											"receivedFileName": "@{triggerBody()?['Name']}",
 											"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveAdapter.scenarioName')",
 											"btsReceivePortName": "@{coalesce(variables('Configuration')?['sftpReceiveAdapter']?['btsReceivePortName'], '(unknownReceivePortName)')}",
-											"btsReceivePortId": "@{coalesce(variables('Configuration')?['sftpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}"
+											"btsReceivePortId": "@{coalesce(variables('Configuration')?['sftpReceiveAdapter']?['btsReceivePortId'], '(unknownReceivePortId)')}",
+											"btsInboundTransportType": "@{coalesce(variables('Configuration')?['sftpReceiveAdapter']?['btsInboundTransportType'], '(unknownTransportType)')}",
+											"btsInboundTransportLocation": "@{coalesce(variables('Configuration')?['sftpReceiveAdapter']?['btsInboundTransportLocation'], '(unknownTransportLocation)')}"
 										}
 									},
 									"retryPolicy": {

@@ -1,0 +1,26 @@
+{
+    "armParameter": {
+        "serviceBusRecurrenceInterval": {
+            "value": {{ resource_template.parameters.azure_service_bus_recurrence_interval }}
+        }
+    },
+    "armTemplateParameter": {
+        "serviceBusRecurrenceInterval": {
+            "type": "int",
+            "metadata": {
+                "description": "The interval with which to check for new messages on the ServiceBus Topic Subscription."
+            }
+        }
+    },
+    "workflowParameter": {
+        "serviceBusRecurrenceInterval": {
+            "value": "[parameters('serviceBusRecurrenceInterval')]"
+        }
+    },
+    "workflowDefinitionParameter": {
+        "serviceBusRecurrenceInterval": {
+            "type": "int",
+            "description": "The interval with which to check for new messages on the ServiceBus Topic Subscription."
+        }
+    }
+}

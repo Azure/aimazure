@@ -1,0 +1,5 @@
+{
+    "workflowResourceProperty": {
+        "tags": "[parameters('tags')]"
+    }
+}

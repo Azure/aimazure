@@ -1,0 +1,15 @@
+{
+    "armTemplateParameter": {
+        "apimRetryPolicy": {
+            "type": "object",
+            "defaultValue": {
+                "count": 3,
+                "interval": "PT5S",
+                "type": "fixed"
+            },
+            "metadata": {
+                "description": "Retry Policy to use when calling APIM."
+            }
+        }
+    }
+}

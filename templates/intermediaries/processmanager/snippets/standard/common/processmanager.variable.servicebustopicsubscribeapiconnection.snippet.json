@@ -1,0 +1,5 @@
+{
+    "armTemplateVariable": {
+        "serviceBusTopicSubscribeApiConnectionResourceId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusTopicSubscribeApiConnectionName'))]"
+    }
+}

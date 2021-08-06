@@ -1,0 +1,16 @@
+{
+    "workflowDefinitionVariable": {
+        "Initialize_Configuration_variable": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "Configuration",
+                        "type": "object"
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,127 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture source_message -%}{{ workflow_object.properties.SourceMessageReferences | first | split: '.' | first }}{%- endcapture -%}
+{%- capture target_message -%}{{ workflow_object.properties.TargetMessageReferences | first | split: '.' | first }}{%- endcapture -%}
+{%- if workflow_object.properties.IsMultiSource == false and workflow_object.properties.IsMultiTarget == false -%}
+{
+    "workflowDefinitionAction": {
+        "Construct:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "Scope",
+            "description": "{{ workflow_object.type }}",
+            "actions": {
+                "{{ workflow_object_name }}:_Call_GetBodyContent": {
+                    "runAfter": {},
+                    "type": "ApiManagement",
+                    "inputs": {
+                        "api": {
+                            "id": "[variables('messagingManagerApiResourceId')]"
+                        },
+                        "body": "@variables('{{ source_message }}')",
+                        "headers": {
+                            "Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
+                            "Content-Type": "application/json"
+                        },
+                        "method": "post",
+                        "pathTemplate": {
+                            "parameters": {},
+                            "template": "/aimmessagingmanager/getbodycontent"
+                        },
+                        "queries": {
+                            "clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                            "enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+                        },
+                        "retryPolicy": "[parameters('apimRetryPolicy')]",
+                        "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                    }
+                },
+                "{{ workflow_object_name }}:_Transform": {
+                    "runAfter": {
+                        "{{ workflow_object_name }}:_Call_GetBodyContent": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "Xslt",
+                    "inputs": {
+                        "content": "@{xml(decodeBase64(body('{{ workflow_object_name }}:_Call_GetBodyContent')?['$content']))}",
+                        "integrationAccount": {
+                            "map": {
+                                "name": "{{ workflow_object.properties.Map }}"
+                            }
+                        },
+                        "transformOptions": "ApplyXsltOutputAttributes"
+                    }
+                },
+                "{{ workflow_object_name }}:_Call_BuildEnvelope": {
+                    "runAfter": {
+                        "{{ workflow_object_name }}:_Transform": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "ApiManagement",
+                    "inputs": {
+                        "api": {
+                            "id": "[variables('messagingManagerApiResourceId')]"
+                        },
+                        "body": "@body('{{ workflow_object_name }}:_Transform')",
+                        "headers": {
+                            "Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
+                            "Content-Type": "application/xml"
+                        },
+                        "method": "post",
+                        "pathTemplate": {
+                            "parameters": {
+                                "envelopeType": "@{encodeURIComponent('document')}",
+                                "scenario": "@{encodeURIComponent(parameters('scenario'))}"
+                            },
+                            "template": "/aimmessagingmanager/buildenvelope/{envelopeType}/{scenario}"
+                        },
+                        "queries": {
+                            "clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+                            "enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+                        },
+                        "retryPolicy": "[parameters('apimRetryPolicy')]",
+                        "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                    }
+                },
+                "{{ workflow_object_name }}:_Set_MessageType": {
+                    "runAfter": {
+                        "{{ workflow_object_name }}:_Call_BuildEnvelope": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                        "name": "MessageType",
+                        "value": "@{coalesce(xpath(xml(body('{{ workflow_object_name }}:_Transform')), 'namespace-uri(/*)'), '')}#@{coalesce(xpath(xml(body('{{ workflow_object_name }}:_Transform')), 'local-name(/*)'), '')}"
+                    }
+                },
+                "{{ workflow_object_name }}:_Set_Message": {
+                    "runAfter": {
+                        "{{ workflow_object_name }}:_Set_MessageType": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                        "name": "{{ target_message }}",
+                        "value": "@setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope'), 'header', setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope')?['header'], 'properties', setProperty(body('{{ workflow_object_name }}:_Call_BuildEnvelope')?['header']?['properties'], 'btsMessageType', variables('MessageType'))))"
+                    }
+                }
+            }
+        }
+    }
+}
+{%- else -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "JavaScriptCode",
+            "description": "{{ workflow_object.type }} - Unsupported Multimap Transform",
+            "inputs": {
+                "code": "var activity = \"{{ workflow_object.name }}\";\r\nreturn activity;"
+            }
+        }
+    }
+}
+{%- endif -%}
