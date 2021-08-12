@@ -3,5 +3,15 @@
 		"value": "",
 		"description": "The name of the scenario for this specific Receive Adapter.",
 		"type": "String"
+	},
+	"workflowname.httpReceiveAdapter.responseTopicName": {
+		"type": "String",
+		"value": "",
+		"description": "Name of the ServiceBus Topic where response messages are found for two-way operations."
+	},
+	"workflowname.httpReceiveAdapter.responseSubscriptionName": {
+		"type": "String",
+		"value": "",
+		"description": "Name of the ServiceBus Subscription used to get response messages for two-way operations."
 	}
 }

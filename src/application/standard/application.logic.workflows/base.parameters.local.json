@@ -24,15 +24,5 @@
 		"type": "String",
 		"value": "suspendqueue",
 		"description": "Name of the ServiceBus Topic that suspended messages are sent to."
-	},
-	"responseTopicName": {
-		"type": "String",
-		"value": "",
-		"description": "Name of the ServiceBus Topic where response messages are found for two-way operations."
-	},
-	"responseSubscriptionName": {
-		"type": "String",
-		"value": "",
-		"description": "Name of the ServiceBus Subscription used to get response messages for two-way operations."
 	}
 }

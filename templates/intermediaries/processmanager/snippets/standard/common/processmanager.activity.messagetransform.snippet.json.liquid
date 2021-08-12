@@ -11,44 +11,63 @@
             "actions": {
                 "{{ workflow_object_name }}:_Call_GetBodyContent": {
                     "runAfter": {},
-                    "type": "ApiManagement",
-                    "inputs": {
-                        "api": {
-                            "id": "[variables('messagingManagerApiResourceId')]"
-                        },
-                        "body": "@variables('{{ source_message }}')",
-                        "headers": {
-                            "Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
-                            "Content-Type": "application/json"
-                        },
-                        "method": "post",
-                        "pathTemplate": {
-                            "parameters": {},
-                            "template": "/aimmessagingmanager/getbodycontent"
-                        },
-                        "queries": {
-                            "clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
-                            "enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
-                        },
-                        "retryPolicy": "[parameters('apimRetryPolicy')]",
-                        "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
-                    }
+					"type": "Http",
+					"inputs": {
+					  "body": "@variables('{{ source_message }}')",
+					  "method": "POST",
+					  "uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/getbodycontent",
+					  "queries": {
+						"clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+						"enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+					  },
+					  "retryPolicy": {
+						"type": "none"
+					  },
+					  "headers": {
+						"Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
+						"Content-Type": "application/json",
+						"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+					  }
+					}
                 },
+				"{{ workflow_object_name }}:_GetTranslatorUrl": {
+					"type": "Http",
+					"inputs": {
+						"method": "GET",
+						"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/logicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/{{ resource_template.parameters.azure_xml_translator_lite_logic_app_name }}",
+						"headers": {
+							"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+						},
+						"queries": {
+							"clearCache": "@parameters('clearCache')"
+						},
+						"retryPolicy": {
+							"type": "none"
+						}
+					},
+					"runAfter": {
+						"{{ workflow_object_name }}:_Call_GetBodyContent": [
+                            "Succeeded"
+                        ]
+					}
+				},
                 "{{ workflow_object_name }}:_Transform": {
                     "runAfter": {
-                        "{{ workflow_object_name }}:_Call_GetBodyContent": [
+                        "{{ workflow_object_name }}:_GetTranslatorUrl": [
                             "Succeeded"
                         ]
                     },
-                    "type": "Xslt",
+                    "type": "Http",
                     "inputs": {
-                        "content": "@{xml(decodeBase64(body('{{ workflow_object_name }}:_Call_GetBodyContent')?['$content']))}",
-                        "integrationAccount": {
-                            "map": {
-                                "name": "{{ workflow_object.properties.Map }}"
-                            }
-                        },
-                        "transformOptions": "ApplyXsltOutputAttributes"
+						"method": "POST",
+						"uri": "@{body('{{ workflow_object_name }}:_GetTranslatorUrl')?['logicAppUrl']}",
+                        "body": {
+							"bodyContent": "@{body('{{ workflow_object_name }}:_Call_GetBodyContent')?['$content']}",
+							"mapName": "{{ workflow_object.properties.Map }}"
+						},
+						"retryPolicy": {
+							"type": "none"
+						}
                     }
                 },
                 "{{ workflow_object_name }}:_Call_BuildEnvelope": {
@@ -57,31 +76,24 @@
                             "Succeeded"
                         ]
                     },
-                    "type": "ApiManagement",
-                    "inputs": {
-                        "api": {
-                            "id": "[variables('messagingManagerApiResourceId')]"
-                        },
-                        "body": "@body('{{ workflow_object_name }}:_Transform')",
-                        "headers": {
-                            "Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
-                            "Content-Type": "application/xml"
-                        },
-                        "method": "post",
-                        "pathTemplate": {
-                            "parameters": {
-                                "envelopeType": "@{encodeURIComponent('document')}",
-                                "scenario": "@{encodeURIComponent(parameters('scenario'))}"
-                            },
-                            "template": "/aimmessagingmanager/buildenvelope/{envelopeType}/{scenario}"
-                        },
-                        "queries": {
-                            "clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
-                            "enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
-                        },
-                        "retryPolicy": "[parameters('apimRetryPolicy')]",
-                        "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
-                    }
+					"type": "Http",
+					"inputs": {
+					  "body": "@body('{{ workflow_object_name }}:_Transform')",
+					  "method": "POST",
+					  "uri": "@{appsetting('apimBaseUrl')}/aimmessagingmanager/buildenvelope/@{encodeURIComponent('document')}/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.processManager.scenarioName'))}",
+					  "queries": {
+						"clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+						"enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+					  },
+					  "retryPolicy": {
+						"type": "none"
+					  },
+					  "headers": {
+						"Aim-Tracking-Id": "@{variables('{{ source_message }}')?['header']?['properties']?['trackingId']}",
+						"Content-Type": "application/xml",
+						"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+					  }
+					}
                 },
                 "{{ workflow_object_name }}:_Set_MessageType": {
                     "runAfter": {

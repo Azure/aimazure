@@ -144,7 +144,7 @@
                     "triggers": {
                         "manual": {
                             "correlation": {
-                                "clientTrackingId": "triggerBody()?['header']?['properties']?['trackingId']"
+                                "clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
                             },
                             "type": "Request",
                             "kind": "Http",

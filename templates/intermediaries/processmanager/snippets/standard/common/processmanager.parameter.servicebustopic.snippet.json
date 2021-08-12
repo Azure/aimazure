@@ -1,26 +1,7 @@
 {
-    "armParameter": {
-        "serviceBusTopicName": {
-            "value": "{{ resource_template.parameters.azure_service_bus_topic_name }}"
-        }
-    },
-    "armTemplateParameter": {
-        "serviceBusTopicName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the ServiceBus Topic used to subscribe to messages."
-            }
-        }
-    },
-    "workflowParameter": {
-        "serviceBusTopicName": {
-            "value": "[parameters('serviceBusTopicName')]"
-        }
-    },
-    "workflowDefinitionParameter": {
-        "serviceBusTopicName": {
-            "type": "String",
-            "description": "Name of the ServiceBus Topic used to subscribe to messages."
-        }
-    }
+	"{{ workflow_object_name }}.processManager.topicName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_topic_name }}",
+		"description": "The name of the topic used for this specific Scenario."
+	}
 }

@@ -1,20 +1,4 @@
 {
-	"{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiId": {
-		"type": "String",
-		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/servicebus"
-	},
-	"{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.resourceId": {
-		"type": "String",
-		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.name')"
-	},
-	"{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiAuthentication": {
-		"type": "Object",
-		"value": {
-			"type": "Raw",
-			"scheme": "Key",
-			"parameter": "@appsetting('{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.key')"
-		}
-	},
 	"{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName": {
 		"type": "String",
 		"value": "{{ resource_template.parameters.scenario_name }}",

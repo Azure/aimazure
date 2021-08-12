@@ -1,5 +1,0 @@
-{
-    "armTemplateVariable": {
-        "serviceBusTopicPublishApiConnectionResourceId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusTopicPublishApiConnectionName'))]"
-    }
-}

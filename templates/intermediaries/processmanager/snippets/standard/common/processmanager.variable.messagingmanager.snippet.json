@@ -1,5 +1,0 @@
-{
-    "armTemplateVariable": {
-        "messagingManagerApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimmessagingmanager')]"
-    }
-}

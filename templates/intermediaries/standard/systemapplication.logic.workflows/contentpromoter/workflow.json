@@ -56,7 +56,7 @@
             {
               "name": "ErrorMessage",
               "type": "string",
-              "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+              "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow"
             }
           ]
         }

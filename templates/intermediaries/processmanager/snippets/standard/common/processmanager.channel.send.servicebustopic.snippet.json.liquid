@@ -96,26 +96,24 @@
 {%- endif %}
                 "{{ workflow_object_name }}:Publish_Message": {
                     "runAfter": {},
-                    "type": "ApiConnection",
-                    "inputs": {
-                        "body": {
-                            "ContentData": "@{base64(variables('{{ workflow_object.properties.MessageName }}'))}",
-                            "ContentType": "application/json",
-                            "MessageId": "@coalesce(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties']?['messageId'], guid())",
-                            "Properties": "@variables('{{ workflow_object.properties.MessageName }}')?['header']?['routing']",
-                            "SessionId": "none"
-                        },
-                        "host": {
-                            "connection": {
-                                "name": "@parameters('$connections')['servicebuspublish']['connectionId']"
-                            }
-                        },
-                        "method": "post",
-                        "path": "/@{encodeURIComponent(coalesce(parameters('serviceBusTopicName'), '(topic name not set)'))}/messages",
-                        "queries": {
-                            "systemProperties": "None"
-                        }
-                    }
+					"type": "ServiceProvider",
+					"inputs": {
+						"parameters": {
+							"entityName": "@{encodeURIComponent(coalesce(parameters('{{ resource_template.parameters.workflow_name }}.processManager.topicName'), '(topic name not set)'))}",
+							"message": {
+								"contentData": "@{base64(variables('{{ workflow_object.properties.MessageName }}'))}",
+								"contentType": "application/json",
+								"messageId": "@coalesce(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties']?['messageId'], guid())",
+								"UserProperties": "@variables('{{ workflow_object.properties.MessageName }}')?['header']?['routing']",
+								"sessionid": "none"
+							}
+						},
+						"serviceProviderConfiguration": {
+							"connectionName": "serviceBusPublish",
+							"operationId": "sendMessage",
+							"serviceProviderId": "/serviceProviders/serviceBus"
+						}
+					}
                 }
             }
         }

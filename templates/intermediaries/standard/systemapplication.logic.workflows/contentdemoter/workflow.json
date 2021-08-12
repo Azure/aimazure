@@ -55,7 +55,7 @@
             {
               "name": "ErrorMessage",
               "type": "string",
-              "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+              "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow"
             }
           ]
         }
@@ -401,7 +401,7 @@
             "type": "Http",
             "inputs": {
               "method": "GET",
-              "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/@{encodeURIComponent(parameters('scenarioStep'))}",
+              "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/contentDemoter",
               "queries": {
                 "clearCache": "@{coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], 'false')}"
               },

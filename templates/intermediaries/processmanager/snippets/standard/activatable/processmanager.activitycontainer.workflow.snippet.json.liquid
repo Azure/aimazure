@@ -2,15 +2,15 @@
 {%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}{%- endcapture -%}
 {
     "workflowDefinitionAction": {
-        "{{ workflow_object.type }}:_{{ workflow_object_name_unique }}": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
             "runAfter": {},
             "type": "Scope",
             "description": "{{ workflow_object.type }}",
             "actions": {}
         },
-        "{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions": {
+        "{{ workflow_object_name }}:Failure:Get_Failed_Actions": {
             "runAfter": {
-                "{{ workflow_object.type }}:_{{ workflow_object_name_unique }}": [
+                "{{ workflow_object.type }}:_{{ workflow_object_name }}": [
                     "Failed",
                     "TimedOut",
                     "Skipped"
@@ -18,42 +18,42 @@
             },
             "type": "Query",
             "inputs": {
-                "from": "@results('ProcessChannel:_Exception_Scope')",
+                "from": "@result('{{ workflow_object.type }}:_{{ workflow_object_name }}')",
                 "where": "@or(equals(item()['status'], 'Failed'), equals(item()['status'], 'TimedOut'))"
             }
         },
-        "{{ workflow_object_name_unique }}:Failure:Create_Fault_Message": {
+        "{{ workflow_object_name }}:Failure:Create_Fault_Message": {
             "runAfter": {
-                "{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions": [
+                "{{ workflow_object_name }}:Failure:Get_Failed_Actions": [
                     "Succeeded"
                 ]
             },
             "type": "Compose",
             "inputs": {
                 "fault": {
-                    "faultActor": "@concat(workflow()?['name'], '.', body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['name'], ' (', workflow()?['run']?['name'], ')')",
+                    "faultActor": "@concat(workflow()?['name'], '.', body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['name'], ' (', workflow()?['run']?['name'], ')')",
                     "faultCategory": "Error",
-                    "faultCode": "@{coalesce(body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['statusCode'], body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['body']?['statusCode'], body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['error']?['code'])}",
-                    "faultMessage": "@{variables('ErrorMessage')}: @{coalesce(body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'], body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['body']?['message'], body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'])}",
-                    "faultReason": "@{body('{{ workflow_object_name_unique }}:Failure:Get_Failed_Actions')?[0]?['status']}"
+                    "faultCode": "@{coalesce(body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['statusCode'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['body']?['statusCode'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['code'])}",
+                    "faultMessage": "@{variables('ErrorMessage')}: @{coalesce(body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['body']?['message'], body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['error']?['message'])}",
+                    "faultReason": "@{body('{{ workflow_object_name }}:Failure:Get_Failed_Actions')?[0]?['status']}"
                 }
             }
         },
-        "{{ workflow_object_name_unique }}:Failure:Set_FaultMessage": {
+        "{{ workflow_object_name }}:Failure:Set_FaultMessage": {
             "runAfter": {
-                "{{ workflow_object_name_unique }}:Failure:Create_Fault_Message": [
+                "{{ workflow_object_name }}:Failure:Create_Fault_Message": [
                     "Succeeded"
                 ]
             },
             "type": "SetVariable",
             "inputs": {
                 "name": "FaultMessage",
-                "value": "@outputs('{{ workflow_object_name_unique }}:Failure:Create_Fault_Message')"
+                "value": "@outputs('{{ workflow_object_name }}:Failure:Create_Fault_Message')"
             }
         },
-        "{{ workflow_object_name_unique }}:Failure:Build_NACK_Message": {
+        "{{ workflow_object_name }}:Failure:Build_NACK_Message": {
             "runAfter": {
-                "{{ workflow_object_name_unique }}:Failure:Set_FaultMessage": [
+                "{{ workflow_object_name }}:Failure:Set_FaultMessage": [
                     "Succeeded"
                 ]
             },
@@ -85,7 +85,7 @@
                 ]
             }
         },
-		"{{ workflow_object_name_unique }}:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+		"{{ workflow_object_name }}:Failure:_Get_SuspendUrl": {
 			"type": "Http",
 			"inputs": {
 				"method": "GET",
@@ -101,14 +101,14 @@
 				}
 			},
 			"runAfter": {
-				"{{ workflow_object_name_unique }}:Failure:Build_NACK_Message": [
+				"{{ workflow_object_name }}:Failure:Build_NACK_Message": [
 					"Succeeded"
 				]
 			}
 		},
-        "{{ workflow_object_name_unique }}:Failure:Send_to_SuspendQueue": {
+        "{{ workflow_object_name }}:Failure:Send_to_SuspendQueue": {
             "runAfter": {
-                "{{ workflow_object_name_unique }}:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+                "{{ workflow_object_name }}:Failure:_Get_SuspendUrl": [
                     "Succeeded",
                     "Failed",
                     "TimedOut"
@@ -117,13 +117,13 @@
             "type": "Http",
 			"inputs": {
 				"method": "POST",
-				"uri": "@{body('{{ workflow_object_name_unique }}:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+				"uri": "@{body('{{ workflow_object_name }}:Failure:_Get_SuspendUrl')?['logicAppUrl']}",
                 "body": {
                     "failedMessageRouting": "@coalesce(variables('Configuration')?['{{ workflow_object_name }}']?['failedMessageRouting'], 'false')",
-                    "nackMessage": "@outputs('{{ workflow_object_name_unique }}:Failure:Build_NACK_Message')",
+                    "nackMessage": "@outputs('{{ workflow_object_name }}:Failure:Build_NACK_Message')",
                     "originalMessage": "@if(equals(triggerBody()?['ContentTransferEncoding'], 'Base64'), json(base64Decode(triggerBody()?['ContentData'])), triggerBody()?['ContentData'])",
-                    "scenario": "@{parameters('scenario')}",
-                    "suspendQueueTopicName": "@parameters('{{ workflow_object_name }}.processManager.suspendQueueTopicName')"
+                    "scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.processManager.scenarioName')}",
+                    "suspendQueueTopicName": "@parameters('{{ resource_template.parameters.workflow_name }}.processManager.suspendQueueTopicName')"
                 },
                 "headers": {
                     "Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
@@ -134,9 +134,9 @@
 				}
             }
         },
-        "{{ workflow_object_name_unique }}:Failure:Terminate": {
+        "{{ workflow_object_name }}:Failure:Terminate": {
             "runAfter": {
-                "{{ workflow_object_name_unique }}:Failure:Send_to_SuspendQueue": [
+                "{{ workflow_object_name }}:Failure:Send_to_SuspendQueue": [
                     "Succeeded",
                     "Failed",
                     "TimedOut"
@@ -152,5 +152,5 @@
             }
         }
     },
-    "workflowDefinitionActionPath": "$.['{{ workflow_object.type }}:_{{ workflow_object_name_unique }}'].actions"
+    "workflowDefinitionActionPath": "$.['{{ workflow_object.type }}:_{{ workflow_object_name }}'].actions"
 }

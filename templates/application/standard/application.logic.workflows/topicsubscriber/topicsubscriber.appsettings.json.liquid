@@ -1,18 +1,1 @@
-[
-	{
-		"name": "{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.name",
-		"value": "{{ resource_template.parameters.azure_topic_subscriber_api_connection_name }}"
-	},
-	{
-		"name": "{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.apiId",
-		"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'servicebus')]"
-	},
-	{
-		"name": "{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.resourceId",
-		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.azure_topic_subscriber_api_connection_name }}')]"
-	},
-	{
-		"name": "{{ resource_template.parameters.workflow_name }}.servicebusSubscribeConnection.runtimeUrl",
-		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.azure_topic_subscriber_api_connection_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
-	}
-]
+[]

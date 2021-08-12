@@ -121,7 +121,7 @@
                     "triggers": {
                         "manual": {
                             "correlation": {
-                                "clientTrackingId": "triggerBody()?['header']?['properties']?['trackingId']"
+                                "clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
                             },
                             "type": "Request",
                             "kind": "Http",
@@ -1202,10 +1202,6 @@
                                 "TransformXml:_Check_StatusCode": {
                                     "runAfter": {
                                         "TransformXml:Failure:_Set_StatusCode_variable": [
-                                            "Succeeded",
-                                            "Skipped"
-                                        ],
-                                        "TransformXml:Success:_Set_StatusCode_variable": [
                                             "Succeeded",
                                             "Skipped"
                                         ]

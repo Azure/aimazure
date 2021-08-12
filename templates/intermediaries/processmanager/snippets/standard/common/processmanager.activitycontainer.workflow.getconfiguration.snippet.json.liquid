@@ -1,0 +1,24 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}{%- endcapture -%}
+{
+	"workflowDefinitionAction": {
+		"Action:_Get_Configuration": {
+			"runAfter": {},
+			"description": "Gets configuration for scenario step {{ resource_template.parameters.scenario_step_name }}",
+			"type": "Http",
+			"inputs": {
+				"method": "GET",
+				"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.processManager.scenarioName'))}/@{encodeURIComponent(parameters('{{ resource_template.parameters.workflow_name }}.processManager.scenarioStep'))}",
+				"queries": {
+					"clearCache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+					"enableTrace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
+				},
+				"retryPolicy": {
+					"type": "none"
+				},
+				"headers": {
+					"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+				}
+			}
+		}
+	}
+}

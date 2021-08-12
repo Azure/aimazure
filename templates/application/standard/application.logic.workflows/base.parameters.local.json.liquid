@@ -24,15 +24,5 @@
 		"type": "String",
 		"value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}",
 		"description": "Name of the ServiceBus Topic that suspended messages are sent to."
-	},
-	"responseTopicName": {
-		"type": "String",
-		"value": "{{ resource_template.parameters.azure_service_bus_response_topic_name }}",
-		"description": "Name of the ServiceBus Topic where response messages are found for two-way operations."
-	},
-	"responseSubscriptionName": {
-		"type": "String",
-		"value": "{{ resource_template.parameters.azure_service_bus_response_subscription_name }}",
-		"description": "Name of the ServiceBus Subscription used to get response messages for two-way operations."
 	}
 }

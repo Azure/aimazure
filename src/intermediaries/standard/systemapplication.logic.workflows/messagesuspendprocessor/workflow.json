@@ -39,7 +39,7 @@
                         {
                             "name": "ErrorMessage",
                             "type": "string",
-                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow"
                         }
                     ]
                 },
@@ -456,7 +456,10 @@
                             "parameters": {
                                 "entityName": "@coalesce(triggerBody()?['suspendQueueTopicName'], '(suspendqueue topic name not set)')",
                                 "message": {
-                                    "Properties": "@variables('NackMessage')?['header']?['routing']"
+                                    "contentData": "@variables('NackMessage')",
+                                    "contentType": "application/json",
+                                    "UserProperties": "@variables('NackMessage')?['header']?['routing']",
+                                    "messageId": "@coalesce(variables('NackMessage')?['header']?['properties']?['messageId'], guid())"
                                 }
                             },
                             "serviceProviderConfiguration": {
@@ -631,10 +634,13 @@
                                     "parameters": {
                                         "entityName": "@coalesce(triggerBody()?['suspendQueueTopicName'], '(suspendqueue topic name not set)')",
                                         "message": {
-                                            "Properties": {
-                                                "messageType": "@variables('OriginalMessage')?['header']?['properties']?['messageType']",
+                                            "contentData": "@variables('OriginalMessage')",
+											"contentType": "application/json",
+											"UserProperties": {
+												"messageType": "@variables('OriginalMessage')?['header']?['properties']?['messageType']",
                                                 "errorType": "FailedMessage"
-                                            }
+											},
+											"messageId": "@guid()"
                                         }
                                     },
                                     "serviceProviderConfiguration": {
@@ -722,7 +728,7 @@
                 },
                 "operationOptions": "EnableSchemaValidation",
                 "correlation": {
-                    "clientTrackingId": "triggerBody()?['header']?['properties']?['trackingId']"
+                    "clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
                 }
             }
         },

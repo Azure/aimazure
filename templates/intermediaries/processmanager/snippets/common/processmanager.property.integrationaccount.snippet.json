@@ -1,7 +1,0 @@
-{
-    "workflowProperty": {
-        "integrationAccount": {
-            "id": "[variables('integrationAccountResourceId')]"
-        }
-    }
-}

@@ -133,7 +133,7 @@
 				"actions": {
 					"Respond:_Is_this_a_TwoWay_adapter": {
 						"actions": {
-							"Respond:TwoWay:_Get_MessageResponseHandler_EndpointUrl": {
+							"Respond:TwoWay:_Get_ResponseHandlerUrl": {
 								"type": "Http",
 								"inputs": {
 									"method": "GET",
@@ -152,19 +152,19 @@
 							},
 							"Respond:TwoWay:_Call_Response_Handler": {
 								"runAfter": {
-									"Respond:_Is_this_a_TwoWay_adapter": [
+									"Respond:TwoWay:_Get_ResponseHandlerUrl": [
 										"Succeeded"
 									]
 								},
 								"type": "Http",
 								"inputs": {
 									"method": "POST",
-									"uri": "@{body('Respond:TwoWay:_Get_MessageResponseHandler_EndpointUrl')?['logicAppUrl']}",
+									"uri": "@{body('Respond:TwoWay:_Get_ResponseHandlerUrl')?['logicAppUrl']}",
 									"body": {
 										"responseTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.responseTopicName')}",
 										"responseSubscriptionName": "@{parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.responseSubscriptionName')}",
 										"correlationId": "@variables('ResponseMessage')?['header']?['properties']?['correlationId']",
-										"responseTimeoutInMinutes": "@coalesce(variables('Configuration')?[httpReceiveAdapter]?['responseTimeoutInMinutes'], 3)"
+										"responseTimeoutInMinutes": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['responseTimeoutInMinutes'], 3)"
 									},
 									"headers": {
 										"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
@@ -377,7 +377,7 @@
 																		}
 																	}
 																},
-																"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+																"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_SuspendUrl": {
 																	"type": "Http",
 																	"inputs": {
 																		"method": "GET",
@@ -402,18 +402,18 @@
 																},
 																"Respond:TwoWay:Success:GetBodyContent:Failure:_Send_to_SuspendQueue": {
 																	"runAfter": {
-																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+																		"Respond:TwoWay:Success:GetBodyContent:Failure:_Get_SuspendUrl": [
 																			"Succeeded"
 																		]
 																	},
 																	"type": "Http",
 																	"inputs": {
 																		"method": "POST",
-																		"uri": "@{body('Respond:TwoWay:Success:GetBodyContent:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+																		"uri": "@{body('Respond:TwoWay:Success:GetBodyContent:Failure:_Get_SuspendUrl')?['logicAppUrl']}",
 																		"body": {
 																			"nackMessage": "@outputs('Respond:TwoWay:Success:GetBodyContent:Failure:_Build_NACK_message')",
 																			"originalMessage": "@body('Respond:TwoWay:_Call_Response_Handler')",
-																			"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.suspendQueueTopicName')}",
+																			"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 																			"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
 																			"scenario": "@{parameters('scenario')}"
 																		},
@@ -564,7 +564,7 @@
 												}
 											}
 										},
-										"Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+										"Respond:TwoWay:Failure:_Get_SuspendUrl": {
 											"type": "Http",
 											"inputs": {
 												"method": "GET",
@@ -589,18 +589,18 @@
 										},
 										"Respond:TwoWay:Failure:_Send_to_SuspendQueue": {
 											"runAfter": {
-												"Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+												"Respond:TwoWay:Failure:_Get_SuspendUrl": [
 													"Succeeded"
 												]
 											},
 											"type": "Http",
 											"inputs": {
 												"method": "POST",
-												"uri": "@{body('Respond:TwoWay:Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+												"uri": "@{body('Respond:TwoWay:Failure:_Get_SuspendUrl')?['logicAppUrl']}",
 												"body": {
 													"nackMessage": "@outputs('Respond:TwoWay:Failure:_Create_NACK_Message')",
 													"originalMessage": "@variables('ResponseMessage')",
-													"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.httpReceiveAdapter.suspendQueueTopicName')}",
+													"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 													"failedMessageRouting": "@coalesce(variables('Configuration')?['httpReceiveAdapter']?['failedMessageRouting'], false)",
 													"scenario": "@{parameters('scenario')}"
 												},
@@ -670,7 +670,7 @@
 							"and": [
 								{
 									"equals": [
-										"@coalesce(variables('Configuration')?[parameters('scenarioStep')]?['isTwoWay'], false)",
+										"@coalesce(variables('Configuration')?['httpReceiveAdapter']?['isTwoWay'], false)",
 										true
 									]
 								}
@@ -753,7 +753,7 @@
 							},
 							"type": "If"
 						},
-						"Failure:_Get_MessageSuspendProcessor_EndpointUrl": {
+						"Failure:_Get_SuspendUrl": {
 							"type": "Http",
 							"inputs": {
 								"method": "GET",
@@ -778,7 +778,7 @@
 							"type": "Http",
 							"inputs": {
 								"method": "POST",
-								"uri": "@{body('Failure:_Get_MessageSuspendProcessor_EndpointUrl')?['logicAppUrl']}",
+								"uri": "@{body('Failure:_Get_SuspendUrl')?['logicAppUrl']}",
 								"headers": {
 									"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
 									"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')"
@@ -795,7 +795,7 @@
 								}
 							},
 							"runAfter": {
-								"Failure:_Get_MessageSuspendProcessor_EndpointUrl": [
+								"Failure:_Get_SuspendUrl": [
 									"Succeeded"
 								]
 							}
@@ -808,7 +808,7 @@
 										"faultCategory": "Error",
 										"faultCode": "500",
 										"faultMessage": "@variables('ErrorMessage')",
-										"faultReason": ""
+										"faultReason": "@coalesce(variables('ResponseMessage')?['body']?[0]?['$content']?['message'], '')"
 									}
 								},
 								"headers": {

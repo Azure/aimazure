@@ -1,5 +1,0 @@
-{
-    "armTemplateVariable": {
-        "messageSuspendProcessorLogicAppResourceId": "[resourceId(parameters('systemApplicationResourceGroupName'), 'Microsoft.Logic/workflows', parameters('messageSuspendProcessorLogicAppName'))]"
-    }
-}

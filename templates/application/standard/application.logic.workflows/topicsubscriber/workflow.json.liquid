@@ -293,7 +293,7 @@
 																"body": {
 																	"nackMessage": "@body('Routing:_Call_RoutingSlipRouter')",
 																	"originalMessage": "@variables('Envelope')",
-																	"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+																	"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 																	"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 																	"scenario": "@parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')"
 																},
@@ -482,7 +482,7 @@
 												"body": {
 													"nackMessage": "@outputs('Routing:Error:_Build_NACK_message')",
 													"originalMessage": "@variables('Envelope')",
-													"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+													"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 													"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 													"scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
 												},
@@ -600,7 +600,7 @@
 								"body": {
 									"nackMessage": "@outputs('Failure:_Build_NACK_message')",
 									"originalMessage": "@variables('Envelope')",
-									"suspendQueueTopicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.suspendQueueTopicName')}",
+									"suspendQueueTopicName": "@{parameters('suspendQueueTopicName')}",
 									"failedMessageRouting": "@coalesce(variables('Configuration')?['messageSubscriber']?['failedMessageRouting'], false)",
 									"scenario": "@{parameters('{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName')}"
 								},

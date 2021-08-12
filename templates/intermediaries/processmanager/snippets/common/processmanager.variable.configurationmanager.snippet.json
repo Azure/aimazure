@@ -1,5 +1,0 @@
-{
-    "armTemplateVariable": {
-        "configurationManagerApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimconfigurationmanager')]"
-    }
-}

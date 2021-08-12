@@ -61,7 +61,7 @@
                         "type": "SetVariable",
                         "inputs": {
                             "name": "ErrorMessage",
-                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp: the subscribed ServiceBus message has an unsupported ContentType value of @{coalesce(triggerBody()?['ContentType'], '(none)')}."
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow: the subscribed ServiceBus message has an unsupported ContentType value of @{coalesce(triggerBody()?['ContentType'], '(none)')}."
                         }
                     }
                 }

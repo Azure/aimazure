@@ -6,6 +6,11 @@
 		"value": "{{ resource_template.parameters.scenario_name }}",
 		"description": "The name of the scenario for this specific Process Manager."
 	},
+	"{{ workflow_object_name }}.processManager.scenarioStep": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.scenario_step_name }}",
+		"description": "The name of the scenario step for this specific Process Manager."
+	},
 	"{{ workflow_object_name }}.processManager.topicName": {
 		"type": "String",
 		"value": "{{ resource_template.parameters.azure_service_bus_topic_name }}",
@@ -15,5 +20,10 @@
 		"type": "String",
 		"value": "{{ resource_template.parameters.azure_service_bus_subscription_name }}",
 		"description": "The name of the topic subscription used for this specific Scenario."
+	},
+	"{{ resource_template.parameters.workflow_name }}.processManager.suspendQueueTopicName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}",
+		"description": "The name of the topic used for suspended messages."
 	}
 }
