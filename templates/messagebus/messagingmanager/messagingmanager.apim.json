@@ -110,8 +110,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false",
-                                "true"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -120,8 +120,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false",
-                                "true"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -130,8 +130,8 @@
                             "type": "bool",
                             "defaultValue": "true",
                             "values": [
-                                "false",
-                                "true"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -438,7 +438,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -447,7 +448,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -532,7 +534,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -541,7 +544,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],

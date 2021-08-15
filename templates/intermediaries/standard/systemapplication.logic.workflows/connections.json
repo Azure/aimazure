@@ -20,7 +20,7 @@
 		}
 	},
 	"managedApiConnections": {
-		"servicebusSubscribe": {
+		"serviceBusSubscribe": {
 			"api": {
 				"id": "@parameters('servicebusSubscribeConnectionApiId')"
 			},

@@ -101,7 +101,7 @@
 						"parameters": {
 							"entityName": "@{encodeURIComponent(coalesce(parameters('{{ resource_template.parameters.workflow_name }}.processManager.topicName'), '(topic name not set)'))}",
 							"message": {
-								"contentData": "@{base64(variables('{{ workflow_object.properties.MessageName }}'))}",
+								"contentData": "@variables('{{ workflow_object.properties.MessageName }}')",
 								"contentType": "application/json",
 								"messageId": "@coalesce(variables('{{ workflow_object.properties.MessageName }}')?['header']?['properties']?['messageId'], guid())",
 								"UserProperties": "@variables('{{ workflow_object.properties.MessageName }}')?['header']?['routing']",

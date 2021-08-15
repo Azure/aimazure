@@ -225,37 +225,25 @@
 						},
 						"Step:_Transform_Xml": {
 							"actions": {
-								"TransformXml:Failure:_Set_StatusCode_variable": {
+								"TransformXml:_Set_StatusCode_variable": {
+									"inputs": {
+										"name": "StatusCode",
+										"value": "@coalesce(outputs('TransformXml:_Transform_Xml')?['statusCode'], 500)"
+									},
 									"runAfter": {
 										"TransformXml:_Transform_Xml": [
+											"Succeeded",
 											"Failed",
 											"Skipped",
 											"TimedOut"
 										]
 									},
-									"type": "SetVariable",
-									"inputs": {
-										"name": "StatusCode",
-										"value": 500
-									}
-								},
-								"TransformXml:Success:_Set_StatusCode_variable": {
-									"runAfter": {
-										"TransformXml:_Transform_Xml": [
-											"Succeeded"
-										]
-									},
-									"type": "SetVariable",
-									"inputs": {
-										"name": "StatusCode",
-										"value": 200
-									}
+									"type": "SetVariable"
 								},
 								"TransformXml:_Check_StatusCode": {
 									"runAfter": {
-										"TransformXml:Failure:_Set_StatusCode_variable": [
-											"Succeeded",
-											"Skipped"
+										"TransformXml:_Set_StatusCode_variable": [
+											"Succeeded"
 										]
 									},
 									"cases": {
