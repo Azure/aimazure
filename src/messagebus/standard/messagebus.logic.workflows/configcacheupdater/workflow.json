@@ -1,0 +1,123 @@
+{
+	"definition": {
+		"$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+		"actions": {},
+		"contentVersion": "1.0.0.0",
+		"outputs": {},
+		"triggers": {
+			"When_a_resource_event_occurs": {
+				"inputs": {
+					"body": {
+						"properties": {
+							"destination": {
+								"endpointType": "webhook",
+								"properties": {
+									"endpointUrl": "@{listCallbackUrl()}"
+								}
+							},
+							"filter": {
+								"includedEventTypes": [
+									"Microsoft.AppConfiguration.KeyValueModified"
+								]
+							},
+							"topic": "@appsetting('appConfigurationStoreResourceId')"
+						}
+					},
+					"host": {
+						"connection": {
+							"referenceName": "eventGridSubscribe"
+						}
+					},
+					"path": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.AppConfiguration.ConfigurationStores/resource/eventSubscriptions",
+					"queries": {
+						"x-ms-api-version": "2017-09-15-preview"
+					}
+				},
+				"splitOn": "@triggerBody()",
+				"type": "ApiConnectionWebhook"
+			}
+		},
+		"actions": {
+			"Switch_on_Label": {
+				"runAfter": {},
+				"cases": {
+					"ConfigurationEntry": {
+						"case": "ConfigurationEntry",
+						"actions": {
+							"Clear_Configuration_Cache": {
+								"runAfter": {},
+								"type": "Http",
+								"inputs": {
+									"method": "GET",
+									"uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['data']?['key'])}",
+									"queries": {
+										"clearCache": "true"
+									},
+									"headers": {
+										"Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+										"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								}
+							}
+						}
+					},
+					"RoutingProperties": {
+						"case": "RoutingProperties",
+						"actions": {
+							"Clear_RoutingProperties_Cache": {
+								"runAfter": {},
+								"type": "Http",
+								"inputs": {
+									"method": "GET",
+									"uri": "@{appsetting('apimBaseUrl')}/aimroutingstore/routingproperties/@{encodeURIComponent(triggerBody()?['data']?['key'])}",
+									"queries": {
+										"clearCache": "true"
+									},
+									"headers": {
+										"Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+										"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								}
+							}
+						}
+					},
+					"RoutingSlip": {
+						"case": "RoutingSlip",
+						"actions": {
+							"Clear_RoutingSlip_Cache": {
+								"runAfter": {},
+								"type": "Http",
+								"inputs": {
+									"method": "GET",
+									"uri": "@{appsetting('apimBaseUrl')}/aimroutingstore/routingslip/@{encodeURIComponent(triggerBody()?['data']?['key'])}",
+									"queries": {
+										"clearCache": "true"
+									},
+									"headers": {
+										"Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+										"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+									},
+									"retryPolicy": {
+										"type": "none"
+									}
+								}
+							}
+						}
+					}
+				},
+				"default": {
+					"actions": {}
+				},
+				"expression": "@triggerBody()?['data']?['label']",
+				"type": "Switch"
+			}
+		}
+	},
+	"kind": "Stateful"
+}

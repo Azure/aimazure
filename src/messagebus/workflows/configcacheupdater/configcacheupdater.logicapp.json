@@ -1,0 +1,244 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of this LogicApp."
+            }
+        },
+        "logicAppLocation": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location (region) or ISE that this LogicApp is to be deployed to. Defaults to the ResourceGroup location."
+            }
+        },
+        "logicAppStartupState": {
+            "type": "string",
+            "defaultValue": "Enabled",
+            "allowedValues": [ "Enabled", "Disabled" ],
+            "metadata": {
+                "description": "Initial state of the LogicApp after it is deployed."
+            }
+        },
+        "configurationManagerAppConfigName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure App Configuration store that holds config."
+            }
+        },
+        "apimServiceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the APIM Service used for MessageBus operations."
+            }
+        },
+        "apimSubscriptionKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Subscription Key used to access APIM."
+            }
+        },
+        "apimRetryPolicy": {
+            "defaultValue": {
+                "count": 3,
+                "interval": "PT5S",
+                "type": "fixed"
+            },
+            "type": "object",
+            "metadata": {
+                "description": "Retry Policy to use when calling APIM."
+            }
+        },
+        "eventGridSubscribeApiConnectionName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the API Connection used for EventGrid Subscribe operations."
+            }
+        },
+        "tags": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "apimServiceResourceId": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
+        "routingStoreApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimroutingstore')]",
+        "configurationManagerApiResourceId": "[concat(variables('apimServiceResourceId'), '/apis/aimconfigurationmanager')]",
+        "eventGridSubscribeApiConnectionResourceId": "[resourceId('Microsoft.Web/connections', parameters('eventGridSubscribeApiConnectionName'))]",
+        "configurationManagerResourceId": "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configurationManagerAppConfigName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('logicAppLocation')]",
+            "tags": "[parameters('tags')]",
+			"identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "[parameters('logicAppStartupState')]",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        },
+                        "apimSubscriptionKey": {
+                            "type": "SecureString",
+                            "description": "Subscription Key used to access APIM."
+                        }
+                    },
+                    "triggers": {
+                        "When_a_resource_event_occurs": {
+                            "splitOn": "@triggerBody()",
+                            "type": "ApiConnectionWebhook",
+                            "inputs": {
+                                "body": {
+                                    "properties": {
+                                        "destination": {
+                                            "endpointType": "webhook",
+                                            "properties": {
+                                                "endpointUrl": "@{listCallbackUrl()}"
+                                            }
+                                        },
+                                        "filter": {
+                                            "includedEventTypes": [
+                                                "Microsoft.AppConfiguration.KeyValueModified"
+                                            ]
+                                        },
+                                        "topic": "[variables('configurationManagerResourceId')]"
+                                    }
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['eventgridsubscribe']['connectionId']"
+                                    }
+                                },
+                                "path": "[concat(subscription().id, '/providers/Microsoft.AppConfiguration.ConfigurationStores/resource/eventSubscriptions')]",
+                                "queries": {
+                                    "x-ms-api-version": "2017-06-15-preview"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Switch_on_Label": {
+                            "runAfter": {},
+                            "cases": {
+                                "ConfigurationEntry": {
+                                    "case": "ConfigurationEntry",
+                                    "actions": {
+                                        "Clear_Configuration_Cache": {
+                                            "runAfter": {},
+                                            "type": "ApiManagement",
+                                            "inputs": {
+                                                "api": {
+                                                    "id": "[variables('configurationManagerApiResourceId')]"
+                                                },
+                                                "method": "get",
+                                                "pathTemplate": {
+                                                    "parameters": {
+                                                        "scenario": "@{encodeURIComponent(triggerBody()?['data']?['key'])}"
+                                                    },
+                                                    "template": "/aimconfigurationmanager/configuration/{scenario}"
+                                                },
+                                                "queries": {
+                                                    "clearCache": "true"
+                                                },
+                                                "retryPolicy": "[parameters('apimRetryPolicy')]",
+                                                "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                                            }
+                                        }
+                                    }
+                                },
+                                "RoutingProperties": {
+                                    "case": "RoutingProperties",
+                                    "actions": {
+                                        "Clear_RoutingProperties_Cache": {
+                                            "runAfter": {},
+                                            "type": "ApiManagement",
+                                            "inputs": {
+                                                "api": {
+                                                    "id": "[variables('routingStoreApiResourceId')]"
+                                                },
+                                                "method": "get",
+                                                "pathTemplate": {
+                                                    "parameters": {
+                                                        "scenario": "@{encodeURIComponent(triggerBody()?['data']?['key'])}"
+                                                    },
+                                                    "template": "/aimroutingstore/routingproperties/{scenario}"
+                                                },
+                                                "queries": {
+                                                    "clearCache": "true"
+                                                },
+                                                "retryPolicy": "[parameters('apimRetryPolicy')]",
+                                                "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                                            }
+                                        }
+                                    }
+                                },
+                                "RoutingSlip": {
+                                    "case": "RoutingSlip",
+                                    "actions": {
+                                        "Clear_RoutingSlip_Cache": {
+                                            "runAfter": {},
+                                            "type": "ApiManagement",
+                                            "inputs": {
+                                                "api": {
+                                                    "id": "[variables('routingStoreApiResourceId')]"
+                                                },
+                                                "method": "get",
+                                                "pathTemplate": {
+                                                    "parameters": {
+                                                        "scenario": "@{encodeURIComponent(triggerBody()?['data']?['key'])}"
+                                                    },
+                                                    "template": "/aimroutingstore/routingslip/{scenario}"
+                                                },
+                                                "queries": {
+                                                    "clearCache": "true"
+                                                },
+                                                "retryPolicy": "[parameters('apimRetryPolicy')]",
+                                                "subscriptionKey": "@{parameters('apimSubscriptionKey')}"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "default": {
+                                "actions": {}
+                            },
+                            "expression": "@triggerBody()?['data']?['label']",
+                            "type": "Switch"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+							"eventgridsubscribe": {
+                                "connectionId": "[variables('eventGridSubscribeApiConnectionResourceId')]",
+                                "connectionName": "[parameters('eventGridSubscribeApiConnectionName')]",
+                                "connectionProperties": {
+                                    "authentication": {
+                                        "type": "ManagedServiceIdentity"
+                                    }
+                                },
+                                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureeventgrid')]"
+                            }
+                        }
+                    },
+                    "apimSubscriptionKey": {
+                        "value": "[parameters('apimSubscriptionKey')]"
+                    }
+                }
+            }
+        }
+    ]
+}

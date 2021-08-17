@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimconfigcacheupdater-prod-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+		"logicAppStartupState": {
+            "value": ""
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "apimSubscriptionKey": {
+            "value": ""
+        },
+		"configurationManagerAppConfigName": {
+			"value": "appcfg-aimrstore-prod-xxxxx"
+		},
+		"eventGridSubscribeApiConnectionName": {
+			"value": "apic-eventgridsubscribe-prod-uksouth-xxxxx"
+		},
+        "tags": {
+            "value": {
+                "ApplicationName": "AIM-MessageBus",
+                "Env": "prod"
+            }
+        }
+    }
+}
