@@ -1,0 +1,365 @@
+﻿{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"logicAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of this LogicApp."
+			}
+		},
+		"logicAppLocation": {
+			"defaultValue": "[resourceGroup().location]",
+			"type": "string",
+			"metadata": {
+				"description": "Location (region) or ISE that this LogicApp is to be deployed to. Defaults to the ResourceGroup location."
+			}
+		},
+		"logicAppStartupState": {
+			"type": "string",
+			"defaultValue": "Enabled",
+			"allowedValues": [
+				"Enabled",
+				"Disabled"
+			],
+			"metadata": {
+				"description": "Initial state of the LogicApp after it is deployed."
+			}
+		},
+		"messageBusResourceGroupName": {
+			"type": "String",
+			"metadata": {
+				"description": "Name of the ResourceGroup that MessageBus artifacts are deployed to (e.g. APIM or RoutingSlipRouter LogicApp)."
+			}
+		},
+		"integrationAccountName": {
+			"type": "String",
+			"metadata": {
+				"description": "Name of the IntegrationAccount connected to this LogicApp."
+			}
+		},
+		"scenarioStep": {
+			"defaultValue": "xmlMessageTranslatorLite",
+			"type": "string",
+			"metadata": {
+				"description": "The step within a Scenario that this LogicApp is running under e.g. xmlMessageTranslatorLite."
+			}
+		},
+		"tags": {
+			"type": "object"
+		}
+	},
+	"variables": {
+		"integrationAccountResourceId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Logic/integrationAccounts', parameters('integrationAccountName'))]"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Logic/workflows",
+			"apiVersion": "2017-07-01",
+			"name": "[parameters('logicAppName')]",
+			"location": "[parameters('logicAppLocation')]",
+			"tags": "[parameters('tags')]",
+			"properties": {
+				"state": "[parameters('logicAppStartupState')]",
+				"integrationAccount": {
+					"id": "[variables('integrationAccountResourceId')]"
+				},
+				"definition": {
+					"$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+					"contentVersion": "1.0.0.0",
+					"parameters": {
+						"scenarioStep": {
+							"type": "String",
+							"description": "The step within a Scenario that this LogicApp is running under e.g. xmlMessageTranslatorLite."
+						}
+					},
+					"triggers": {
+						"manual": {
+							"type": "Request",
+							"inputs": {
+								"schema": {
+									"properties": {
+										"bodyContent": {
+											"type": "string"
+										},
+										"mapName": {
+											"type": "string"
+										}
+									},
+									"type": "object"
+								}
+							},
+							"kind": "Http",
+							"operationOptions": "EnableSchemaValidation"
+						}
+					},
+					"actions": {
+						"Initialize_StatusCode_variable": {
+							"runAfter": {},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "StatusCode",
+										"type": "integer",
+										"value": 500
+									}
+								]
+							}
+						},
+						"Initialize_FaultMessage_variable": {
+							"runAfter": {
+								"Initialize_StatusCode_variable": [
+									"Succeeded"
+								]
+							},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "FaultMessage",
+										"type": "object"
+									}
+								]
+							}
+						},
+						"Initialize_ErrorMessage_variable": {
+							"runAfter": {
+								"Initialize_FaultMessage_variable": [
+									"Succeeded"
+								]
+							},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "ErrorMessage",
+										"type": "string",
+										"value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) LogicApp"
+									}
+								]
+							}
+						},
+						"Initialize_Checkpoint_variable": {
+							"runAfter": {
+								"Initialize_ErrorMessage_variable": [
+									"Succeeded"
+								]
+							},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "Checkpoint",
+										"type": "string"
+									}
+								]
+							}
+						},
+						"Initialize_TransformedContent_variable": {
+							"runAfter": {
+								"Initialize_Checkpoint_variable": [
+									"Succeeded"
+								]
+							},
+							"type": "InitializeVariable",
+							"inputs": {
+								"variables": [
+									{
+										"name": "TransformedContent",
+										"type": "object"
+									}
+								]
+							}
+						},
+						"MessageSender:_Were_we_Successful": {
+							"actions": {
+								"Sucess:_Return_Transformed_Content": {
+									"runAfter": {},
+									"type": "Response",
+									"kind": "Http",
+									"inputs": {
+										"body": "@variables('TransformedContent')",
+										"headers": {
+											"Content-Type": "text/xml"
+										},
+										"statusCode": 200
+									}
+								}
+							},
+							"runAfter": {
+								"Step:_Transform_Xml": [
+									"Succeeded",
+									"Failed",
+									"Skipped",
+									"TimedOut"
+								]
+							},
+							"else": {
+								"actions": {
+									"Failure:_Send_Fault_response": {
+										"runAfter": {},
+										"type": "Response",
+										"kind": "Http",
+										"inputs": {
+											"body": "@variables('FaultMessage')",
+											"headers": {
+												"Content-Type": "application/json"
+											},
+											"statusCode": 500
+										}
+									}
+								}
+							},
+							"expression": {
+								"or": [
+									{
+										"equals": [
+											"@variables('Checkpoint')",
+											"TransformXml"
+										]
+									}
+								]
+							},
+							"type": "If"
+						},
+						"Step:_Transform_Xml": {
+							"actions": {
+								"TransformXml:_Set_StatusCode_variable": {
+									"inputs": {
+										"name": "StatusCode",
+										"value": "@coalesce(outputs('TransformXml:_Transform_Xml')?['statusCode'], 500)"
+									},
+									"runAfter": {
+										"TransformXml:_Transform_Xml": [
+											"Succeeded",
+											"Failed",
+											"Skipped",
+											"TimedOut"
+										]
+									},
+									"type": "SetVariable"
+								},
+								"TransformXml:_Check_StatusCode": {
+									"runAfter": {
+										"TransformXml:_Set_StatusCode_variable": [
+											"Succeeded"
+										]
+									},
+									"cases": {
+										"Success": {
+											"case": 200,
+											"actions": {
+												"TransformXml:Success:_Set_TransformedContent_variable": {
+													"runAfter": {},
+													"type": "SetVariable",
+													"inputs": {
+														"name": "TransformedContent",
+														"value": "@body('TransformXml:_Transform_Xml')"
+													}
+												},
+												"TransformXml:Success:_Set_Checkpoint_variable": {
+													"runAfter": {
+														"TransformXml:Success:_Set_TransformedContent_variable": [
+															"Succeeded"
+														]
+													},
+													"type": "SetVariable",
+													"inputs": {
+														"name": "Checkpoint",
+														"value": "TransformXml"
+													}
+												}
+											}
+										}
+									},
+									"default": {
+										"actions": {
+											"TransformXml:Failure:_Create_Fault_message": {
+												"runAfter": {},
+												"type": "Compose",
+												"inputs": {
+													"fault": {
+														"faultActor": "@concat(workflow()?['name'], '.', actions('TransformXml:_Transform_Xml')?['name'], ' (', workflow()?['run']?['name'], ')')",
+														"faultCategory": "Error",
+														"faultCode": "@{coalesce(outputs('TransformXml:_Transform_Xml')?['statusCode'], outputs('TransformXml:_Transform_Xml')?['body']?['statusCode'], actions('TransformXml:_Transform_Xml')?['error']?['code'])}",
+														"faultMessage": "@{coalesce(outputs('TransformXml:_Transform_Xml')?['error']?['message'], outputs('TransformXml:_Transform_Xml')?['body']?['message'], actions('TransformXml:_Transform_Xml')?['error']?['message'])}",
+														"faultReason": "@{actions('TransformXml:_Transform_Xml')?['status']}"
+													}
+												}
+											},
+											"TransformXml:Failure:_Set_ErrorMessage_variable": {
+												"runAfter": {
+													"TransformXml:Failure:_Set_FaultMessage_variable": [
+														"Succeeded"
+													]
+												},
+												"type": "SetVariable",
+												"inputs": {
+													"name": "ErrorMessage",
+													"value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to transform Xml"
+												}
+											},
+											"TransformXml:Failure:_Set_FaultMessage_variable": {
+												"runAfter": {
+													"TransformXml:Failure:_Create_Fault_message": [
+														"Succeeded"
+													]
+												},
+												"type": "SetVariable",
+												"inputs": {
+													"name": "FaultMessage",
+													"value": "@outputs('TransformXml:Failure:_Create_Fault_message')"
+												}
+											}
+										}
+									},
+									"expression": "@variables('StatusCode')",
+									"type": "Switch"
+								},
+								"TransformXml:_Transform_Xml": {
+									"runAfter": {},
+									"type": "Xslt",
+									"inputs": {
+										"content": "@xml(decodeBase64(triggerBody()?['bodyContent']))",
+										"integrationAccount": {
+											"map": {
+												"name": "@{coalesce(triggerBody()?['mapName'], '')}"
+											}
+										},
+										"transformOptions": "ApplyXsltOutputAttributes"
+									}
+								}
+							},
+							"runAfter": {
+								"Initialize_TransformedContent_variable": [
+									"Succeeded",
+									"Failed",
+									"Skipped",
+									"TimedOut"
+								]
+							},
+							"expression": {
+								"and": [
+									{
+										"equals": [
+											"@variables('Checkpoint')",
+											""
+										]
+									}
+								]
+							},
+							"type": "If"
+						}
+					},
+					"outputs": {}
+				},
+				"parameters": {
+					"scenarioStep": {
+						"value": "[parameters('scenarioStep')]"
+					}
+				}
+			}
+		}
+	]
+}

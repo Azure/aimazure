@@ -1,0 +1,17 @@
+{
+	"{{ resource_template.parameters.workflow_name }}.topicSubscriber.scenarioName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.scenario_name }}",
+		"description": "The name of the scenario for this specific Topic Subscriber."
+	},
+	"{{ resource_template.parameters.workflow_name }}.topicSubscriber.topicName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_topic_name }}",
+		"description": "The name of the topic used for this specific Scenario."
+	},
+	"{{ resource_template.parameters.workflow_name }}.topicSubscriber.subscriptionName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_subscription_name }}",
+		"description": "The name of the topic subscription used for this specific Scenario."
+	}
+}

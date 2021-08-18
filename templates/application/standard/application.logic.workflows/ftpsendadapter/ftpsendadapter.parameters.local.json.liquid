@@ -1,0 +1,28 @@
+{
+	"{{ resource_template.parameters.workflow_name }}.ftpSendConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/ftp"
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpSendConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.name')"
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpSendConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.key')"
+		}
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFileName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_target_file_name }}",
+		"description": "The name of the file to send (can include macro values e.g. %MessageID% or %SourceFileName%)."
+	},
+	"{{ resource_template.parameters.workflow_name }}.ftpSendAdapter.ftpSendFolder": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_ftp_target_folder }}",
+		"description": "The path where the FTP connector sends files."
+	}
+}

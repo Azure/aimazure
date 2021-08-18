@@ -1,0 +1,7 @@
+{
+	"{{ workflow_object_name }}.processManager.topicName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_topic_name }}",
+		"description": "The name of the topic used for this specific Scenario."
+	}
+}

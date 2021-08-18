@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"{{ resource_template.parameters.workflow_name }}.sftpReceiveConnection": {
+			"api": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('{{ resource_template.parameters.workflow_name }}.sftpReceiveConnection.runtimeUrl')",
+			"authentication": "@parameters('{{ resource_template.parameters.workflow_name }}.sftpReceiveConnection.apiAuthentication')"
+		}
+	}
+}

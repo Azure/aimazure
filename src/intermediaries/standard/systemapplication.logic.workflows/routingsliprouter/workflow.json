@@ -1,0 +1,820 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_StatusCode_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "StatusCode",
+                            "type": "integer",
+                            "value": 500
+                        }
+                    ]
+                },
+                "runAfter": {}
+            },
+            "Initialize_FaultMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "FaultMessage",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_StatusCode_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ErrorMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ErrorMessage",
+                            "type": "string",
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow."
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_FaultMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ResponseMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ResponseMessage",
+                            "type": "object",
+                            "value": null
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ErrorMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Checkpoint_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Checkpoint",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ResponseMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Envelope_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Envelope",
+                            "type": "object",
+                            "value": "@triggerBody()"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Checkpoint_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Configuration_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Configuration",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Envelope_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_RouteIndex_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "RouteIndex",
+                            "type": "integer",
+                            "value": -1
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Configuration_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Set_RouteIndex_variable": {
+                "type": "SetVariable",
+                "inputs": {
+                    "name": "RouteIndex",
+                    "value": "@int(coalesce(triggerBody()?['header']?['routingSlip']?['nextRoute'], '-1'))"
+                },
+                "runAfter": {
+                    "Initialize_RouteIndex_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Route_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Route",
+                            "type": "object",
+                            "value": "@triggerBody()?['header']?['routingSlip']?['routes']?[variables('RouteIndex')]"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Set_RouteIndex_variable": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "Initialize_ChannelType_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ChannelType",
+                            "type": "string",
+                            "value": "@variables('Route')?['routingSteps']?['channelType']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Route_variable": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "MessageSender:_Were_we_successful": {
+                "type": "If",
+                "expression": {
+                    "or": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "NoMoreRoutes"
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "ProcessChannel"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Success:_Send_ACK_response": {
+                        "type": "Response",
+                        "kind": "Http",
+                        "inputs": {
+                            "statusCode": 200,
+                            "headers": {
+                                "Aim-Clear-Cache": "@coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], false)",
+                                "Aim-Enable-Trace": "@coalesce(triggerOutputs()?['headers']?['Aim-Enable-Trace'], false)",
+                                "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                                "Content-Type": "application/json"
+                            },
+                            "body": "@variables('ResponseMessage')"
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Step:_Process_Channel": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                },
+                "else": {
+                    "actions": {
+                        "Failure:_Build_NACK_message": {
+                            "type": "Compose",
+                            "inputs": {
+                                "body": [
+                                    {
+                                        "$content": {
+                                            "code": "500",
+                                            "message": "@variables('ErrorMessage')",
+                                            "lastCheckpoint": "@variables('Checkpoint')",
+                                            "fault": "@variables('FaultMessage')"
+                                        },
+                                        "$contentType": "application/json",
+                                        "$part": 1,
+                                        "$partType": "http://schemas.microsoft.com/aim#nack"
+                                    }
+                                ],
+                                "header": {
+                                    "properties": {
+                                        "createDate": "@utcNow()",
+                                        "envelopeType": "nack",
+                                        "messageId": "@guid()",
+                                        "rootPart": 1,
+                                        "trackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                                    },
+                                    "routing": {
+                                        "MessageType": "http://schemas.microsoft.com/aim#nack"
+                                    },
+                                    "routingSlip": {},
+                                    "state": {}
+                                }
+                            },
+                            "runAfter": {}
+                        },
+                        "Failure:_Send_NACK_response": {
+                            "type": "Response",
+                            "kind": "Http",
+                            "inputs": {
+                                "statusCode": 200,
+                                "headers": {
+                                    "Aim-Clear-Cache": "@coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], false)",
+                                    "Aim-Enable-Trace": "@coalesce(triggerOutputs()?['headers']?['Aim-Enable-Trace'], false)",
+                                    "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                                    "Content-Type": "application/json"
+                                },
+                                "body": "@outputs('Failure:_Build_NACK_message')"
+                            },
+                            "runAfter": {
+                                "Failure:_Build_NACK_message": [
+                                    "Succeeded"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "Step:_Get_Configuration": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": {
+                        "type": "Http",
+                        "inputs": {
+                            "method": "GET",
+                            "uri": "@{appsetting('apimBaseUrl')}/aimconfigurationmanager/configuration/@{encodeURIComponent(triggerBody()?['header']?['properties']?['scenario'])}/routingSlipRouter",
+                            "headers": {
+                                "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+                            },
+                            "queries": {
+                                "clearCache": "@{coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], 'false')}"
+                            },
+                            "retryPolicy": {
+                                "type": "none"
+                            }
+                        },
+                        "runAfter": {}
+                    },
+                    "GetConfiguration:_Check_Status_Code": {
+                        "type": "Switch",
+                        "expression": "@variables('StatusCode')",
+                        "cases": {
+                            "Success": {
+                                "case": 200,
+                                "actions": {
+                                    "GetConfiguration:Success:_Set_Checkpoint_variable": {
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "Checkpoint",
+                                            "value": "GetConfiguration"
+                                        },
+                                        "runAfter": {
+                                            "GetConfiguration:Success:_Set_Configuration_variable": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    },
+                                    "GetConfiguration:Success:_Set_Configuration_variable": {
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "Configuration",
+                                            "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                                        },
+                                        "runAfter": {}
+                                    }
+                                }
+                            }
+                        },
+                        "default": {
+                            "actions": {
+                                "GetConfiguration:Failure:_Do_we_have_a_Fault_Message": {
+                                    "type": "If",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "not": {
+                                                    "equals": [
+                                                        "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['fault']",
+                                                        null
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "actions": {
+                                        "GetConfiguration:Fault:_Set_ErrorMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "ErrorMessage",
+                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                                            },
+                                            "runAfter": {
+                                                "GetConfiguration:Fault:_Set_FaultMessage_variable": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        },
+                                        "GetConfiguration:Fault:_Set_FaultMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "FaultMessage",
+                                                "value": "@body('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')"
+                                            },
+                                            "runAfter": {}
+                                        }
+                                    },
+                                    "runAfter": {},
+                                    "else": {
+                                        "actions": {
+                                            "GetConfiguration:NoFault:_Create_Fault_Message": {
+                                                "type": "Compose",
+                                                "inputs": {
+                                                    "fault": {
+                                                        "faultActor": "@concat(workflow()?['name'], '.', actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                        "faultCategory": "Error",
+                                                        "faultCode": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['statusCode'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['code'])}",
+                                                        "faultMessage": "@{coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'], outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['body']?['message'], actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['error']?['message'])}",
+                                                        "faultReason": "@{actions('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['status']}"
+                                                    }
+                                                },
+                                                "runAfter": {}
+                                            },
+                                            "GetConfiguration:NoFault:_Set_ErrorMessage_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ErrorMessage",
+                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the ConfigurationManager GetConfigurationForStep operation"
+                                                },
+                                                "runAfter": {
+                                                    "GetConfiguration:NoFault:_Set_FaultMessage_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            },
+                                            "GetConfiguration:NoFault:_Set_FaultMessage_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "FaultMessage",
+                                                    "value": "@outputs('GetConfiguration:NoFault:_Create_Fault_Message')"
+                                                },
+                                                "runAfter": {
+                                                    "GetConfiguration:NoFault:_Create_Fault_Message": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "GetConfiguration:_Set_StatusCode_variable": [
+                                "Succeeded"
+                            ]
+                        }
+                    },
+                    "GetConfiguration:_Set_StatusCode_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "StatusCode",
+                            "value": "@coalesce(outputs('GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep')?['statusCode'], 500)"
+                        },
+                        "runAfter": {
+                            "GetConfiguration:_Call_APIM_ConfigurationManager.GetConfigurationForStep": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_ChannelType_variable": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "Step:_Check_if_have_processed_all_routes": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "GetConfiguration"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Have_we_processed_all_routes": {
+                        "type": "If",
+                        "expression": {
+                            "or": [
+                                {
+                                    "greaterOrEquals": [
+                                        "@variables('RouteIndex')",
+                                        "@length(triggerBody()?['header']?['routingSlip']?['routes'])"
+                                    ]
+                                },
+                                {
+                                    "less": [
+                                        "@variables('RouteIndex')",
+                                        0
+                                    ]
+                                }
+                            ]
+                        },
+                        "actions": {
+                            "NoMoreRoutes:_Build_ACK": {
+                                "type": "Compose",
+                                "inputs": {
+                                    "body": [
+                                        {
+                                            "$content": "No more routes to process",
+                                            "$contentType": "text/plain",
+                                            "$part": 1,
+                                            "$partType": "http://schemas.microsoft.com/aim#ack"
+                                        }
+                                    ],
+                                    "header": {
+                                        "properties": {
+                                            "createDate": "@{utcNow()}",
+                                            "envelopeType": "ack",
+                                            "messageId": "@{guid()}",
+                                            "rootPart": 1,
+                                            "trackingId": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                                            "correlationId": "@{triggerBody()?['header']?['properties']?['messageId']}"
+                                        },
+                                        "routing": {
+                                            "MessageType": "http://schemas.microsoft.com/aim#ack"
+                                        },
+                                        "routingSlip": {},
+                                        "state": {}
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "NoMoreRoutes:_Set_ResponseMessage": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "ResponseMessage",
+                                    "value": "@outputs('NoMoreRoutes:_Build_ACK')"
+                                },
+                                "runAfter": {
+                                    "NoMoreRoutes:_Build_ACK": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            },
+                            "NoMoreRoutes:_Set_Checkpoint_variable": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "Checkpoint",
+                                    "value": "NoMoreRoutes"
+                                },
+                                "runAfter": {
+                                    "NoMoreRoutes:_Set_ResponseMessage": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        },
+                        "runAfter": {},
+                        "else": {
+                            "actions": {
+                                "RoutesToProcess:_Set_Checkpoint_variable": {
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "Checkpoint",
+                                        "value": "RoutesToProcess"
+                                    },
+                                    "runAfter": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Step:_Get_Configuration": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "Step:_Process_Channel": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "RoutesToProcess"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "ProcessChannel:Failure:_Get_Failed_Items": {
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@result('ProcessChannel:_Exception_Scope')",
+                            "where": "@or(equals(item()['status'], 'Failed'), equals(item()['status'], 'TimedOut'))"
+                        },
+                        "runAfter": {
+                            "ProcessChannel:_Exception_Scope": [
+                                "Failed",
+                                "TimedOut"
+                            ]
+                        }
+                    },
+                    "ProcessChannel:Failure:_Set_ErrorMessage_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "ErrorMessage",
+                            "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) in an ExceptionScope. Error: Action: @{body('ProcessChannel:Failure:_Get_Failed_Items')?[0]?['name']}, StatusCode: @{body('ProcessChannel:Failure:_Get_Failed_Items')?[0]?['outputs']?['statusCode']}, Message: @{concat(body('ProcessChannel:Failure:_Get_Failed_Items')?[0]?['error']?['message'], body('ProcessChannel:Failure:_Get_Failed_Items')?[0]?['outputs']?['body']?['message'])}"
+                        },
+                        "runAfter": {
+                            "ProcessChannel:Failure:_Get_Failed_Items": [
+                                "Succeeded"
+                            ]
+                        }
+                    },
+                    "ProcessChannel:_Exception_Scope": {
+                        "type": "Scope",
+                        "actions": {
+                            "ProcessChannel:_Switch_on_ChannelType": {
+                                "type": "Switch",
+                                "expression": "@variables('ChannelType')",
+                                "cases": {
+                                    "APIM": {
+                                        "case": "microsoft.channels.trigger.azure-apim",
+                                        "actions": {
+                                            "APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute": {
+                                                "type": "Http",
+                                                "inputs": {
+                                                    "method": "POST",
+                                                    "uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/sendtonextroute",
+                                                    "headers": {
+                                                        "Aim-Tracking-Id": "@{triggerBody()?['header']?['properties']?['trackingId']}",
+                                                        "Content-Transfer-Encoding": "none",
+                                                        "Content-Type": "application/json",
+                                                        "Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+                                                    },
+                                                    "queries": {
+                                                        "clearCache": "@coalesce(triggerOutputs()?['headers']?['Aim-Clear-Cache'], false)",
+                                                        "enableTrace": "@coalesce(triggerOutputs()?['headers']?['Aim-Enable-Trace'], false)"
+                                                    },
+                                                    "body": "@triggerBody()",
+                                                    "retryPolicy": {
+                                                        "type": "none"
+                                                    }
+                                                },
+                                                "runAfter": {}
+                                            },
+                                            "APIMRouting:_Check_StatusCode": {
+                                                "type": "Switch",
+                                                "expression": "@variables('StatusCode')",
+                                                "cases": {
+                                                    "Success": {
+                                                        "case": 200,
+                                                        "actions": {
+                                                            "APIMRouting:Success:_Set_Checkpoint_variable": {
+                                                                "type": "SetVariable",
+                                                                "inputs": {
+                                                                    "name": "Checkpoint",
+                                                                    "value": "ProcessChannel"
+                                                                },
+                                                                "runAfter": {
+                                                                    "APIMRouting:Success:_Set_ResponseMessage_variable": [
+                                                                        "Succeeded"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "APIMRouting:Success:_Set_ResponseMessage_variable": {
+                                                                "type": "SetVariable",
+                                                                "inputs": {
+                                                                    "name": "ResponseMessage",
+                                                                    "value": "@body('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')"
+                                                                },
+                                                                "runAfter": {}
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "default": {
+                                                    "actions": {
+                                                        "APIMRouting:Failure:_Do_we_have_a_Fault_Message": {
+                                                            "type": "If",
+                                                            "expression": {
+                                                                "and": [
+                                                                    {
+                                                                        "not": {
+                                                                            "equals": [
+                                                                                "@body('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['fault']",
+                                                                                null
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "actions": {
+                                                                "APIMRouting:Fault:_Set_ErrorMessage_variable": {
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "ErrorMessage",
+                                                                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager SendToNextRoute operation"
+                                                                    },
+                                                                    "runAfter": {
+                                                                        "APIMRouting:Fault:_Set_FaultMessage_variable": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "APIMRouting:Fault:_Set_FaultMessage_variable": {
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "FaultMessage",
+                                                                        "value": "@body('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')"
+                                                                    },
+                                                                    "runAfter": {}
+                                                                }
+                                                            },
+                                                            "runAfter": {},
+                                                            "else": {
+                                                                "actions": {
+                                                                    "APIMRouting:NoFault:_Create_Fault_Message": {
+                                                                        "type": "Compose",
+                                                                        "inputs": {
+                                                                            "fault": {
+                                                                                "faultActor": "@concat(workflow()?['name'], '.', actions('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                                                "faultCategory": "Error",
+                                                                                "faultCode": "@{coalesce(outputs('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['statusCode'], outputs('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['body']?['statusCode'], actions('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['error']?['code'])}",
+                                                                                "faultMessage": "@{coalesce(outputs('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['error']?['message'], outputs('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['body']?['message'], actions('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['error']?['message'])}",
+                                                                                "faultReason": "@{actions('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')?['status']}"
+                                                                            }
+                                                                        },
+                                                                        "runAfter": {}
+                                                                    },
+                                                                    "APIMRouting:NoFault:_Set_ErrorMessage_variable": {
+                                                                        "type": "SetVariable",
+                                                                        "inputs": {
+                                                                            "name": "ErrorMessage",
+                                                                            "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to call the MessageManager SendToNextRoute operation"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "APIMRouting:NoFault:_Set_FaultMessage_variable": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "APIMRouting:NoFault:_Set_FaultMessage_variable": {
+                                                                        "type": "SetVariable",
+                                                                        "inputs": {
+                                                                            "name": "FaultMessage",
+                                                                            "value": "@outputs('APIMRouting:NoFault:_Create_Fault_Message')"
+                                                                        },
+                                                                        "runAfter": {
+                                                                            "APIMRouting:NoFault:_Create_Fault_Message": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "runAfter": {
+                                                    "APIMRouting:_Set_StatusCode_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            },
+                                            "APIMRouting:_Set_StatusCode_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "StatusCode",
+                                                    "value": "@coalesce(outputs('APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute')['statusCode'], 500)"
+                                                },
+                                                "runAfter": {
+                                                    "APIMRouting:_Call_APIM_RoutingManager.SendToNextRoute": [
+                                                        "Succeeded",
+                                                        "Failed",
+                                                        "TimedOut",
+                                                        "Skipped"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "default": {
+                                    "actions": {
+                                        "Unsupported_ChannelType:_Set_ErrorMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "ErrorMessage",
+                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}): Have an unsupported ChannelType value of @{coalesce(variables('ChannelType'), '(not supplied)')}"
+                                            },
+                                            "runAfter": {}
+                                        }
+                                    }
+                                },
+                                "runAfter": {}
+                            }
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Step:_Check_if_have_processed_all_routes": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {}
+                },
+                "correlation": {
+                    "clientTrackingId": "@coalesce(triggerBody()?['header']?['properties']?['trackingId'], guid())"
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0"
+    },
+    "kind": "Stateful"
+}

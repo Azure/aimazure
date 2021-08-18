@@ -1,0 +1,31 @@
+{
+	"apimRetryPolicy": {
+		"type": "Object",
+		"value": {
+			"count": 3,
+			"interval": "PT5S",
+			"type": "fixed"
+		}
+	},
+	"eventGridSubscribeConnectionApiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/azureeventgrid"
+	},
+	"eventGridSubscribeConnectionResourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('eventGridSubscribeConnectionName')"
+	},
+	"eventGridSubscribeManagedApiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('eventGridSubscribeConnectionKey')"
+		}
+	},
+	"clearCache": {
+		"type": "Bool",
+		"value": false,
+		"description": "Flag indicating if the cache should be cleared when calling APIM."
+	}
+}

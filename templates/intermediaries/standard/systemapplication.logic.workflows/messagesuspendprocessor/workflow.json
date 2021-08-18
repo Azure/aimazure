@@ -1,0 +1,738 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Initialize_StatusCode_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "StatusCode",
+                            "type": "integer",
+                            "value": 500
+                        }
+                    ]
+                },
+                "runAfter": {}
+            },
+            "Initialize_FaultMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "FaultMessage",
+                            "type": "object",
+                            "value": null
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_StatusCode_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_ErrorMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ErrorMessage",
+                            "type": "string",
+                            "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_FaultMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_Checkpoint_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "Checkpoint",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_ErrorMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_NackMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "NackMessage",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_Checkpoint_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_OriginalMessage_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "OriginalMessage",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_NackMessage_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "MessageSender:_Were_we_Successful": {
+                "type": "If",
+                "expression": {
+                    "or": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "SuspendOriginalMessage"
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "SkippedSuspendOriginalMessage"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Success:_Build_ACK_message": {
+                        "type": "Compose",
+                        "inputs": {
+                            "body": [
+                                {
+                                    "$content": {
+                                        "result": "Successfully published a NACK@{if(equals(variables('Checkpoint'), 'SuspendOriginalMessage'), ' and Original message', '')} to the SuspendQueue in ServiceBus"
+                                    },
+                                    "$contentType": "application/json",
+                                    "$part": 1,
+                                    "$partType": "http://schemas.microsoft.com/aim#ack"
+                                }
+                            ],
+                            "header": {
+                                "properties": {
+                                    "createDate": "@utcNow()",
+                                    "envelopeType": "ack",
+                                    "messageId": "@guid()",
+                                    "rootPart": 1,
+                                    "trackingId": "@variables('NackMessage')?['header']?['properties']?['trackingId']"
+                                },
+                                "routing": {
+                                    "messageType": "http://schemas.microsoft.com/aim#ack"
+                                },
+                                "routingSlip": {},
+                                "state": {}
+                            }
+                        },
+                        "runAfter": {}
+                    },
+                    "Routing:Success:_Send_ACK-Content_response": {
+                        "type": "Response",
+                        "kind": "Http",
+                        "inputs": {
+                            "statusCode": 200,
+                            "headers": {
+                                "Aim-Tracking-Id": "@{variables('NackMessage')?['header']?['properties']?['trackingId']}",
+                                "Aim-Clear-Cache": "@coalesce(trigger()?['headers']?['Aim-Clear-Cache'], 'false')",
+                                "Aim-Enable-Trace": "@coalesce(trigger()?['headers']?['Aim-Enable-Trace'], 'false')",
+                                "Content-Type": "application/json"
+                            },
+                            "body": "@outputs('Success:_Build_ACK_message')"
+                        },
+                        "runAfter": {
+                            "Success:_Build_ACK_message": [
+                                "Succeeded"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Step:_Suspend_Original_Message": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                },
+                "else": {
+                    "actions": {
+                        "Failure:_Build_NACK_message": {
+                            "type": "Compose",
+                            "inputs": {
+                                "body": [
+                                    {
+                                        "$content": {
+                                            "code": "500",
+                                            "message": "@variables('ErrorMessage')",
+                                            "lastCheckpoint": "@variables('Checkpoint')",
+                                            "fault": "@variables('FaultMessage')"
+                                        },
+                                        "$contentType": "application/json",
+                                        "$part": 1,
+                                        "$partType": "http://schemas.microsoft.com/aim#nack"
+                                    }
+                                ],
+                                "header": {
+                                    "properties": {
+                                        "createDate": "@utcNow()",
+                                        "envelopeType": "nack",
+                                        "messageId": "@guid()",
+                                        "rootPart": 1,
+                                        "trackingId": "@variables('NackMessage')?['header']?['properties']?['trackingId']"
+                                    },
+                                    "routing": {
+                                        "messageType": "http://schemas.microsoft.com/aim#nack"
+                                    },
+                                    "routingSlip": {},
+                                    "state": {}
+                                }
+                            },
+                            "runAfter": {}
+                        },
+                        "Failure:_Send_NACK_response": {
+                            "type": "Response",
+                            "kind": "Http",
+                            "inputs": {
+                                "statusCode": 200,
+                                "headers": {
+                                    "Aim-Tracking-Id": "@{variables('NackMessage')?['header']?['properties']?['trackingId']}",
+                                    "Aim-Clear-Cache": "@coalesce(trigger()?['headers']?['Aim-Clear-Cache'], 'false')",
+                                    "Aim-Enable-Trace": "@coalesce(trigger()?['headers']?['Aim-Enable-Trace'], 'false')",
+                                    "Content-Type": "application/json"
+                                },
+                                "body": "@outputs('Failure:_Build_NACK_message')"
+                            },
+                            "runAfter": {
+                                "Failure:_Build_NACK_message": [
+                                    "Succeeded"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "Step:_Get_Messages": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "GetMessages:_Set_NackMessage_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "NackMessage",
+                            "value": "@triggerBody()?['nackMessage']"
+                        },
+                        "runAfter": {}
+                    },
+                    "GetMessages:_Set_OriginalMessage_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "OriginalMessage",
+                            "value": "@triggerBody()?['originalMessage']"
+                        },
+                        "runAfter": {
+                            "GetMessages:_Set_NackMessage_variable": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
+                            ]
+                        }
+                    },
+                    "GetMessages:_Have_Valid_Messages": {
+                        "type": "If",
+                        "expression": {
+                            "and": [
+                                {
+                                    "not": {
+                                        "equals": [
+                                            "@coalesce(variables('NackMessage'), '')",
+                                            ""
+                                        ]
+                                    }
+                                },
+                                {
+                                    "not": {
+                                        "equals": [
+                                            "@coalesce(variables('OriginalMessage'), '')",
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "actions": {
+                            "GetMessages:Success:_Set_Checkpoint_variable": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "Checkpoint",
+                                    "value": "GetMessages"
+                                },
+                                "runAfter": {}
+                            }
+                        },
+                        "runAfter": {
+                            "GetMessages:_Set_OriginalMessage_variable": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
+                            ]
+                        },
+                        "else": {
+                            "actions": {
+                                "GetMessages:Failure:_Set_Checkpoint_variable": {
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "ErrorMessage",
+                                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}): no messages supplied in triggerBody - need either or both of NACK message or Original message"
+                                    },
+                                    "runAfter": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_OriginalMessage_variable": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "Step:_Suspend_NACK": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "GetMessages"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "SuspendNack:_Check_Status_Code": {
+                        "type": "Switch",
+                        "expression": "@variables('StatusCode')",
+                        "cases": {
+                            "Success": {
+                                "case": 200,
+                                "actions": {
+                                    "SuspendNack:Success:_Set_Checkpoint_variable": {
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "Checkpoint",
+                                            "value": "SuspendNack"
+                                        },
+                                        "runAfter": {}
+                                    }
+                                }
+                            }
+                        },
+                        "default": {
+                            "actions": {
+                                "SuspendNack:Failure:_Do_we_have_a_Fault_Message": {
+                                    "type": "If",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "not": {
+                                                    "equals": [
+                                                        "@body('SuspendNack:_Send_to_ServiceBus')?['fault']",
+                                                        null
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "actions": {
+                                        "SuspendNack:Fault:_Set_ErrorMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "ErrorMessage",
+                                                "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to publish a NACK to the SuspendQueue in ServiceBus"
+                                            },
+                                            "runAfter": {
+                                                "SuspendNack:Fault:_Set_FaultMessage_variable": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        },
+                                        "SuspendNack:Fault:_Set_FaultMessage_variable": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "FaultMessage",
+                                                "value": "@body('SuspendNack:_Send_to_ServiceBus')"
+                                            },
+                                            "runAfter": {}
+                                        }
+                                    },
+                                    "runAfter": {},
+                                    "else": {
+                                        "actions": {
+                                            "SuspendNack:NoFault:_Create_Fault_Message": {
+                                                "type": "Compose",
+                                                "inputs": {
+                                                    "fault": {
+                                                        "faultActor": "@concat(workflow()['name'], '.', actions('SuspendNack:_Send_to_ServiceBus')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                        "faultCategory": "Error",
+                                                        "faultCode": "@{coalesce(outputs('SuspendNack:_Send_to_ServiceBus')?['statusCode'], outputs('SuspendNack:_Send_to_ServiceBus')?['body']?['statusCode'], actions('SuspendNack:_Send_to_ServiceBus')?['error']?['code'])}",
+                                                        "faultMessage": "@{coalesce(outputs('SuspendNack:_Send_to_ServiceBus')?['error']?['message'], outputs('SuspendNack:_Send_to_ServiceBus')?['body']?['message'], actions('SuspendNack:_Send_to_ServiceBus')?['error']?['message'])}",
+                                                        "faultReason": "@{actions('SuspendNack:_Send_to_ServiceBus')?['status']}"
+                                                    }
+                                                },
+                                                "runAfter": {}
+                                            },
+                                            "SuspendNack:NoFault:_Set_ErrorMessage_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "ErrorMessage",
+                                                    "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to publish a NACK to the SuspendQueue in ServiceBus"
+                                                },
+                                                "runAfter": {
+                                                    "SuspendNack:NoFault:_Set_FaultMessage_variable": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            },
+                                            "SuspendNack:NoFault:_Set_FaultMessage_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "FaultMessage",
+                                                    "value": "@outputs('SuspendNack:NoFault:_Create_Fault_Message')"
+                                                },
+                                                "runAfter": {
+                                                    "SuspendNack:NoFault:_Create_Fault_Message": [
+                                                        "Succeeded"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "SuspendNack:_Set_StatusCode_variable": [
+                                "Succeeded"
+                            ]
+                        }
+                    },
+                    "SuspendNack:_Send_to_ServiceBus": {
+                        "type": "ServiceProvider",
+                        "inputs": {
+                            "parameters": {
+                                "entityName": "@coalesce(triggerBody()?['suspendQueueTopicName'], '(suspendqueue topic name not set)')",
+                                "message": {
+									"contentData": "@variables('NackMessage')",
+                                    "contentType": "application/json",
+                                    "UserProperties": "@variables('NackMessage')?['header']?['routing']",
+                                    "messageId": "@coalesce(variables('NackMessage')?['header']?['properties']?['messageId'], guid())"
+                                }
+                            },
+                            "serviceProviderConfiguration": {
+                                "connectionName": "serviceBusPublish",
+                                "operationId": "sendMessage",
+                                "serviceProviderId": "/serviceProviders/serviceBus"
+                            }
+                        },
+                        "runAfter": {}
+                    },
+                    "SuspendNack:_Set_StatusCode_variable": {
+                        "type": "SetVariable",
+                        "inputs": {
+                            "name": "StatusCode",
+                            "value": "@if(equals(outputs('SuspendNack:_Send_to_ServiceBus')?['statusCode'], 'OK'), 200, 500)"
+                        },
+                        "runAfter": {
+                            "SuspendNack:_Send_to_ServiceBus": [
+                                "Succeeded",
+                                "Failed",
+                                "Skipped",
+                                "TimedOut"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Step:_Get_Messages": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            },
+            "Step:_Suspend_Original_Message": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@variables('Checkpoint')",
+                                "SuspendNack"
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "SuspendOriginalMessage:_Check_FailedMessageRouting_value": {
+                        "type": "If",
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@coalesce(triggerBody()?['failedMessageRouting'], false)",
+                                        true
+                                    ]
+                                }
+                            ]
+                        },
+                        "actions": {
+                            "SuspendOriginalMessage:_Check_Status_Code": {
+                                "type": "Switch",
+                                "expression": "@variables('StatusCode')",
+                                "cases": {
+                                    "Success": {
+                                        "case": 200,
+                                        "actions": {
+                                            "SuspendOriginalMessage:Success:_Set_Checkpoint_variable": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "Checkpoint",
+                                                    "value": "SuspendOriginalMessage"
+                                                },
+                                                "runAfter": {}
+                                            }
+                                        }
+                                    }
+                                },
+                                "default": {
+                                    "actions": {
+                                        "SuspendOriginalMessage:Failure:_Do_we_have_a_Fault_Message": {
+                                            "type": "If",
+                                            "expression": {
+                                                "and": [
+                                                    {
+                                                        "not": {
+                                                            "equals": [
+                                                                "@body('SuspendOriginalMessage:_Send_to_ServiceBus')?['fault']",
+                                                                null
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            "actions": {
+                                                "SuspendOriginalMessage:Fault:_Set_ErrorMessage_variable": {
+                                                    "type": "SetVariable",
+                                                    "inputs": {
+                                                        "name": "ErrorMessage",
+                                                        "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to publish an original message to the SuspendQueue in ServiceBus"
+                                                    },
+                                                    "runAfter": {
+                                                        "SuspendOriginalMessage:Fault:_Set_FaultMessage_variable": [
+                                                            "Succeeded"
+                                                        ]
+                                                    }
+                                                },
+                                                "SuspendOriginalMessage:Fault:_Set_FaultMessage_variable": {
+                                                    "type": "SetVariable",
+                                                    "inputs": {
+                                                        "name": "FaultMessage",
+                                                        "value": "@body('SuspendOriginalMessage:_Send_to_ServiceBus')"
+                                                    },
+                                                    "runAfter": {}
+                                                }
+                                            },
+                                            "runAfter": {},
+                                            "else": {
+                                                "actions": {
+                                                    "SuspendOriginalMessage:NoFault:_Create_Fault_Message": {
+                                                        "type": "Compose",
+                                                        "inputs": {
+                                                            "fault": {
+                                                                "faultActor": "@concat(workflow()['name'], '.', actions('SuspendOriginalMessage:_Send_to_ServiceBus')?['name'], ' (', workflow()?['run']?['name'], ')')",
+                                                                "faultCategory": "Error",
+                                                                "faultCode": "@{coalesce(outputs('SuspendOriginalMessage:_Send_to_ServiceBus')?['statusCode'], outputs('SuspendOriginalMessage:_Send_to_ServiceBus')?['body']?['statusCode'], actions('SuspendOriginalMessage:_Send_to_ServiceBus')?['error']?['code'])}",
+                                                                "faultMessage": "@{coalesce(outputs('SuspendOriginalMessage:_Send_to_ServiceBus')?['error']?['message'], outputs('SuspendOriginalMessage:_Send_to_ServiceBus')?['body']?['message'], actions('SuspendOriginalMessage:_Send_to_ServiceBus')?['error']?['message'])}",
+                                                                "faultReason": "@{actions('SuspendOriginalMessage:_Send_to_ServiceBus')?['status']}"
+                                                            }
+                                                        },
+                                                        "runAfter": {}
+                                                    },
+                                                    "SuspendOriginalMessage:NoFault:_Set_ErrorMessage_variable": {
+                                                        "type": "SetVariable",
+                                                        "inputs": {
+                                                            "name": "ErrorMessage",
+                                                            "value": "An error occurred in @{workflow()?['name']} (@{workflow()?['run']?['name']}) trying to publish an original message to the SuspendQueue in ServiceBus"
+                                                        },
+                                                        "runAfter": {
+                                                            "SuspendOriginalMessage:NoFault:_Set_FaultMessage_variable": [
+                                                                "Succeeded"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "SuspendOriginalMessage:NoFault:_Set_FaultMessage_variable": {
+                                                        "type": "SetVariable",
+                                                        "inputs": {
+                                                            "name": "FaultMessage",
+                                                            "value": "@outputs('SuspendOriginalMessage:NoFault:_Create_Fault_Message')"
+                                                        },
+                                                        "runAfter": {
+                                                            "SuspendOriginalMessage:NoFault:_Create_Fault_Message": [
+                                                                "Succeeded"
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "runAfter": {
+                                    "SuspendOriginalMessage:_Set_StatusCode_variable": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            },
+                            "SuspendOriginalMessage:_Send_to_ServiceBus": {
+                                "type": "ServiceProvider",
+                                "inputs": {
+                                    "parameters": {
+                                        "entityName": "@coalesce(triggerBody()?['suspendQueueTopicName'], '(suspendqueue topic name not set)')",
+                                        "message": {
+											"contentData": "@variables('OriginalMessage')",
+											"contentType": "application/json",
+											"UserProperties": {
+												"messageType": "@variables('OriginalMessage')?['header']?['properties']?['messageType']",
+                                                "errorType": "FailedMessage"
+											},
+											"messageId": "@guid()"
+                                        }
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "serviceBusPublish",
+                                        "operationId": "sendMessage",
+                                        "serviceProviderId": "/serviceProviders/serviceBus"
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "SuspendOriginalMessage:_Set_StatusCode_variable": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "StatusCode",
+                                    "value": "@if(equals(outputs('SuspendOriginalMessage:_Send_to_ServiceBus')?['statusCode'], 'OK'), 200, 500)"
+                                },
+                                "runAfter": {
+                                    "SuspendOriginalMessage:_Send_to_ServiceBus": [
+                                        "Succeeded",
+                                        "Failed",
+                                        "Skipped",
+                                        "TimedOut"
+                                    ]
+                                }
+                            }
+                        },
+                        "runAfter": {},
+                        "else": {
+                            "actions": {
+                                "SuspendOriginalMessage:Skipped:_Set_Checkpoint_variable": {
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "Checkpoint",
+                                        "value": "SkippedSuspendOriginalMessage"
+                                    },
+                                    "runAfter": {}
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Step:_Suspend_NACK": [
+                        "Succeeded",
+                        "Failed",
+                        "Skipped",
+                        "TimedOut"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "properties": {
+                            "nackMessage": {
+                                "properties": {},
+                                "type": "object"
+                            },
+                            "originalMessage": {
+                                "properties": {},
+                                "type": "object"
+                            },
+                            "suspendQueueTopicName": {
+                                "type": "string"
+                            },
+                            "failedMessageRouting": {
+                                "type": "boolean"
+                            },
+                            "scenario": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "nackMessage",
+                            "suspendQueueTopicName",
+                            "failedMessageRouting",
+                            "scenario"
+                        ],
+                        "type": "object"
+                    }
+                },
+                "operationOptions": "EnableSchemaValidation",
+                "correlation": {
+                    "clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0"
+    },
+    "kind": "Stateful"
+}

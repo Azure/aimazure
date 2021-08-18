@@ -1204,10 +1204,6 @@
                                         "TransformXml:Failure:_Set_StatusCode_variable": [
                                             "Succeeded",
                                             "Skipped"
-                                        ],
-                                        "TransformXml:Success:_Set_StatusCode_variable": [
-                                            "Succeeded",
-                                            "Skipped"
                                         ]
                                     },
                                     "cases": {

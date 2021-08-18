@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"workflowname.ftpReceiveConnection": {
+			"api": {
+				"id": "@parameters('workflowname.ftpReceiveConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('workflowname.ftpReceiveConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('workflowname.ftpReceiveConnection.runtimeUrl')",
+			"authentication": "@parameters('workflowname.ftpReceiveConnection.apiAuthentication')"
+		}
+	}
+}

@@ -1,0 +1,21 @@
+{%- capture workflow_object_name_unique -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}{%- endcapture -%}
+{
+	"workflowTrigger": {
+		"When_messages_are_available_in_Service_Bus_topic": {
+			"type": "ServiceProvider",
+			"inputs": {
+				"parameters": {
+					"topicName": "@{parameters('{{ resource_template.parameters.workflow_name }}.processManager.topicName')}",
+					"subscriptionName": "@{parameters('{{ resource_template.parameters.workflow_name }}.processManager.subscriptionName')}"
+				},
+				"serviceProviderConfiguration": {
+					"connectionName": "serviceBusSubscribe",
+					"operationId": "receiveTopicMessages",
+					"serviceProviderId": "/serviceProviders/serviceBus"
+				}
+			},
+			"splitOn": "@triggerOutputs()?['body']"
+		}
+	}
+}

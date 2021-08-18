@@ -1,0 +1,17 @@
+{
+    "workflowDefinitionVariable": {
+        "Initialize_ErrorMessage_variable": {
+            "runAfter": {},
+            "type": "InitializeVariable",
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "ErrorMessage",
+                        "type": "string",
+                        "value": "An error occurred in the @{workflow()?['name']} (@{workflow()?['run']?['name']}) workflow."
+                    }
+                ]
+            }
+        }
+    }
+}

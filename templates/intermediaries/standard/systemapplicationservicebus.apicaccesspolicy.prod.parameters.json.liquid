@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "apiConnectionLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "logicAppName": {
+            "value": "{{ resource_template.parameters.system_application_logicapp_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

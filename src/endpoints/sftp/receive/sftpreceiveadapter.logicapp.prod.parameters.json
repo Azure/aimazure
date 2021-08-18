@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimsftpradapter-aim-sftppassthru-receivelocation-prod-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-prod-uksouth-xxxxx"
+        },
+        "systemApplicationResourceGroupName": {
+            "value": "rg-aimapp-systemapplication-prod-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-prod-uksouth-xxxxx"
+        },
+        "messageConstructorLogicAppName": {
+            "value": "logic-aimmessageconstructor-prod-xxxxx"
+        },
+        "messageSuspendProcessorLogicAppName": {
+            "value": "logic-aimmessagesuspendprocessor-prod-xxxxx"
+        },
+        "suspendQueueTopicName": {
+            "value": "suspendqueue"
+        },
+        "sftpReceiveApiConnectionName": {
+            "value": "apic-aimsftprconnector-aim-sftppassthru-receivelocation-prod-xxxxx"
+        },
+        "sftpReceiveFolder": {
+            "value": "/"
+        },
+        "sftpFileMask": {
+            "value": "*.*"
+        },
+        "sftpMaxFileCount": {
+            "value": 10
+        },
+        "sftpRecurrenceFrequency": {
+            "value": "Minute"
+        },
+        "sftpRecurrenceInterval": {
+            "value": 1
+        },
+        "apimServiceName": {
+            "value": "apim-aimmsgbussvc-prod-xxxxx"
+        },
+        "serviceBusTopicPublishApiConnectionName": {
+            "value": "apic-aimservicebuspublishconnector-rcvfile-sftp-prod-xxxxx"
+        },
+        "scenario": {
+            "value": "aim-sftppassthru.aim-sftppassthru-receiveport"
+        },
+        "scenarioStep": {
+            "value": "sftpReceiveAdapter"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "aim-sftppassthru",
+                "Env": "prod"
+            }
+        }
+    }
+}

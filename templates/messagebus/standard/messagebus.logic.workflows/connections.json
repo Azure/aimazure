@@ -1,0 +1,16 @@
+{
+	"serviceProviderConnections": {
+	},
+	"managedApiConnections": {
+		"eventGridSubscribe": {
+			"api": {
+				"id": "@parameters('eventGridSubscribeConnectionApiId')"
+			},
+			"connection": {
+				"id": "@parameters('eventGridSubscribeConnectionResourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('eventGridSubscribeConnectionRuntimeUrl')",
+			"authentication": "@parameters('eventGridSubscribeManagedApiAuthentication')"
+		}
+	}
+}

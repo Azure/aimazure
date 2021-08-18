@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "logic-aimxmlmessagetranslatorlite-dev-xxxxx"
+        },
+        "logicAppLocation": {
+            "value": "UK South"
+        },
+        "messageBusResourceGroupName": {
+            "value": "rg-aimmsgbus-dev-uksouth-xxxxx"
+        },
+        "integrationAccountName": {
+            "value": "intacc-aimartifactstore-dev-uksouth-xxxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName": "AIM-SystemApp",
+                "Env": "dev"
+            }
+        }
+    }
+}

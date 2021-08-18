@@ -1,0 +1,48 @@
+{
+	"workflowname.fileReceiveConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/file"
+	},
+	"workflowname.fileReceiveConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.fileReceiveConnection.name')"
+	},
+	"workflowname.fileReceiveConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('workflowname.fileReceiveConnection.key')"
+		}
+	},
+	"workflowname.fileReceiveAdapter.scenarioName": {
+		"value": "",
+		"description": "The name of the scenario for this specific Receive Adapter.",
+		"type": "String"
+	},
+	"workflowname.fileReceiveAdapter.fileReceiveFolder": {
+		"value": "",
+		"description": "The path where the File connector looks for new/updated files.",
+		"type": "String"
+	},
+	"workflowname.fileReceiveAdapter.fileNameMask": {
+		"value": "*.*",
+		"description": "The file mask to use when checking for files.",
+		"type": "String"
+	},
+	"workflowname.fileReceiveAdapter.fileMaxFileCount": {
+		"value": 10,
+		"description": "The max number of files the File Connector will retrieve per polling interval.",
+		"type": "Int"
+	},
+	"workflowname.fileReceiveAdapter.fileRecurrenceFrequency": {
+		"value": "Second",
+		"description": "The frequency with which to check for new files on the File server.",
+		"type": "String"
+	},
+	"workflowname.fileReceiveAdapter.fileRecurrenceInterval": {
+		"value": 60,
+		"description": "The interval with which to check for new files on the File server.",
+		"type": "Int"
+	}
+}

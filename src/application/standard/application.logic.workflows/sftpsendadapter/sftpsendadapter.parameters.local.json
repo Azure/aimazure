@@ -1,0 +1,28 @@
+{
+	"workflowname.sftpSendConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/sftpwithssh"
+	},
+	"workflowname.sftpSendConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.sftpSendConnection.name')"
+	},
+	"workflowname.sftpSendConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('workflowname.sftpSendConnection.key')"
+		}
+	},
+	"workflowname.sftpSendAdapter.sftpSendFileName": {
+		"type": "String",
+		"value": "",
+		"description": "The name of the file to send (can include macro values e.g. %MessageID% or %SourceFileName%)."
+	},
+	"workflowname.sftpSendAdapter.sftpSendFolder": {
+		"type": "String",
+		"value": "",
+		"description": "The path where the FTP connector sends files."
+	}
+}

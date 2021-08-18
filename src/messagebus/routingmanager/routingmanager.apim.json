@@ -5,22 +5,34 @@
         "apimServiceName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 50
+            "maxLength": 50,
+            "metadata": {
+                "description": "Name of the APIM service this API is to be deployed to."
+            }
         },
         "apiName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 256,
-            "defaultValue": "aimroutingmanager"
+            "defaultValue": "aimroutingmanager",
+            "metadata": {
+                "description": "Name of this API."
+            }
         },
         "routingManagerAppServiceName": {
             "type": "string",
             "minLength": 2,
-            "maxLength": 60
+            "maxLength": 60,
+            "metadata": {
+                "description": "Name of the App Service for the RoutingManager function."
+            }
         },
         "cacheTimeout": {
             "type": "string",
-            "defaultValue": "21600"
+            "defaultValue": "21600",
+            "metadata": {
+                "description": "Amount of time (in seconds) that config entries are cached for, before they are retrieved again."
+            }
         }
     },
     "variables": {
@@ -101,7 +113,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -110,7 +123,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -182,7 +196,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -191,7 +206,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -263,7 +279,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         },
                         {
@@ -272,7 +289,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -358,7 +376,8 @@
                             "type": "bool",
                             "defaultValue": "false",
                             "values": [
-                                "false"
+                                "true",
+								"false"
                             ]
                         }
                     ],
@@ -380,6 +399,83 @@
                     {
                         "statusCode": 500,
                         "description": "An internal error has occurred retrieving a LogicApp Callback URL, a Fault message will be returned",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n\t\"fault\": {\r\n\t\t\"faultActor\": \"\",\r\n\t\t\"faultCategory\": \"Error\",\r\n\t\t\"faultCode\": \"500\",\r\n\t\t\"faultMessage\": \"\",\r\n\t\t\"faultReason\": \"\"\r\n\t}\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2021-01-01-preview",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getstandardlogicappcallbackurl')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]"
+            ],
+            "properties": {
+                "displayName": "GetStandardLogicAppCallbackUrl",
+                "description": "Gets the Callback URL for a given Standard Logic App Workflow.",
+                "method": "GET",
+                "urlTemplate": "/standardlogicappcallbackurl/{resourceGroupName}/{logicAppName}/{workflowName}",
+                "templateParameters": [
+                    {
+                        "name": "resourceGroupName",
+                        "description": "Name of the Resource Group the Standard LogicApp is in.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    },
+                    {
+                        "name": "logicAppName",
+                        "description": "Name of the Standard LogicApp to get the CallbackUrl for.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    },
+                    {
+                        "name": "workflowName",
+                        "description": "Name of the Workflow to get the CallbackUrl for.",
+                        "type": "string",
+                        "required": true,
+                        "values": []
+                    }
+                ],
+                "request": {
+                    "queryParameters": [
+                        {
+                            "name": "clearCache",
+                            "description": "If true, then the cache is cleared before retrieving the callback Url.",
+                            "type": "bool",
+                            "defaultValue": "false",
+                            "values": [
+                                "true",
+								"false"
+                            ]
+                        }
+                    ],
+                    "headers": [],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Successfully retrieved a Standard Logic App Callback URL.",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\r\n  \"logicAppUrl\": \"https://prod-20.westus.logic.azure.com:443/workflows/\"\r\n}\r\n"
+                            }
+                        ],
+                        "headers": []
+                    },
+                    {
+                        "statusCode": 500,
+                        "description": "An internal error has occurred retrieving a Standard Logic App Callback URL, a Fault message will be returned",
                         "representations": [
                             {
                                 "contentType": "application/json",
@@ -452,6 +548,22 @@
             ],
             "properties": {
                 "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"resourceGroupName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;resourceGroupName&quot;]))\" />\r\n    <set-variable name=\"logicAppName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;logicAppName&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:LogicAppCallbackUrl:&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;:&quot; + context.Variables[&quot;logicAppName&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;/providers/Microsoft.Logic/workflows/&quot; + context.Variables[&quot;logicAppName&quot;] + &quot;/triggers/manual/listCallbackURL?api-version=2016-06-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a CallbackUrl for this LogicApp but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(\r\n                        new JObject(\r\n                            new JProperty(\"logicAppUrl\",((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"])\r\n                        ).ToString()\r\n                    )</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('apimServiceName'), '/', parameters('apiName'), '/getstandardlogicappcallbackurl/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), parameters('apiName'), 'getstandardlogicappcallbackurl')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/backends', parameters('apimServiceName'), parameters('apiName'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimCacheTimeoutNamedValue'))]",
+                "[resourceId('Microsoft.ApiManagement/service/namedValues', parameters('apimServiceName'), variables('aimSubscriptionIdNamedValue'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    This policy will retrieve the CallBackUrl from the Azure Management API for a workflow within a given Standard Logic App.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <set-variable name=\"resourceGroupName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;resourceGroupName&quot;]))\" />\r\n    <set-variable name=\"logicAppName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;logicAppName&quot;]))\" />\r\n    <set-variable name=\"workflowName\" value=\"@(System.Net.WebUtility.UrlDecode(context.Request.MatchedParameters[&quot;workflowName&quot;]))\" />\r\n    <set-variable name=\"cacheKey\" value=\"@(&quot;Cache:LogicAppCallbackUrl:&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;:&quot; + context.Variables[&quot;logicAppName&quot;] + &quot;:&quot; + context.Variables[&quot;workflowName&quot;])\" />\r\n    <set-variable name=\"managementUrl\" value=\"@(&quot;https://management.azure.com/subscriptions/{{AIM-SubscriptionId}}/resourceGroups/&quot; + context.Variables[&quot;resourceGroupName&quot;] + &quot;/providers/Microsoft.Web/sites/&quot; + context.Variables[&quot;logicAppName&quot;] + &quot;/hostruntime/runtime/webhooks/workflow/api/management/workflows/&quot; + context.Variables[&quot;workflowName&quot;] + &quot;/triggers/manual/listCallbackURL?api-version=2018-11-01&quot;)\" />\r\n    <choose>\r\n      <when condition=\"@(System.String.Compare(context.Request.OriginalUrl.Query.GetValueOrDefault(&quot;clearCache&quot;), &quot;true&quot;, true) == 0)\">\r\n        <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n        <set-variable name=\"managementResponse\" value=\"@(null)\" />\r\n      </when>\r\n      <otherwise>\r\n        <cache-lookup-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" variable-name=\"managementResponse\" caching-type=\"prefer-external\" />\r\n      </otherwise>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(context.Variables.GetValueOrDefault&lt;IResponse&gt;(&quot;managementResponse&quot;) == null)\">\r\n        <send-request ignore-error=\"false\" timeout=\"20\" response-variable-name=\"managementResponse\" mode=\"new\">\r\n          <set-url>@(context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\"))</set-url>\r\n          <set-method>POST</set-method>\r\n          <authentication-managed-identity resource=\"https://management.azure.com\" />\r\n        </send-request>\r\n        <choose>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).Body == null)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-body>@(\r\n                                new JObject(\r\n                                    new JProperty(\"fault\", \r\n                                        new JObject(\r\n                                                new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                new JProperty(\"faultCategory\", \"Error\"),\r\n                                                new JProperty(\"faultMessage\", \"Found a CallbackUrl for this Standard LogicApp but it is blank\")\r\n                                        )\r\n                                    )\r\n                                ).ToString()\r\n                            )</set-body>\r\n            </return-response>\r\n          </when>\r\n          <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n            <cache-remove-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" caching-type=\"prefer-external\" />\r\n            <return-response>\r\n              <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n              <set-header name=\"Content-Type\" exists-action=\"override\">\r\n                <value>application/json</value>\r\n              </set-header>\r\n              <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a Standard LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n            </return-response>\r\n          </when>\r\n          <otherwise>\r\n            <cache-store-value key=\"@(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;cacheKey&quot;))\" value=\"@((IResponse)context.Variables[&quot;managementResponse&quot;])\" duration=\"{{AIM-CacheTimeout}}\" caching-type=\"prefer-external\" />\r\n          </otherwise>\r\n        </choose>\r\n      </when>\r\n    </choose>\r\n    <choose>\r\n      <when condition=\"@(((IResponse)context.Variables[&quot;managementResponse&quot;]).StatusCode != 200)\">\r\n        <return-response>\r\n          <set-status code=\"500\" reason=\"Internal Server Error\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@{\r\n                                        var additionalDetails = string.Empty;\r\n                                        var internalFault = ((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;();\r\n                                        if (internalFault != null)\r\n                                        {\r\n                                            if (internalFault?[\"error\"] != null)\r\n                                            {\r\n                                                additionalDetails = \" Code: \" + ((string)internalFault?[\"error\"]?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"error\"]?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                            else if (internalFault?[\"message\"] != null)\r\n                                            {\r\n                                                 additionalDetails = \" Code: \" + ((string)internalFault?[\"code\"] ?? \"(unknown)\") + \", Error: \" + ((string)internalFault?[\"message\"] ?? \"(unknown)\");\r\n                                            }\r\n                                        }\r\n\r\n                                        return new JObject(\r\n                                            new JProperty(\"fault\", \r\n                                                new JObject(\r\n                                                        new JProperty(\"faultActor\", context.Variables.GetValueOrDefault&lt;string&gt;(\"managementUrl\")),\r\n                                                        new JProperty(\"faultCode\", ((IResponse)context.Variables[\"managementResponse\"]).StatusCode),\r\n                                                        new JProperty(\"faultReason\",((IResponse)context.Variables[\"managementResponse\"]).StatusReason),\r\n                                                        new JProperty(\"faultCategory\", \"Error\"),\r\n                                                        new JProperty(\"faultMessage\", \"An error occurred trying to get a Standard LogicApp CallBackUrl.\" + additionalDetails)\r\n                                                )\r\n                                            )\r\n                                        ).ToString();\r\n                            }</set-body>\r\n        </return-response>\r\n      </when>\r\n      <otherwise>\r\n        <return-response>\r\n          <set-status code=\"200\" reason=\"OK\" />\r\n          <set-header name=\"Content-Type\" exists-action=\"override\">\r\n            <value>application/json</value>\r\n          </set-header>\r\n          <set-body>@(\r\n                        new JObject(\r\n                            new JProperty(\"logicAppUrl\",((IResponse)context.Variables[\"managementResponse\"]).Body.As&lt;JObject&gt;()[\"value\"])\r\n                        ).ToString()\r\n                    )</set-body>\r\n        </return-response>\r\n      </otherwise>\r\n    </choose>\r\n    <base />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
                 "format": "xml"
             }
         },

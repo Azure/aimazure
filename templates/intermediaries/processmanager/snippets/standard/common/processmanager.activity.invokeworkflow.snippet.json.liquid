@@ -1,0 +1,45 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{
+    "workflowDefinitionAction": {
+		"{{ workflow_object_name }}:_GetRouterUrl": {
+			"type": "Http",
+			"inputs": {
+				"method": "GET",
+				"uri": "@{appsetting('apimBaseUrl')}/aimroutingmanager/standardlogicappcallbackurl/@{encodeURIComponent(appsetting('systemApplicationResourceGroupName'))}/@{encodeURIComponent(appsetting('systemApplicationLogicAppName'))}/routingsliprouter",
+				"headers": {
+					"Ocp-Apim-Subscription-Key": "@appsetting('apimSubscriptionKey')"
+				},
+				"queries": {
+					"clearCache": "@parameters('clearCache')"
+				},
+				"retryPolicy": {
+					"type": "none"
+				}
+			},
+			"runAfter": {}
+		},
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {
+				"{{ workflow_object_name }}:_GetRouterUrl": [
+					"Succeeded"
+				]
+			},
+            "type": "Http",
+            "description": "{{ workflow_object.type }}",
+            "inputs": {
+				"method": "POST",
+				"uri": "@{body('{{ workflow_object_name }}:_GetRouterUrl')?['logicAppUrl']}",
+				"headers": {
+					"Aim-Clear-Cache": "@coalesce(variables('Configuration')?['globalConfig']?['clearCache'], 'false')",
+					"Aim-Enable-Trace": "@coalesce(variables('Configuration')?['globalConfig']?['enableTrace'], 'false')",
+					"Aim-Tracking-Id": "@{coalesce(variables('Envelope')?['header']?['properties']?['trackingId'], guid())}",
+					"Content-Type": "application/json"
+				},
+				"body": "@variables('Envelope')",
+				"retryPolicy": {
+					"type": "none"
+				}
+            }
+        }
+    }
+}

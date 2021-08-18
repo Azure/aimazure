@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+        "logicAppLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+		"logicAppStartupState": {
+			"value": ""
+		},
+        "apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "apimSubscriptionKey": {
+            "value": ""
+        },
+		"configurationManagerAppConfigName": {
+			"value": "{{ resource_template.parameters.app_config_store_name }}"
+		},
+		"eventGridSubscribeApiConnectionName": {
+			"value": "{{ resource_template.parameters.event_grid_api_connection_name }}"
+		},
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

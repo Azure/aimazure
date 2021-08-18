@@ -1,0 +1,28 @@
+{
+	"apimRetryPolicy": {
+		"type": "Object",
+		"value": {
+			"count": 3,
+			"interval": "PT5S",
+			"type": "fixed"
+		}
+	},
+	"routerRetryPolicy": {
+		"type": "Object",
+		"value": {
+			"count": 3,
+			"interval": "PT5S",
+			"type": "fixed"
+		}
+	},
+	"clearCache": {
+		"type": "Bool",
+		"value": false,
+		"description": "Flag indicating if the cache should be cleared when calling APIM."
+	},
+	"suspendQueueTopicName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_suspend_queue_topic_name }}",
+		"description": "Name of the ServiceBus Topic that suspended messages are sent to."
+	}
+}

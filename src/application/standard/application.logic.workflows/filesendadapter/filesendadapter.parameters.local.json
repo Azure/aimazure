@@ -1,0 +1,28 @@
+{
+	"workflowname.fileSendConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/filesystem"
+	},
+	"workflowname.fileSendConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.fileSendConnection.name')"
+	},
+	"workflowname.fileSendConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('workflowname.fileSendConnection.key')"
+		}
+	},
+	"workflowname.fileSendAdapter.fileSendFileName": {
+		"type": "String",
+		"value": "%MessageID%.xml",
+		"description": "The name of the file to send (can include macro values e.g. %MessageID% or %SourceFileName%)."
+	},
+	"workflowname.fileSendAdapter.fileSendFolder": {
+		"type": "String",
+		"value": "",
+		"description": "The path where the FileSystem connector sends files."
+	}
+}

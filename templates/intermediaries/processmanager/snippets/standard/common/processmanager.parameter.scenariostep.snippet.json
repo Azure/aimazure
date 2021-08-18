@@ -1,0 +1,7 @@
+{
+	"{{ workflow_object_name }}.processManager.scenarioStep": {
+		"value": "{{ resource_template.parameters.scenario_step_name }}",
+		"description": "The name of the scenario for this Process Manager.",
+		"type": "String"
+	}
+}

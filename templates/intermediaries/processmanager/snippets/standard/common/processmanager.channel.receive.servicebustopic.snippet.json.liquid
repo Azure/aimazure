@@ -1,0 +1,41 @@
+{%- capture workflow_object_name -%}{{ workflow_object.name | replace: " ", "_" | replace: ".", "_" | replace: "'", "_" }}_({{ workflow_object.properties.UniqueId }}){%- endcapture -%}
+{%- if workflow_object.properties.Activate == "True" -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "SetVariable",
+            "inputs": {
+                "name": "{{ workflow_object.properties.MessageName }}",
+                "value": "@variables('Envelope')"
+            }
+        }
+    }
+}
+{%- else -%}
+{
+    "workflowDefinitionAction": {
+        "{{ workflow_object.type }}:_{{ workflow_object_name }}": {
+            "runAfter": {},
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                        "name": "@parameters('$connections')['servicebussubscribe']['connectionId']"
+                    }
+                },
+                "method": "get",
+                "path": "/@{encodeURIComponent(parameters('serviceBusTopicName'))}/subscriptions/@{encodeURIComponent(parameters('serviceBusTopicSubscriptionName'))}/messages/head/peek",
+                "queries": {
+                    "sessionId": "None",
+                    "subscriptionType": "Main"
+                }
+            },
+            "recurrence": {
+                "frequency": "@{parameters('serviceBusRecurrenceFrequency')}",
+                "interval": "@parameters('serviceBusRecurrenceInterval')"
+            }
+        }
+    }
+}
+{%- endif -%}

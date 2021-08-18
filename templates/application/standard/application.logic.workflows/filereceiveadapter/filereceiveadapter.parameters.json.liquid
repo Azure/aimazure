@@ -1,0 +1,41 @@
+{
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/filesystem"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.name')"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "ManagedServiceIdentity"
+		}
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveAdapter.scenarioName": {
+		"value": "{{ resource_template.parameters.scenario_name }}",
+		"description": "The name of the scenario for this specific Receive Adapter.",
+		"type": "String"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveAdapter.fileReceiveFolder": {
+		"value": "{{ resource_template.parameters.azure_file_target_folder }}",
+		"description": "The path where the FTP connector looks for new/updated files.",
+		"type": "String"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveAdapter.fileMaxFileCount": {
+		"value": {{ resource_template.parameters.azure_file_max_file_count }},
+		"description": "The max number of files the File Connector will retrieve per polling interval.",
+		"type": "Int"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveAdapter.fileRecurrenceFrequency": {
+		"value": "{{ resource_template.parameters.azure_file_frequency }}",
+		"description": "The frequency with which to check for new files on the File server.",
+		"type": "String"
+	},
+	"{{ resource_template.parameters.workflow_name }}.fileReceiveAdapter.fileRecurrenceInterval": {
+		"value": {{ resource_template.parameters.azure_file_recurrence }},
+		"description": "The interval with which to check for new files on the File server.",
+		"type": "Int"
+	}
+}

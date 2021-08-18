@@ -1,0 +1,18 @@
+[
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.fileSendConnection.name",
+		"value": "{{ resource_template.parameters.filesystem_api_connector_name }}"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.fileSendConnection.apiId",
+		"value": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('logicAppLocation'), 'filesystem')]"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.fileSendConnection.resourceId",
+		"value": "[resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.filesystem_api_connector_name }}')]"
+	},
+	{
+		"name": "{{ resource_template.parameters.workflow_name }}.fileSendConnection.runtimeUrl",
+		"value": "[reference(resourceId('Microsoft.Web/connections', '{{ resource_template.parameters.filesystem_api_connector_name }}'),'2016-06-01', 'full').properties.connectionRuntimeUrl]"
+	}
+]

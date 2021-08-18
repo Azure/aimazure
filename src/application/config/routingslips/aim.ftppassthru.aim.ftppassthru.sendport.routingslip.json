@@ -6,7 +6,7 @@
         "channelType": "microsoft.channels.trigger.azure-apim"
       },
       "routingParameters": {
-        "messageReceiverType": "microsoft.workflows.azurelogicapp",
+        "messageReceiverType": "microsoft.workflows.azurelogicapp.consumption",
         "parameters": {
           "resourceId": "/rg-aimapp-systemapplication-dev-uksouth-xxxxx/logic-aimcontentpromoter-dev-xxxxx"
         }
@@ -18,7 +18,7 @@
         "channelType": "microsoft.channels.trigger.azure-apim"
       },
       "routingParameters": {
-        "messageReceiverType": "microsoft.workflows.azurelogicapp",
+        "messageReceiverType": "microsoft.workflows.azurelogicapp.consumption",
         "parameters": {
           "resourceId": "/rg-aimapp-systemapplication-dev-uksouth-xxxxx/logic-aimtopicpublisher-dev-xxxxx"
         }

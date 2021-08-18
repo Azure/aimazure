@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "value": "{{ resource_template.resource_name }}"
+        },
+		"logicAppLocation": {
+            "value": "{{ resource_template.parameters.azure_primary_region }}"
+        },
+        "appServicePlanName": {
+            "value": "{{ resource_template.parameters.azure_app_service_plan_name }}"
+        },
+		"storageAccountName": {
+            "value": "{{ resource_template.parameters.azure_storage_account_name }}"
+        },
+		"messageBusResourceGroupName": {
+            "value": "{{ resource_template.parameters.azure_message_bus_resource_group_name }}"
+        },
+		"systemApplicationResourceGroupName": {
+			"value": "{{ resource_template.parameters.azure_system_application_resource_group_name }}"
+		},
+		"systemApplicationLogicAppName": {
+			"value": "{{ resource_template.parameters.azure_system_application_logic_app_name }}"
+		},
+		"serviceBusResourceGroupName": {
+			"value": "{{ resource_template.parameters.azure_service_bus_resource_group_name }}"
+		},
+		"serviceBusNamespaceName": {
+			"value": "{{ resource_template.parameters.azure_service_bus_namespace_name }}"
+		},
+		"serviceBusPublishPolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"serviceBusSubscribePolicyName": {
+			"value": "RootManageSharedAccessKey"
+		},
+		"appInsightsName": {
+            "value": "{{ resource_template.parameters.app_insights_name }}"
+        },
+		"apimServiceName": {
+            "value": "{{ resource_template.parameters.apim_service_name }}"
+        },
+        "tags": {
+            "value": {
+{%- for tag in resource_template.tags -%}
+    {%- if forloop.last == false %}
+                "{{ tag.key }}" : "{{ tag.value }}",
+    {%- else %}
+                "{{ tag.key }}" : "{{ tag.value }}"
+    {%- endif -%}
+{%- endfor %}
+            }
+        }
+    }
+}

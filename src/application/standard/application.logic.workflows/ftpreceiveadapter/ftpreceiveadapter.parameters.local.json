@@ -1,0 +1,48 @@
+{
+	"workflowname.ftpReceiveConnection.apiId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/providers/Microsoft.Web/locations/@appsetting('apiConnectionLocation')/managedApis/ftp"
+	},
+	"workflowname.ftpReceiveConnection.resourceId": {
+		"type": "String",
+		"value": "/subscriptions/@appsetting('apiConnectionSubscriptionId')/resourceGroups/@appsetting('apiConnectionResourceGroupName')/providers/Microsoft.Web/connections/@appsetting('workflowname.ftpReceiveConnection.name')"
+	},
+	"workflowname.ftpReceiveConnection.apiAuthentication": {
+		"type": "Object",
+		"value": {
+			"type": "Raw",
+			"scheme": "Key",
+			"parameter": "@appsetting('workflowname.ftpReceiveConnection.key')"
+		}
+	},
+	"workflowname.ftpReceiveAdapter.scenarioName": {
+		"value": "",
+		"description": "The name of the scenario for this specific Receive Adapter.",
+		"type": "String"
+	},
+	"workflowname.ftpReceiveAdapter.ftpReceiveFolder": {
+		"value": "",
+		"description": "The path where the FTP connector looks for new/updated files.",
+		"type": "String"
+	},
+	"workflowname.ftpReceiveAdapter.fileNameMask": {
+		"value": "*.*",
+		"description": "The file mask to use when checking for files.",
+		"type": "String"
+	},
+	"workflowname.ftpReceiveAdapter.ftpMaxFileCount": {
+		"value": 10,
+		"description": "The max number of files the FTP Connector will retrieve per polling interval.",
+		"type": "Int"
+	},
+	"workflowname.ftpReceiveAdapter.ftpRecurrenceFrequency": {
+		"value": "Second",
+		"description": "The frequency with which to check for new files on the FTP server.",
+		"type": "String"
+	},
+	"workflowname.ftpReceiveAdapter.ftpRecurrenceInterval": {
+		"value": 60,
+		"description": "The interval with which to check for new files on the FTP server.",
+		"type": "Int"
+	}
+}

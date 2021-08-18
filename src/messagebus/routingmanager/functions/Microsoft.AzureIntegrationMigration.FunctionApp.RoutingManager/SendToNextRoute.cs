@@ -146,7 +146,7 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
             }
 
             // Get the array of routes
-            JArray routes = (JArray)routingSlip?.First?.First;           
+            JArray routes = (JArray)routingSlip?.First?.First;
 
             // Get the current route
             JObject currentRoute = routes[envelope.RouteIndex] as JObject;
@@ -178,10 +178,15 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
             // Switch by messageReceiverType
             switch (messageReceiverType.ToLower())
             {
-                case "microsoft.workflows.azurelogicapp":
+                case "microsoft.workflows.azurelogicapp.consumption":
                     {
-                        log.LogDebug($"{logPrefix}Calling the next route LogicApp");
-                        return await RouteToLogicApp(envelope, routeParameters, requestDetails, logPrefix, log);
+                        log.LogDebug($"{logPrefix}Calling the next route Consumption LogicApp");
+                        return await RouteToConsumptionLogicApp(envelope, routeParameters, requestDetails, logPrefix, log);
+                    }
+                case "microsoft.workflows.azurelogicapp.standard":
+                    {
+                        log.LogDebug($"{logPrefix}Calling the next route Standard LogicApp");
+                        return await RouteToStandardLogicApp(envelope, routeParameters, requestDetails, logPrefix, log);
                     }
                 default:
                     {
@@ -238,7 +243,7 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
         }
 
         /// <summary>
-        /// Sends the envelope to a LogicApp and returns the response, as an <see cref="IActionResult"/> instance.
+        /// Sends the envelope to a Consumption LogicApp and returns the response, as an <see cref="IActionResult"/> instance.
         /// </summary>
         /// <param name="envelope"><see cref="Envelope"/> instance containing the envelope.</param>
         /// <param name="routeParameters"><see cref="JObject"/> instance containing the route parameters.</param>
@@ -246,7 +251,7 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
         /// <param name="logPrefix">Logging prefix to use.</param>
         /// <param name="log"><see cref="ILogger"/> instance to use for logging.</param>
         /// <returns><see cref="Task{IActionResult}"/> instance.</returns>
-        private static async Task<IActionResult> RouteToLogicApp(Envelope envelope, JObject routeParameters, RequestDetails requestDetails, string logPrefix, ILogger log)
+        private static async Task<IActionResult> RouteToConsumptionLogicApp(Envelope envelope, JObject routeParameters, RequestDetails requestDetails, string logPrefix, ILogger log)
         {
             // Get the ResourceId
             string resourceId = routeParameters["resourceId"]?.ToString();
@@ -258,7 +263,7 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
             string[] resourceIdParts = resourceId.Split('/');
             if (resourceIdParts.Length != 3)
             {
-                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"The resourceId that is set in the parameters section for the route with index {envelope.RouteIndex} is malformed - expected 3 parts, but received only {resourceIdParts.Length} parts", logPrefix, log);
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"The resourceId that is set in the parameters section for the Consumption Logic App route with index {envelope.RouteIndex} is malformed - expected 3 parts, but received only {resourceIdParts.Length} parts", logPrefix, log);
             }
 
             string resourceGroupName = resourceIdParts[1];
@@ -266,21 +271,21 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
 
             Uri logicAppCallbackUri;
 
-            // Get the logicApps callback URL
+            // Get the Consumption Logic App callback URL
             try
             {
-                logicAppCallbackUri = await new ApimRestClient(requestDetails).GetLogicAppCallbackUrlAsync(resourceGroupName, logicAppName);
-                log.LogDebug($"{logPrefix}Retrieved CallbackUrl for LogicApp {logicAppName}");
+                logicAppCallbackUri = await new ApimRestClient(requestDetails).GetConsumptionLogicAppCallbackUrlAsync(resourceGroupName, logicAppName);
+                log.LogDebug($"{logPrefix}Retrieved CallbackUrl for Consumption LogicApp {logicAppName}");
             }
             catch (AzureResponseException arex)
             {
                 // Exception occurred
-                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling APIM to get a LogicApp URL for the route with index {envelope.RouteIndex}", arex, logPrefix, log);
+                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling APIM to get a Consumption LogicApp URL for the route with index {envelope.RouteIndex}", arex, logPrefix, log);
             }
             catch (Exception ex)
             {
                 // Exception occurred
-                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"An error occurred calling APIM to get a LogicApp URL for the route with index {envelope.RouteIndex}", ex, logPrefix, log);
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"An error occurred calling APIM to get a Consumption LogicApp URL for the route with index {envelope.RouteIndex}", ex, logPrefix, log);
             }
 
             // Build headers
@@ -293,14 +298,92 @@ namespace Microsoft.AzureIntegrationMigration.FunctionApp.RoutingManager
             try
             {
                 // Call the LogicApp
-                log.LogDebug($"{logPrefix}Calling LogicApp {logicAppName} using Url {logicAppCallbackUri}");
+                log.LogDebug($"{logPrefix}Calling Consumption LogicApp {logicAppName} using Url {logicAppCallbackUri}");
                 response = await new AzureRestClient(requestDetails, AzureAuthenticationEndpoints.LogicApps).SendAsync(HttpMethod.Post, logicAppCallbackUri, headers, envelope.ToString());
-                log.LogDebug($"{logPrefix}Finished calling LogicApp {logicAppName} - return StatusCode is {response?.StatusCode}");
+                log.LogDebug($"{logPrefix}Finished calling Consumption LogicApp {logicAppName} - return StatusCode is {response?.StatusCode}");
             }
             catch (AzureResponseException arex)
             {
                 // Exception occurred
-                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling the LogicApp {logicAppName}", arex, logPrefix, log);
+                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling the Consumption LogicApp {logicAppName}", arex, logPrefix, log);
+            }
+            catch (Exception ex)
+            {
+                // Exception occurred
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"An error occurred calling the Consumption LogicApp {logicAppName}", ex, logPrefix, log);
+            }
+
+            // The response from the LogicApp should be 200 (ACK or NACK).
+            // If it's anything else (e.g. a 500) then it's a fault, and an envelope will need to be created.
+            // Look at the StatusCode and the ResponseContent and work out what to return
+            return AzureResponseHelper.GenerateRouteResponse(requestDetails, response, "LogicApp", logicAppName, logPrefix, log);
+        }
+
+        /// <summary>
+        /// Sends the envelope to a Standard LogicApp and returns the response, as an <see cref="IActionResult"/> instance.
+        /// </summary>
+        /// <param name="envelope"><see cref="Envelope"/> instance containing the envelope.</param>
+        /// <param name="routeParameters"><see cref="JObject"/> instance containing the route parameters.</param>
+        /// <param name="requestDetails"><see cref="RequestDetails"/> instance containing details about the request.</param>
+        /// <param name="logPrefix">Logging prefix to use.</param>
+        /// <param name="log"><see cref="ILogger"/> instance to use for logging.</param>
+        /// <returns><see cref="Task{IActionResult}"/> instance.</returns>
+        private static async Task<IActionResult> RouteToStandardLogicApp(Envelope envelope, JObject routeParameters, RequestDetails requestDetails, string logPrefix, ILogger log)
+        {
+            // Get the ResourceId
+            string resourceId = routeParameters["resourceId"]?.ToString();
+            if (string.IsNullOrWhiteSpace(resourceId))
+            {
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"No resourceId is set in the parameters section for the route with index {envelope.RouteIndex}", logPrefix, log);
+            }
+
+            string[] resourceIdParts = resourceId.Split('/');
+            if (resourceIdParts.Length != 4)
+            {
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"The resourceId that is set in the parameters section for the Standard Logic App route with index {envelope.RouteIndex} is malformed - expected 4 parts, but received only {resourceIdParts.Length} parts", logPrefix, log);
+            }
+
+            string resourceGroupName = resourceIdParts[1];
+            string logicAppName = resourceIdParts[2];
+            string workflowName = resourceIdParts[3];
+
+            Uri logicAppCallbackUri;
+
+            // Get the Standard Logic App Workflow callback URL
+            try
+            {
+                logicAppCallbackUri = await new ApimRestClient(requestDetails).GetStandardLogicAppWorkflowCallbackUrlAsync(resourceGroupName, logicAppName, workflowName);
+                log.LogDebug($"{logPrefix}Retrieved CallbackUrl for Standard LogicApp {logicAppName} and workflow {workflowName}");
+            }
+            catch (AzureResponseException arex)
+            {
+                // Exception occurred
+                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling APIM to get a Standard LogicApp URL for the route with index {envelope.RouteIndex}", arex, logPrefix, log);
+            }
+            catch (Exception ex)
+            {
+                // Exception occurred
+                return AzureResponseHelper.CreateFaultObjectResult(requestDetails, $"An error occurred calling APIM to get a Standard LogicApp URL for the route with index {envelope.RouteIndex}", ex, logPrefix, log);
+            }
+
+            // Build headers
+            IDictionary<string, string> headers = new Dictionary<string, string>();
+            headers[HeaderConstants.AimClearCache] = requestDetails.ClearCache.ToString();
+            headers[HeaderConstants.AimEnableTracing] = requestDetails.EnableTrace.ToString();
+
+            AzureResponse response;
+
+            try
+            {
+                // Call the LogicApp
+                log.LogDebug($"{logPrefix}Calling Standard LogicApp {logicAppName} and workflow {workflowName} using Url {logicAppCallbackUri}");
+                response = await new AzureRestClient(requestDetails, AzureAuthenticationEndpoints.LogicApps).SendAsync(HttpMethod.Post, logicAppCallbackUri, headers, envelope.ToString());
+                log.LogDebug($"{logPrefix}Finished calling Standard LogicApp {logicAppName} and workflow {workflowName} - return StatusCode is {response?.StatusCode}");
+            }
+            catch (AzureResponseException arex)
+            {
+                // Exception occurred
+                return AzureResponseHelper.CreateFaultObjectResult($"An AzureResponseException error occurred calling the Standard LogicApp {logicAppName} and workflow {workflowName}", arex, logPrefix, log);
             }
             catch (Exception ex)
             {

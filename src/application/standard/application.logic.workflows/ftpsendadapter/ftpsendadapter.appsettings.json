@@ -1,0 +1,18 @@
+[
+	{
+		"name": "workflowname.ftpSendConnection.name",
+		"value": ""
+	},
+	{
+		"name": "workflowname.ftpSendConnection.apiId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.ftpSendConnection.resourceId",
+		"value": ""
+	},
+	{
+		"name": "workflowname.ftpSendConnection.runtimeUrl",
+		"value": ""
+	}
+]

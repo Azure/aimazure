@@ -4,7 +4,8 @@
     "Description": "Allows API Management to get the Logic App callback URL.",
     "Actions": [
         "Microsoft.Logic/workflows/triggers/listCallbackUrl/action",
-        "Microsoft.Logic/workflows/listCallbackUrl/action"
+        "Microsoft.Logic/workflows/listCallbackUrl/action",
+        "*/listCallbackUrl/action"
     ],
     "DataActions": [
     ],

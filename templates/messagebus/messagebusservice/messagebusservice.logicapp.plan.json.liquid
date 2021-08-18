@@ -1,0 +1,88 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appServicePlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of this Application Service Plan."
+            }
+        },
+        "appServicePlanLocation": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Name of the location (region) this plan is deployed to."
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "WS1",
+            "metadata": {
+                "description": "Name of the SKU (price) used for this plan."
+            }
+        },
+        "skuTier": {
+            "type": "string",
+            "defaultValue": "WorkflowStandard",
+            "metadata": {
+                "description": "Tier for the SKU used for this plan."
+            }
+        },
+        "skuSize": {
+            "type": "string",
+            "defaultValue": "[parameters('skuName')]",
+            "metadata": {
+                "description": "Size of the SKU used for this plan."
+            }
+        },
+        "skuFamily": {
+            "type": "string",
+            "defaultValue": "WS",
+            "metadata": {
+                "description": "Family for the SKU used for this plan."
+            }
+        },
+        "skuCapacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Capacity for the SKU used for this plan."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "metadata": {
+                "description": "Tags for this resource."
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('appServicePlanName')]",
+            "location": "[parameters('appServicePlanLocation')]",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuTier')]",
+                "size": "[parameters('skuSize')]",
+                "family": "[parameters('skuFamily')]",
+                "capacity": "[parameters('skuCapacity')]"
+            },
+            "kind": "elastic",
+            "properties": {
+                "perSiteScaling": false,
+                "maximumElasticWorkerCount": 20,
+                "isSpot": false,
+                "reserved": false,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        }
+    ]
+}

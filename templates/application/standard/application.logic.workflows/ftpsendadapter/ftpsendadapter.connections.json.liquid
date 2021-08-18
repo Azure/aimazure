@@ -1,0 +1,15 @@
+{
+	"serviceProviderConnections": {},
+	"managedApiConnections": {
+		"{{ resource_template.parameters.workflow_name }}.ftpSendConnection": {
+			"api": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.apiId')"
+			},
+			"connection": {
+				"id": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.resourceId')"
+			},
+			"connectionRuntimeUrl": "@appsetting('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.runtimeUrl')",
+			"authentication": "@parameters('{{ resource_template.parameters.workflow_name }}.ftpSendConnection.apiAuthentication')"
+		}
+	}
+}

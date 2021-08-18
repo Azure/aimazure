@@ -1,0 +1,337 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"logicAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of this Standard Logic App service (note that this differs from the name of the workflows contained within this Logic App)."
+			}
+		},
+		"logicAppLocation": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "The region that this Standard Logic App service should be deployed to."
+			}
+		},
+		"appServicePlanName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the App Service Plan used by this Standard Logic App service."
+			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Storage Account used by this Standard Logic App service."
+			}
+		},
+		"messageBusResourceGroupName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Resource group that the Message Bus resources are deployed to."
+			}
+		},
+		"systemApplicationResourceGroupName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Resource group that the System Application resources are deployed to."
+			}
+		},
+		"systemApplicationLogicAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the System Application Logic App resource."
+			}
+		},
+		"serviceBusResourceGroupName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Resource group that the Service Bus resource is deployed to."
+			}
+		},
+		"serviceBusNamespaceName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Service Bus namespace this Logic App connects to."
+			}
+		},
+		"serviceBusPublishPolicyName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Service Bus Policy we're authenticating against to get a connection string for publish operations."
+			}
+		},
+		"serviceBusSubscribePolicyName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Service Bus Policy we're authenticating against to get a connection string for subscribe operations."
+			}
+		},
+		"appInsightsName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the Application Insights instance used by this logic app."
+			}
+		},
+		"apimServiceName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the APIM Service used for SystemApplication operations."
+			}
+		},
+		"apimSubscriptionKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Subscription Key used to access APIM."
+			}
+		},
+		"tags": {
+			"type": "object",
+			"defaultValue": {
+				"Environment": "dev"
+			},
+			"metadata": {
+				"description": "Tags for this resource."
+			}
+		}
+	},
+	"variables": {},
+	"resources": [
+		{
+			"type": "Microsoft.Web/sites",
+			"apiVersion": "2021-01-15",
+			"name": "[parameters('logicAppName')]",
+			"location": "[parameters('logicAppLocation')]",
+			"kind": "functionapp,workflowapp",
+			"identity": {
+				"type": "SystemAssigned"
+			},
+			"dependsOn": [],
+			"tags": "[parameters('tags')]",
+			"properties": {
+				"enabled": true,
+				"hostNameSslStates": [
+					{
+						"name": "[concat(parameters('logicAppName'), '.azurewebsites.net')]",
+						"sslState": "Disabled",
+						"hostType": "Standard"
+					},
+					{
+						"name": "[concat(parameters('logicAppName'), '.scm.azurewebsites.net')]",
+						"sslState": "Disabled",
+						"hostType": "Repository"
+					}
+				],
+				"serverFarmId": "[resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+				"reserved": false,
+				"isXenon": false,
+				"hyperV": false,
+				"siteConfig": {
+					"numberOfWorkers": 1,
+					"acrUseManagedIdentityCreds": false,
+					"alwaysOn": false,
+					"http20Enabled": false,
+					"functionAppScaleLimit": 0,
+					"minimumElasticInstanceCount": 1
+				},
+				"scmSiteAlsoStopped": false,
+				"clientAffinityEnabled": false,
+				"clientCertEnabled": false,
+				"clientCertMode": "Required",
+				"hostNamesDisabled": false,
+				"containerSize": 1536,
+				"dailyMemoryTimeQuota": 0,
+				"keyVaultReferenceIdentity": "SystemAssigned",
+				"httpsOnly": false,
+				"redundancyMode": "None",
+				"storageAccountRequired": false,
+				"siteConfig": {
+					"appSettings": [
+						{
+							"name": "APP_KIND",
+							"value": "workflowApp"
+						},
+						{
+							"name": "AzureFunctionsJobHost__extensionBundle__id",
+							"value": "Microsoft.Azure.Functions.ExtensionBundle.Workflows"
+						},
+						{
+							"name": "AzureFunctionsJobHost__extensionBundle__version",
+							"value": "[1.*, 2.0.0)"
+						},
+						{
+							"name": "AzureWebJobsDashboard",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+						},
+						{
+							"name": "AzureWebJobsStorage",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+						},
+						{
+							"name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+							"value": "[reference(resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Insights/components', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+						},
+						{
+							"name": "FUNCTIONS_EXTENSION_VERSION",
+							"value": "~3"
+						},
+						{
+							"name": "FUNCTIONS_V2_COMPATIBILITY_MODE",
+							"value": "true"
+						},
+						{
+							"name": "FUNCTIONS_WORKER_RUNTIME",
+							"value": "node"
+						},
+						{
+							"name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId(parameters('messageBusResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+						},
+						{
+							"name": "WEBSITE_CONTENTSHARE",
+							"value": "[parameters('logicAppName')]"
+						},
+						{
+							"name": "WEBSITE_NODE_DEFAULT_VERSION",
+							"value": "~12"
+						},
+						{
+							"name": "systemApplicationResourceGroupName",
+							"value": "[parameters('systemApplicationResourceGroupName')]"
+						},
+						{
+							"name": "systemApplicationLogicAppName",
+							"value": "[parameters('systemApplicationLogicAppName')]"
+						},
+						{
+							"name": "apiConnectionSubscriptionId",
+							"value": "[subscription().subscriptionId]"
+						},
+						{
+							"name": "apiConnectionResourceGroupName",
+							"value": "[resourceGroup().name]"
+						},
+						{
+							"name": "apiConnectionLocation",
+							"value": "[resourceGroup().location]"
+						},
+						{
+							"name": "apimBaseUrl",
+							"value": "[concat('https://', parameters('apimServiceName'), '.azure-api.net')]"
+						},
+						{
+							"name": "apimSubscriptionKey",
+							"value": "[parameters('apimSubscriptionKey')]"
+						},
+						{
+							"name": "servicebusPublishConnectionString",
+							"value": "[listKeys(resourceId(parameters('serviceBusResourceGroupName'), 'Microsoft.ServiceBus/namespaces/AuthorizationRules', parameters('serviceBusNamespaceName'), parameters('serviceBusPublishPolicyName')), '2017-04-01').primaryConnectionString]"
+						},
+						{
+							"name": "servicebusSubscribeConnectionString",
+							"value": "[listKeys(resourceId(parameters('serviceBusResourceGroupName'), 'Microsoft.ServiceBus/namespaces/AuthorizationRules', parameters('serviceBusNamespaceName'), parameters('serviceBusSubscribePolicyName')), '2017-04-01').primaryConnectionString]"
+						}
+					]
+				},
+				"redundancyMode": "None"
+			}
+		},
+		{
+			"type": "Microsoft.Web/sites/config",
+			"apiVersion": "2021-01-15",
+			"name": "[concat(parameters('logicAppName'), '/web')]",
+			"location": "[parameters('logicAppLocation')]",
+			"tags": "[parameters('tags')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]"
+			],
+			"properties": {
+				"numberOfWorkers": 1,
+				"defaultDocuments": [
+					"Default.htm",
+					"Default.html",
+					"Default.asp",
+					"index.htm",
+					"index.html",
+					"iisstart.htm",
+					"default.aspx",
+					"index.php"
+				],
+				"netFrameworkVersion": "v4.0",
+				"phpVersion": "5.6",
+				"requestTracingEnabled": false,
+				"remoteDebuggingEnabled": false,
+				"httpLoggingEnabled": false,
+				"acrUseManagedIdentityCreds": false,
+				"logsDirectorySizeLimit": 35,
+				"detailedErrorLoggingEnabled": false,
+				"publishingUsername": "$logic-sbtest-vscode-uksouth",
+				"azureStorageAccounts": {},
+				"scmType": "None",
+				"use32BitWorkerProcess": true,
+				"webSocketsEnabled": false,
+				"alwaysOn": false,
+				"managedPipelineMode": "Integrated",
+				"virtualApplications": [
+					{
+						"virtualPath": "/",
+						"physicalPath": "site\\wwwroot",
+						"preloadEnabled": false
+					}
+				],
+				"loadBalancing": "LeastRequests",
+				"experiments": {
+					"rampUpRules": []
+				},
+				"autoHealEnabled": false,
+				"vnetRouteAllEnabled": false,
+				"vnetPrivatePortsCount": 0,
+				"localMySqlEnabled": false,
+				"managedServiceIdentityId": 23940,
+				"ipSecurityRestrictions": [
+					{
+						"ipAddress": "Any",
+						"action": "Allow",
+						"priority": 1,
+						"name": "Allow all",
+						"description": "Allow all access"
+					}
+				],
+				"scmIpSecurityRestrictions": [
+					{
+						"ipAddress": "Any",
+						"action": "Allow",
+						"priority": 1,
+						"name": "Allow all",
+						"description": "Allow all access"
+					}
+				],
+				"scmIpSecurityRestrictionsUseMain": false,
+				"http20Enabled": false,
+				"minTlsVersion": "1.2",
+				"scmMinTlsVersion": "1.0",
+				"ftpsState": "AllAllowed",
+				"preWarmedInstanceCount": 1,
+				"functionAppScaleLimit": 0,
+				"functionsRuntimeScaleMonitoringEnabled": false,
+				"minimumElasticInstanceCount": 1
+			}
+		},
+		{
+			"type": "Microsoft.Web/sites/hostNameBindings",
+			"apiVersion": "2021-01-15",
+			"name": "[concat(parameters('logicAppName'), '/', parameters('logicAppName'), '.azurewebsites.net')]",
+			"location": "[parameters('logicAppLocation')]",
+			"tags": "[parameters('tags')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]"
+			],
+			"properties": {
+				"siteName": "[parameters('logicAppName')]",
+				"hostNameType": "Verified"
+			}
+		}
+	]
+}

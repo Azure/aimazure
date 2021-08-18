@@ -1,0 +1,7 @@
+{
+	"{{ workflow_object_name }}.processManager.subscriptionName": {
+		"type": "String",
+		"value": "{{ resource_template.parameters.azure_service_bus_subscription_name }}",
+		"description": "The name of the topic subscription used for this specific Scenario."
+	}
+}

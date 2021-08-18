@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiConnectionName": {
+            "value": "apic-systemapplicationservicebus-dev-xxxxx"
+        },
+        "apiConnectionLocation": {
+            "value": "UK South"
+        },
+        "logicAppName": {
+            "value": "logic-aimsystemapplication-dev-xxxxx"
+        },
+        "tags": {
+            "value": {
+                "ApplicationName" : "Aim-System",
+                "Env" : "dev"
+            }
+        }
+    }
+}
