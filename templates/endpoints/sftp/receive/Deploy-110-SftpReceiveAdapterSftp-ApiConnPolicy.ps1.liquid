@@ -1,0 +1,13 @@
+{%- assign formatted_azure_primary_region = format_region(model.migration_target.azure_primary_region) | downcase -%}
+<#
+.SYNOPSIS
+Invokes the deployment of the sftp receive api connection access policy.
+
+.DESCRIPTION
+Prior to running this script ensure you are authenticated against Azure and have the desired subscription set.
+
+.EXAMPLE
+.\Deploy-110-SftpReceiveAdapterSftp-ApiConnPolicy.ps1
+#>
+
+& $PSScriptRoot\New-SftpReceiveAdapterSftp-ApiConnPolicy.ps1 -resourceGroupName "{{ resource_template.parameters.azure_resource_group_name }}" -templateFile "$PSScriptRoot\sftpreceiveadaptersftp.apiconnpolicy.json" -templateParameterFile "$PSScriptRoot\sftpreceiveadaptersftp.apiconnpolicy.{{ model.migration_target.deployment_environment | downcase }}.parameters.json" -deploymentName "sftpreceiveadaptersftp.apicaccesspolicy.{{ formatted_azure_primary_region }}.{{ model.migration_target.unique_deployment_id | downcase }}"
