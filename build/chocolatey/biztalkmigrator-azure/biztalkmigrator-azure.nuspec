@@ -19,6 +19,6 @@
   </metadata>
   <files>
     <file src="..\..\..\dist\choco-src\**" target="tools"/>
-    <file src="..\..\..\templates\**" target="tools\templates"/>
+    <file src="..\..\..\templates\**" target="tools\templates" exclude="**\*.gitignore*" />
   </files>
 </package>
