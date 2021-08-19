@@ -1,0 +1,22 @@
+{
+	"IsEncrypted": false,
+	"Values": {
+		"AzureWebJobsStorage": "UseDevelopmentStorage=true",
+		"FUNCTIONS_WORKER_RUNTIME": "node",
+		"WORKFLOWS_TENANT_ID": "",
+		"WORKFLOWS_SUBSCRIPTION_ID": "",
+		"WORKFLOWS_RESOURCE_GROUP_NAME": "",
+		"WORKFLOWS_LOCATION_NAME": "",
+		"WORKFLOWS_MANAGEMENT_BASE_URI": "https://management.azure.com/",
+		"apiConnectionSubscriptionId": "",
+		"apiConnectionResourceGroupName": "",
+		"apiConnectionLocation": "",
+		"apimBaseUrl": "",
+		"apimSubscriptionKey": "",
+		"eventGridSubscribeConnectionName": "",
+		"eventGridSubscribeConnectionApiId": "",
+		"eventGridSubscribeConnectionResourceId": "",
+		"eventGridSubscribeConnectionRuntimeUrl": "",
+		"eventGridSubscribeConnectionKey": ""
+	}
+}
