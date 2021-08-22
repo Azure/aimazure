@@ -116,7 +116,7 @@
                     "triggers": {
                         "manual": {
                             "correlation": {
-                                "clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+                                "clientTrackingId": "@guid()"
                             },
                             "type": "Request",
                             "kind": "Http",
