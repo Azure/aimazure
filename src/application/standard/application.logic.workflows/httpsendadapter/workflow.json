@@ -1073,7 +1073,7 @@
 					"schema": {}
 				},
 				"correlation": {
-					"clientTrackingId": "@triggerBody()?['header']?['properties']?['trackingId']"
+					"clientTrackingId": "@coalesce(triggerBody()?['header']?['properties']?['trackingId'], guid())"
 				}
 			}
 		},
