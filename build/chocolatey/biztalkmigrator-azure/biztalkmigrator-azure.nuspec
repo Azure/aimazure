@@ -4,8 +4,10 @@
     <id>biztalkmigrator-azure</id>
     <!-- Note This version will be overriden by the command line. -->
     <version>0.0.1-beta</version>
-    <packageSourceUrl>https://github.com/azure/aimazure</packageSourceUrl>
+    <packageSourceUrl>https://github.com/Azure/aimazure/blob/main/build/chocolatey/biztalkmigrator-azure/biztalkmigrator-azure.nuspec</packageSourceUrl>
+    <projectSourceUrl>https://github.com/azure/aimazure</projectSourceUrl>
     <title>BizTalk Migrator Dependency - Azure Templates</title>
+    <owners>probertdaniel,345paul,valrobb</owners>
     <authors>Microsoft</authors>
     <projectUrl>https://github.com/azure/aimazure</projectUrl>
     <projectSourceUrl>https://github.com/azure/aimazure</projectSourceUrl>

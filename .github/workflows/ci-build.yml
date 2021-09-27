@@ -61,15 +61,16 @@ jobs:
       - name: Create the Chocolatey verification file and copy the license file
         shell: bash
         run: |         
-          mkdir -p ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}
+          mkdir -p ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}     
           cp ./LICENSE ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/LICENSE.txt
-          verificationFile=./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION.txt
-          touch $verificationFile
-          find ./templates -type f  | 
+          cp ./VERIFICATION ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION.txt
+          echo "Checksums for the files in the package are:" >> ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION.txt
+          find ${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }} -type f  | 
           while read f
           do
-            filename="$basename -- $f"
-            echo $filename >> $verificationFile
+            filename="$(basename $f) [$f]"
+            filehash=$(sha256sum $f | awk '{print $1}')
+            echo "$filename -- $filehash" >> ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION.txt
           done
 
       - name: Create the Chocolatey package output directory
