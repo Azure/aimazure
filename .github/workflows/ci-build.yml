@@ -72,7 +72,7 @@ jobs:
             filehash=$(sha256sum $f | awk '{print $1}')
             echo "$filename -- $filehash" >> ./${{ env.OUTPUT_DIR }}/${{ env.CHOCO_SRC_DIR }}/VERIFICATION.txt
           done
-          find ../../templates -type f  | 
+          find ./templates -type f  | 
           while read f
           do
             filename="$(basename $f) [$f]"
